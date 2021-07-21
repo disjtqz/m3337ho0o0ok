@@ -1,3 +1,5 @@
+#include "mh_defs.hpp"
+
 #include <Windows.h>
 #include "game_exe_interface.hpp"
 #include "memscan.hpp"
@@ -96,7 +98,8 @@ struct cs_idfile_override_t : public idFile {
 
 	static void deconstructor(idFile* thiz, unsigned int) {
 		reinterpret_cast<cs_idfile_override_t*>(thiz)->destroy();
-		idMemorySystem_free(thiz);
+		//freeing us causes crash
+		//idMemorySystem_free(thiz);
 	}
 
 	static const char* get_full_path(idFile* thiz) {
@@ -372,12 +375,19 @@ FILE* get_override_for_resource(const char* name, size_t* size_out) {
 	char pathbuf[4096];
 	memset(pathbuf, 0, sizeof(pathbuf));
 
+	
+
 	if ((gOverrideFileName != nullptr) && (strstr(name, ".entities") != 0) && (gOverrideName.size() && !strcmp(gOverrideName.c_str(), name))) {
 		strcpy_s(pathbuf, gOverrideFileName);
 		gOverrideFileName = nullptr;
 
 	}
 	else {
+		if(strstr(name, "base\\") == name) {
+			name += sizeof("base\\")-1;
+		}
+
+		
 		sprintf_s(pathbuf, ".\\overrides\\%s", name);
 	}
 
@@ -412,6 +422,19 @@ static constexpr unsigned INDEX_OF_OPENFILEREAD = 37;
 static size_t readfile_repl(void* fs, const char* path, void** out_data, void* fileprops, unsigned psrch);
 static void* g_old_readfile = (void*)readfile_repl;
 
+static void readfile_log_path(const char* path) {
+#if 0
+	if(!g_readfile_log) {
+		fopen_s(&g_readfile_log, "resources_seen.txt", "w");
+		atexit(dispose_log);
+	}
+	fprintf(g_readfile_log, "%s\n", path);
+	fflush(g_readfile_log);
+
+	
+#endif
+}
+
 static size_t readfile_repl(void* fs, const char* path, void** out_data, void* fileprops, unsigned psrch) {
 
 
@@ -420,7 +443,6 @@ static size_t readfile_repl(void* fs, const char* path, void** out_data, void* f
 	size_t sz = 0;
 	FILE* overrid = get_override_for_resource(path, &sz);
 
-	//	fprintf(g_readfile_log, "%s\n", path);
 	if (!overrid)
 		return res;
 
@@ -433,7 +455,9 @@ static size_t readfile_repl(void* fs, const char* path, void** out_data, void* f
 	fread(newdata, 1, sz, overrid);
 	fclose(overrid);
 	*out_data = newdata;
-
+	if((int)res < 0) {//id failed to open and read the file, but we succeeded
+		return sz;
+	}
 	return res;
 
 }
@@ -457,28 +481,43 @@ static idFile* openfileread_replacement(void* a1, const char* a2, bool a3, int a
 }
 static void* g_old_openfileread2 = nullptr;
 
-static idFile* openfileread2_replacement(void* a1, const char* a2, unsigned a3) {
+static idFile* openfileread2_replacement(void* a1, const char* a2) {
 	/*	if(a5 !=FSPATH_SEARCH_BASE && a5 != FSPATH_SEARCH_DEFAULT ) {
 			return g_backup_filesystem_vftbl._ZN17idFileSystemLocal12OpenFileReadEPKcbb14fsPathSearch_t(a1, a2, a3, a4, a5);
 		}
 		else */
 	{
 		size_t sz = 0;
+		readfile_log_path(a2);
 		FILE* overr = get_override_for_resource(a2, &sz);
 		if (overr) {
 			return cs_idfile_override_t::create(overr, true, false, a2, a2);
 		}
 		else {
-			return call_as<idFile*>(g_old_openfileread2, a1, a2, a3);
+			return call_as<idFile*>(g_old_openfileread2, a1, a2);
 		}
 	}
+}
+
+#define OFFSET_RESOURCEMANAGER_GETRESFILE		0x88
+
+static void** get_resourcemanager_vftbl() {
+	void* resourceManager2 = *(void**)descan::g_resourceManager2;
+	return *(void***)resourceManager2;
 }
 void hook_idfilesystem() {
 	void** fs_vftbl = **reinterpret_cast<void****>(descan::g_idfilesystemlocal);
 
-	swap_out_ptrs(&fs_vftbl[INDEX_OF_OPENFILEREAD], &g_old_readfile, 1);
-	//g_old_openfileread2 = (void*)openfileread2_replacement;
+	swap_out_ptrs(&fs_vftbl[INDEX_OF_READFILE], &g_old_readfile, 1);
+	
 
-//	swap_out_ptrs(&fs_vftbl[INDEX_OF_OPENFILEREAD+3], &g_old_openfileread2, 1);
+
+	void** addrof_resman_repl = &get_resourcemanager_vftbl()[OFFSET_RESOURCEMANAGER_GETRESFILE / 8];
+
+
+
+	g_old_openfileread2 = openfileread2_replacement;//(void*)openfileread2_replacement;
+
+	swap_out_ptrs(addrof_resman_repl, &g_old_openfileread2, 1);
 
 }

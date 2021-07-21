@@ -20,6 +20,12 @@ struct enumTypeInfo_t {
 	enumValueInfo_t* values;
 	int* valueIndex;
 };
+struct typedefInfo_t {
+	char* name;
+	char* type;
+	char* ops;
+	int size;
+};
 struct classMetaDataInfo_t
 {
   char *metaData;
@@ -72,5 +78,74 @@ namespace idType {
 	classTypeInfo_t* FindClassInfo(const char* cname);
 	enumTypeInfo_t* FindEnumInfo(const char* enumname);
 	classVariableInfo_t* FindClassField(const char* cname, const char* fieldname);
+
+	classTypeInfo_t* ClassTypes(unsigned& out_n, unsigned whichsource=0);
+	enumTypeInfo_t* EnumTypes(unsigned& out_n, unsigned whichsource=0);
+	typedefInfo_t* TypedefTypes(unsigned& out_n, unsigned whichsource=0);
 	void do_idlib_dump();
+	//generate an ida idc file that tries to  define all structs, enums and their fields
+	void generate_idc();
+
+	void generate_json();
+
+	classVariableInfo_t* try_locate_var_by_name(classVariableInfo_t* from, const char* field);
+
+	classVariableInfo_t* try_locate_var_by_name_inher(classTypeInfo_t* clstype, const char* field);
+	template<typename... TRest>
+	static unsigned _impl_get_nested_field_offset_by_name(unsigned offset, classTypeInfo_t* clstype, const char* fld, TRest... restfields) {
+		classVariableInfo_t* located_var = nullptr;
+		for (classTypeInfo_t* clptr = clstype; clptr && !located_var; clptr = FindClassInfo(clptr->superType)) {
+
+			located_var = try_locate_var_by_name(clptr->variables, fld);
+		}
+
+		offset += located_var->offset;
+
+		if constexpr (sizeof...(restfields) != 0) {
+			return _impl_get_nested_field_offset_by_name(offset, FindClassInfo(located_var->type), restfields...);
+		}
+		else {
+			return offset;
+		}
+	}
+	template<typename... TRest>
+	static char* _impl_get_nested_field_by_name(char* objptr, classTypeInfo_t* clstype, const char* fld, TRest... restfields) {
+		return objptr + _impl_get_nested_field_offset_by_name(0, clstype, fld, restfields...);
+	}
+
+
+	template<typename T, typename TObj, typename... TRest>
+	static T* get_nested_field_by_name(TObj obj, const char* cls, TRest... subfields) {
+		return reinterpret_cast<T*>(_impl_get_nested_field_by_name((char*)obj, FindClassInfo(cls), subfields...));
+	}
+	/*
+		processes strings with format like "renderModelInfo.blah.x"
+
+	*/
+	int fieldspec_calculate_offset(classTypeInfo_t* onclass, char* rwbuff);
 }
+
+template<typename TRet>
+class mh_fieldcached_t {
+	unsigned m_offset;
+	template<typename... TRest>
+	MH_NOINLINE
+	MH_CODE_SEG(".field_init")
+	MH_REGFREE_CALL
+	void init_field(const char* clsname, TRest... restfields) {
+		m_offset = idType::_impl_get_nested_field_offset_by_name(0, idType::FindClassInfo(clsname), restfields...);
+	}
+public:
+	constexpr mh_fieldcached_t() : m_offset(~0u) {}
+
+
+
+
+	template< typename TObj, typename... TRest>
+	inline TRet* operator ()(TObj obj, const char* cls, TRest... subfields) {
+		MH_UNLIKELY_IF (!~m_offset)  {
+			init_field(cls, subfields...);
+		}
+		return reinterpret_cast<TRet*>(((char*)obj) + m_offset);
+	}
+};

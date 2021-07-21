@@ -107,7 +107,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>../</OutDir>
+    <OutDir>Q:\DOOMEternal_dev_version</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -117,7 +117,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLRelease|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>../</OutDir>
+    <OutDir>Q:\DOOMEternal_dev_version</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
@@ -181,6 +181,7 @@
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ExceptionHandling>false</ExceptionHandling>
       <AdditionalIncludeDirectories>../RPCInterface</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -232,7 +233,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <AdditionalOptions>-flto=full %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-flto=full -msse4.1 -msse4.2 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -247,7 +248,6 @@
     <ClCompile Include="cmdsystem.cpp" />
     <ClCompile Include="compressedfile_override.cpp" />
     <ClCompile Include="errorhandling_hooks.cpp" />
-    <ClCompile Include="error_checking.cpp" />
     <ClCompile Include="eventdef.cpp" />
     <ClCompile Include="fs_hooks.cpp" />
     <ClCompile Include="gameapi.cpp" />
@@ -257,7 +257,10 @@
     <ClCompile Include="idtypeinfo.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="meathook.cpp" />
+    <ClCompile Include="memscan.cpp" />
     <ClCompile Include="mhserver.cpp" />
+    <ClCompile Include="mh_dev_hooks.cpp" />
+    <ClCompile Include="mh_memmanip_cmds.cpp" />
     <ClCompile Include="mh_native_api.cpp" />
     <ClCompile Include="scanner_core.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Full</Optimization>
@@ -269,21 +272,21 @@
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</BasicRuntimeChecks>
       <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</BufferSecurityCheck>
     </ClCompile>
+    <ClCompile Include="thunkstrementer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\RPCInterface\meathook_interface.h" />
     <ClInclude Include="alltypes.h" />
     <ClInclude Include="clipboard_helpers.hpp" />
     <ClInclude Include="cmdsystem.hpp" />
-    <ClInclude Include="declare_vtbl_feature_vars.hpp" />
-    <ClInclude Include="define_vtbl_feature_vars.hpp" />
     <ClInclude Include="errorhandling_hooks.hpp" />
-    <ClInclude Include="error_checking.hpp" />
     <ClInclude Include="eventdef.hpp" />
     <ClInclude Include="fs_hooks.hpp" />
     <ClInclude Include="gameapi.hpp" />
     <ClInclude Include="game_exe_interface.hpp" />
+    <ClInclude Include="generalized_number.hpp" />
     <ClInclude Include="idLib.hpp" />
+    <ClInclude Include="idmath.hpp" />
     <ClInclude Include="idStr.hpp" />
     <ClInclude Include="idtypeinfo.hpp" />
     <ClInclude Include="mapfile.hpp" />
@@ -291,11 +294,19 @@
     <ClInclude Include="meathook_plugin_api.hpp" />
     <ClInclude Include="memorySystem.hpp" />
     <ClInclude Include="memscan.hpp" />
+    <ClInclude Include="mh_defs.hpp" />
+    <ClInclude Include="mh_dev_hooks.hpp" />
+    <ClInclude Include="mh_memmanip_cmds.hpp" />
     <ClInclude Include="mh_native_api.hpp" />
     <ClInclude Include="resource.hpp" />
     <ClInclude Include="scanners\scanners_typeinfo.hpp" />
     <ClInclude Include="scanner_core.hpp" />
     <ClInclude Include="types_with_vtables.hpp" />
+    <ClInclude Include="xbyak\xbyak.h" />
+    <ClInclude Include="xbyak\xbyak_bin2hex.h" />
+    <ClInclude Include="xbyak\xbyak_mnemonic.h" />
+    <ClInclude Include="xbyak\xbyak_util.h" />
+    <ClInclude Include="xmacro_scanned_features.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

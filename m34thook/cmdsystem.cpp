@@ -1,3 +1,5 @@
+#include "mh_defs.hpp"
+
 #include "cmdsystem.hpp"
 #include "game_exe_interface.hpp"
 //#include "doomoffs.hpp"

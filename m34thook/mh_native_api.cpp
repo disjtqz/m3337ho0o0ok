@@ -1,3 +1,5 @@
+#include "mh_defs.hpp"
+
 #include <Windows.h>
 #include "game_exe_interface.hpp"
 #include "memscan.hpp"
@@ -11,6 +13,8 @@
 #include "idLib.hpp"
 #include "clipboard_helpers.hpp"
 #include "gameapi.hpp"
+#include "generalized_number.hpp"
+
 static mh_classtype_t find_classtype(const char* name) {
 	return reinterpret_cast<mh_classtype_t>(idType::FindClassInfo(name));
 }
@@ -76,6 +80,16 @@ static size_t classvar_offset(mh_classvar_t var) {
 static mh_game_entity_t find_entity_by_name(const char* entname) {
 	return reinterpret_cast<mh_game_entity_t>(find_entity(entname));
 }
+
+static mh_game_entity_t _find_next_entity_with_class(const char* classname, mh_game_entity_t after) {
+	return reinterpret_cast<mh_game_entity_t>(find_next_entity_with_class(classname, after));
+}
+static const char* _get_entity_name(mh_game_entity_t ent) {
+	return get_entity_name(ent);
+}
+static mh_game_entity_t get_player() {
+	return reinterpret_cast<mh_game_entity_t>(find_entity("player1"));
+}
 static mh_interface_t g_interface{
 	.m_execute_cmd_text = idCmd::execute_command_text,
 	.m_console_printf = idLib::Printf,
@@ -99,7 +113,17 @@ static mh_interface_t g_interface{
 	.m_classvar_comment = classvar_comment,
 	.m_classvar_size = classvar_size,
 	.m_classvar_offset = classvar_offset,
-	.m_find_entity_by_name = find_entity_by_name
+	.m_find_entity_by_name = find_entity_by_name,
+	.m_sizeof_generalized_number = sizeof(mh_gennum::num_t),
+	.m_pad = 0,
+	.m_find_next_entity_with_class = _find_next_entity_with_class,
+	.m_get_entity_name = _get_entity_name,
+	.m_add_persistent_text = add_persistent_text,
+	.m_remove_persistent_text = remove_persistent_text,
+	.m_get_player1 = get_player,
+	.m_get_player_looktarget = reinterpret_cast<mh_game_entity_t (*)()>(get_player_look_target),
+
+
 };
 
 /*

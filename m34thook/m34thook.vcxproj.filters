@@ -16,6 +16,9 @@
     <Filter Include="Header Files\scanners">
       <UniqueIdentifier>{f563642e-5e3c-49b8-b9a5-558138a8049e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\xbyak">
+      <UniqueIdentifier>{dc3f1388-cb82-46c8-9257-024445c4e178}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -60,13 +63,22 @@
     <ClCompile Include="errorhandling_hooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="error_checking.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="gameapi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mh_native_api.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="memscan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="thunkstrementer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mh_dev_hooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mh_memmanip_cmds.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -113,12 +125,6 @@
     <ClInclude Include="scanner_core.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="declare_vtbl_feature_vars.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="define_vtbl_feature_vars.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="scanners\scanners_typeinfo.hpp">
       <Filter>Header Files\scanners</Filter>
     </ClInclude>
@@ -137,13 +143,40 @@
     <ClInclude Include="errorhandling_hooks.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="error_checking.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="gameapi.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mh_native_api.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xmacro_scanned_features.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="idmath.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mh_defs.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="generalized_number.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="xbyak\xbyak.h">
+      <Filter>Header Files\xbyak</Filter>
+    </ClInclude>
+    <ClInclude Include="xbyak\xbyak_bin2hex.h">
+      <Filter>Header Files\xbyak</Filter>
+    </ClInclude>
+    <ClInclude Include="xbyak\xbyak_mnemonic.h">
+      <Filter>Header Files\xbyak</Filter>
+    </ClInclude>
+    <ClInclude Include="xbyak\xbyak_util.h">
+      <Filter>Header Files\xbyak</Filter>
+    </ClInclude>
+    <ClInclude Include="mh_dev_hooks.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mh_memmanip_cmds.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

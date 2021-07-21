@@ -1,81 +1,44 @@
+#include "mh_defs.hpp"
+
 #include "game_exe_interface.hpp"
 #include "memscan.hpp"
 #include "scanner_core.hpp"
+#include <map>
+#include <string_view>
+#define		DISABLE_PARALLEL_SCANGROUPS
 
 //#define		PRINT_SCAN_TIME_TAKEN
 using locate_alloca_probe = memscanner_t<
 	scanbytes<0x48, 0x83, 0xec, 0x10, 0x4c, 0x89, 0x14, 0x24, 0x4c, 0x89, 0x5c, 0x24, 0x8, 0x4d, 0x33, 0xdb, 0x4c, 0x8d, 0x54, 0x24, 0x18, 0x4c, 0x2b, 0xd0, 0x4d, 0xf, 0x42, 0xd3, 0x65, 0x4c, 0x8b, 0x1c, 0x25, 0x10, 0x0, 0x0, 0x0, 0x4d, 0x3b, 0xd3, 0xf2, 0x73, 0x17, 0x66, 0x41, 0x81, 0xe2, 0x0, 0xf0, 0x4d, 0x8d, 0x9b, 0x0, 0xf0, 0xff, 0xff, 0x41, 0xc6, 0x3, 0x0, 0x4d, 0x3b, 0xd3, 0xf2, 0x75, 0xef, 0x4c, 0x8b, 0x14, 0x24, 0x4c, 0x8b, 0x5c, 0x24, 0x8, 0x48, 0x83, 0xc4, 0x10, 0xf2, 0xc3>>;
-located_feature_t descan::g_alloca_probe = 0;
-located_feature_t descan::g_security_cookie = 0;
-located_feature_t descan::g_security_check_cookie = 0;
-located_feature_t descan::g_msvc_typeinfo_vtbl = 0;
-located_feature_t descan::g_doom_memorysystem = 0;
-located_feature_t descan::g_idfilecompressed_getfile = 0;
-located_feature_t descan::g_doom_operator_new = 0;
-located_feature_t descan::g_idoodle_decompress = 0;
-located_feature_t descan::g_sqrtf = 0;
-located_feature_t descan::g_sqrt = 0;
-
-located_feature_t descan::g_idfilememory_ctor = 0;
-located_feature_t descan::g_gamelib_initialize_ptr = 0;
-located_feature_t descan::g__ZN5idStr4IcmpEPKcS1_ = 0;
-located_feature_t descan::g_idcmdsystem = 0, descan::g_idcvarsystem = 0, descan::g_idlib_vprintf = 0;
-
-//idStr::Hash is inlined everywhere in v6
-#if !defined(MH_ETERNAL_V6)
-located_feature_t descan::g_idstr_hash = 0;
-#endif
-located_feature_t descan::g_gamelocal = 0, descan::g_command_patch_area = 0;
-
-located_feature_t descan::g_idstr__idstr = 0;
-located_feature_t descan::g_atomic_string_set = 0;
-located_feature_t descan::g_declentitydef_setentitystate = 0;
-located_feature_t descan::g_declentitydef_gettextwithinheritance = 0;
-located_feature_t descan::g_idlib_warning = 0, descan::g_idstr_dctor = 0, descan::g_idstr_assign_charptr = 0, descan::g_noclip_func = 0, descan::g_idmapfile_write = 0;
-
-located_feature_t descan::g_idgamesystemlocal = 0;
-located_feature_t descan::g_idgamesystemlocal_find = 0;
-
-located_feature_t descan::g_maplocal_getlevelmap = 0;
-
-located_feature_t descan::g_idfilesystemlocal = 0;
-
-located_feature_t descan::g_idlib_fatalerror = 0, descan::g_idlib_error = 0;
-located_feature_t descan::g_levelreload = 0;
-located_feature_t descan::g_init_func_rva_992170 = 0;
-//v1 = 0140B70320 find_next_entity_with_class 
-located_feature_t descan::g_find_next_entity_with_class = 0;
-
-located_feature_t descan::g_resourcelist_index = 0;
+#define		SCANNED_PTR_FEATURE(name, ...)		located_feature_t descan:: name = 0;
+#define		SCANNED_UINT_FEATURE(name,...)		 unsigned descan::  name = 0;
+#include "xmacro_scanned_features.hpp"
+#undef SCANNED_PTR_FEATURE
+#undef SCANNED_UINT_FEATURE
 
 
 
-unsigned descan::g_vftbl_offset_getlevelmap = 0;
-unsigned descan::g_offset_resourcelist_length = 0;
 
-#include "define_vtbl_feature_vars.hpp"
-
-static void* g_security_cookie_rvaptr = nullptr;
 #include "scanners/scanners_typeinfo.hpp"
 
 //v1=1408DAB34
 //use locate_func + hunt start back
 using locate_resourcelist_index = memscanner_t<
-	scanbytes<0x84,0xc0,0x8b,0xfb,0xb9,0x1,0x0,0x0,0x0,0xf,0x45,0xf9,
-	
+	scanbytes<0x84, 0xc0, 0x8b, 0xfb, 0xb9, 0x1, 0x0, 0x0, 0x0, 0xf, 0x45, 0xf9,
+
 	//lea - offset differs from v6 to v1
-	0x41,0x3B,0x6E
+	0x41, 0x3B, 0x6E
 	>,
 	//skip<1>,
 	skip_and_capture_1byte_value<&descan::g_offset_resourcelist_length>,
 	scanbytes<0x7C>, //jl, skip offset even though same in all
 	skip<1>,
-// lea     rcx, aResourceIndexE
-	scanbytes<0x48,0x8D,0x0D>,
-	riprel32_data_equals<  0x52, 0x65, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x69, 
-  0x6E, 0x64, 0x65, 0x78, 0x20, 0x65, 0x78, 0x63, 0x65, 0x65, 
-  0x64, 0x73, 0x20, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6E, 0x74, 
-  0x20, 0x63, 0x6F, 0x75, 0x6E, 0x74, 0x00>>;//Resource index exceeds current count
+	// lea     rcx, aResourceIndexE
+	scanbytes<0x48, 0x8D, 0x0D>,
+	riprel32_data_equals<  0x52, 0x65, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x69,
+	0x6E, 0x64, 0x65, 0x78, 0x20, 0x65, 0x78, 0x63, 0x65, 0x65,
+	0x64, 0x73, 0x20, 0x63, 0x75, 0x72, 0x72, 0x65, 0x6E, 0x74,
+	0x20, 0x63, 0x6F, 0x75, 0x6E, 0x74, 0x00>>;//Resource index exceeds current count
 
 
 
@@ -106,11 +69,11 @@ using locate_idgamesystemlocal = memscanner_t<
 //v1=014096469B
 using locate_idgamesystemlocal = memscanner_t<
 	scanbytes<0x48, 0x8d, 0x15>,
-	riprel32_data_equals<  0x2D, 0x72, 0x65, 0x73, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61, 
-  0x00>, //-resetData
+	riprel32_data_equals<  0x2D, 0x72, 0x65, 0x73, 0x65, 0x74, 0x44, 0x61, 0x74, 0x61,
+	0x00>, //-resetData
 	scanbytes<0xE8>, //call to idStr::icmp
 	skip<4>,
-	scanbytes<0x85,0xc0,0x75>,
+	scanbytes<0x85, 0xc0, 0x75>,
 	skip<1>,
 	scanbytes<0x48, 0x8D, 0x0D>//lea of idgamesyslocal
 >;
@@ -141,14 +104,14 @@ using locate_idfilecompressed_getfile = memscanner_t<
 	0x20, 0x66, 0x6F, 0x72, 0x20, 0x25, 0x73, 0x00>>;
 #else
 using locate_idfilecompressed_getfile = memscanner_t<
-	scanbytes<0x48,0x8D,0x0D>,
-	riprel32_data_equals<  0x69, 0x64, 0x46, 0x69, 0x6C, 0x65, 0x52, 0x65, 0x73, 0x6F, 
-  0x75, 0x72, 0x63, 0x65, 0x43, 0x6F, 0x6D, 0x70, 0x72, 0x65, 
-  0x73, 0x73, 0x65, 0x64, 0x3A, 0x3A, 0x47, 0x65, 0x74, 0x46, 
-  0x69, 0x6C, 0x65, 0x3A, 0x20, 0x43, 0x6F, 0x75, 0x6C, 0x64, 
-  0x20, 0x6E, 0x6F, 0x74, 0x20, 0x64, 0x65, 0x63, 0x6F, 0x6D, 
-  0x70, 0x72, 0x65, 0x73, 0x73, 0x20, 0x74, 0x65, 0x78, 0x74, 
-  0x20, 0x66, 0x6F, 0x72, 0x20, 0x25, 0x73, 0x00>>;
+	scanbytes<0x48, 0x8D, 0x0D>,
+	riprel32_data_equals<  0x69, 0x64, 0x46, 0x69, 0x6C, 0x65, 0x52, 0x65, 0x73, 0x6F,
+	0x75, 0x72, 0x63, 0x65, 0x43, 0x6F, 0x6D, 0x70, 0x72, 0x65,
+	0x73, 0x73, 0x65, 0x64, 0x3A, 0x3A, 0x47, 0x65, 0x74, 0x46,
+	0x69, 0x6C, 0x65, 0x3A, 0x20, 0x43, 0x6F, 0x75, 0x6C, 0x64,
+	0x20, 0x6E, 0x6F, 0x74, 0x20, 0x64, 0x65, 0x63, 0x6F, 0x6D,
+	0x70, 0x72, 0x65, 0x73, 0x73, 0x20, 0x74, 0x65, 0x78, 0x74,
+	0x20, 0x66, 0x6F, 0x72, 0x20, 0x25, 0x73, 0x00>>;
 #endif
 #endif
 
@@ -166,7 +129,7 @@ using locate_idoodle_decompress = memscanner_t<
 //matches in v1 and v6
 //mov rax, -1 became or rax, -1 which broke it, checked this and it matches all
 using locate_idoodle_decompress = memscanner_t<
-scanbytes<0x48,0x89,0x5c,0x24,0x8,0x48,0x89,0x6c,0x24,0x10,0x48,0x89,0x74,0x24,0x18,0x48,0x89,0x7c,0x24,0x20,0x41,0x56,0x48,0x81,0xec,0x90,0x0,0x0,0x0,0x48,0x8b,0xfa,0x48,0x8b,0xf1,0x8b,0x8c,0x24,0xc0,0x0,0x0,0x0>
+	scanbytes<0x48, 0x89, 0x5c, 0x24, 0x8, 0x48, 0x89, 0x6c, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x48, 0x89, 0x7c, 0x24, 0x20, 0x41, 0x56, 0x48, 0x81, 0xec, 0x90, 0x0, 0x0, 0x0, 0x48, 0x8b, 0xfa, 0x48, 0x8b, 0xf1, 0x8b, 0x8c, 0x24, 0xc0, 0x0, 0x0, 0x0>
 >;
 #endif
 
@@ -185,9 +148,9 @@ using locate_idstr_hash = memscanner_t<
 #if !defined(MH_ETERNAL_V6)
 using locate_game_engine_init_ptr = memscanner_t<
 	scanbytes<
-	0xbf, 0xe, 0x1c, 0x40, 
-	0xbf, 0xe, 0x1c, 0x40, 
-	0xbf, 0xe, 0x9c, 0x40, 
+	0xbf, 0xe, 0x1c, 0x40,
+	0xbf, 0xe, 0x1c, 0x40,
+	0xbf, 0xe, 0x9c, 0x40,
 
 
 	0xbf, 0xe, 0x1c, 0x3e, 0x1e, 0x16, 0x6a, 0x41, 0xf, 0x0, 0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0>>;
@@ -195,13 +158,13 @@ using locate_game_engine_init_ptr = memscanner_t<
 //v1 = 14335B078
 using locate_game_engine_init_ptr = memscanner_t<
 	scanbytes<
-	0xbf, 0xe, 0x1c, 0x40, 
-	0xbf, 0xe, 0x1c, 0x40, 
+	0xbf, 0xe, 0x1c, 0x40,
+	0xbf, 0xe, 0x1c, 0x40,
 	0xbf, 0xe, 0x9c, 0x40>,
 	match_within_variable_distance<12, memscanner_t<scanbytes<0xf, 0x0, 0x0, 0x0, 0x2, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0>>>
 
 
-	>;
+>;
 #endif
 /*
 	version 1.0
@@ -253,13 +216,13 @@ using locate_atomicstring_set = memscanner_t<scanbytes<0xf, 0xb6, 0x45, 0xb3, 0x
 //sprint_detached
 //should work in all versions
 using locate_atomicstring_set = memscanner_t<
-scanbytes<0x48,0x8D, 0x15>,
-riprel32_data_equals<  0x73, 0x70, 0x72, 0x69, 0x6E, 0x74, 0x5F, 0x64, 0x65, 0x74, 
-  0x61, 0x63, 0x68, 0x65, 0x64, 0x00>,
-scanbytes<0x48, 0x8D,0x0D>,
-skip<4>,
-scanbytes<0xE8>
-//last four bytes = riprel to atomstrset
+	scanbytes<0x48, 0x8D, 0x15>,
+	riprel32_data_equals<  0x73, 0x70, 0x72, 0x69, 0x6E, 0x74, 0x5F, 0x64, 0x65, 0x74,
+	0x61, 0x63, 0x68, 0x65, 0x64, 0x00>,
+	scanbytes<0x48, 0x8D, 0x0D>,
+	skip<4>,
+	scanbytes<0xE8>
+	//last four bytes = riprel to atomstrset
 >;
 #endif
 #if !defined(MH_ETERNAL_V6)
@@ -322,12 +285,7 @@ using locate_getlevelmap_offset = memscanner_t<
 >;
 #endif
 
-using locate_idfilesystemlocal = memscanner_t<
-	scanbytes<0x48, 0x8D, 0x15>,
-	riprel32_data_equals<  0x2E, 0x62, 0x6E, 0x65, 0x74, 0x2D, 0x74, 0x6F, 0x6B, 0x65,
-	0x6E, 0x00>,
-	scanbytes<0x41, 0xb9, 0x5, 0x0, 0x0, 0x0, 0x41, 0xb0, 0x1>
->;
+
 
 using locate_idlib_fatalerror_body = memscanner_t<
 	scanbytes<0x4c, 0x8b, 0x44, 0x24, 0x30, 0x4c, 0x8d, 0x4c, 0x24, 0x38, 0xba, 0x8, 0x0, 0x0, 0x0, 0x8d, 0x4a, 0xf9, 0xe8>,
@@ -338,9 +296,7 @@ using locate_idlib_error_body = memscanner_t<
 	scanbytes<0x4c, 0x8b, 0x44, 0x24, 0x30, 0x4c, 0x8d, 0x4c, 0x24, 0x38, 0xba, 0x7, 0x0, 0x0, 0x0, 0x8d, 0x4a, 0xfa, 0xe8>,
 	match_riprel32_to<&descan::g_idlib_vprintf>
 >;
-using locate_level_reload = memscanner_t<
-	scanbytes<0x48, 0x89, 0x5c, 0x24, 0x20, 0x55, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57, 0x48, 0x8d, 0xac, 0x24, 0xb0, 0x8e>
->;
+
 using locate_sqrtf = memscanner_t<scanbytes<0xf3, 0xf, 0x11, 0x44, 0x24, 0x8, 0x48, 0x83, 0xec, 0x58, 0xb9, 0x0, 0x0, 0x80, 0x7f, 0xf3, 0xf, 0x11, 0x44, 0x24, 0x68, 0x8b, 0x54, 0x24, 0x68, 0x8b, 0xc2, 0x23, 0xc1, 0x3b, 0xc1>>;
 
 using locate_init_func_rva_992170 = memscanner_t <
@@ -354,12 +310,27 @@ using locate_find_next_ent_with_class = memscanner_t<
 	skip<4>,*/
 
 	scanbytes<0x4C, 0x8D, 0x05>,
-	riprel32_data_equals<  0x69, 0x64, 0x49, 0x6E, 0x66, 0x6F, 0x4C, 0x65, 0x76, 0x65, 
-  0x6C, 0x46, 0x61, 0x64, 0x65, 0x49, 0x6E, 0x00>, //idInfoLevelFadeIn
-	scanbytes<0x48,0x8b,0xd7,0x48,0x8b,0xce,0xe8>>;
-	//scanbytes<0x33,0xd2,0x49,0x8b,0xce,0xE8>>;//then a call to it
+	riprel32_data_equals<  0x69, 0x64, 0x49, 0x6E, 0x66, 0x6F, 0x4C, 0x65, 0x76, 0x65,
+	0x6C, 0x46, 0x61, 0x64, 0x65, 0x49, 0x6E, 0x00>, //idInfoLevelFadeIn
+	scanbytes<0x48, 0x8b, 0xd7, 0x48, 0x8b, 0xce, 0xe8>>;
+//scanbytes<0x33,0xd2,0x49,0x8b,0xce,0xE8>>;//then a call to it
+//v1=14094E568
+using locate_resourceManager2 = memscanner_t<
+	scanbytes<0x48,0x8D,0x4C,0x24>,
+	skip<1>, //skip offs 30, may change
+	scanbytes<0xE8>, //call2sub
+	skip<4>,
+	scanbytes<0x48,0x8D,0x15>, //lea
+	riprel32_data_equals<  0x72, 0x65, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x4D, 0x61, 
+  0x6E, 0x61, 0x67, 0x65, 0x72, 0x2D, 0x3E, 0x49, 0x6E, 0x69, 
+  0x74, 0x00>, //"resourceManager->Init"
+	scanbytes<0x48,0x8D,0x4C,0x24>,
+	skip<1>, //another ref to spoffs 0x30
+	scanbytes<0xE8>,
+	skip<4>,
+	scanbytes<0x48,0x8B,0x0D>>; //load rcx with cs:resmanager2, last 4 bytes = rva
 
-
+using locate_rtti_typeinfo_string = memscanner_t<scanbytes<  0x2E, 0x3F, 0x41, 0x56, 0x74, 0x79, 0x70, 0x65, 0x5F, 0x69, 0x6E, 0x66, 0x6F, 0x40, 0x40, 0x00>>;
 
 #define		BSCANENT(name, ...)\
 	const char* ___name_##name = #name;\
@@ -409,15 +380,14 @@ namespace initial_scanners {
 	BSCANENT(locate_idstr_assign_charptr_entry, &descan::g_idstr_assign_charptr, scanbehavior_locate_csrel_after<locate_idstr_assign_charptr>);
 	BSCANENT(locate_noclip_code_entry, &descan::g_noclip_func, scanbehavior_locate_func<locate_noclip_code>);
 	BSCANENT(locate_typeinfo_tools_entry, &descan::g_global_typeinfo_tools, scanbehavior_locate_csrel_after<scanner_locate_global_typeinfo_tools>);
+	BSCANENT(locate_resourceManager2_entry, &descan::g_resourceManager2, scanbehavior_locate_csrel_after<locate_resourceManager2>);
 #if !defined(MH_ETERNAL_V6)
 	BSCANENT(locate_getlevelmap_entry, &descan::g_maplocal_getlevelmap, scanbehavior_locate_func<locate_body_of_getlevelmap>);
 #else
 	BSCANENT(locate_getlevelmap_entry, nullptr, scanbehavior_locate_func<locate_getlevelmap_offset>);
 
 #endif
-	//BSCANENT(locate_readfile_entry, &descan::g_idfilesystemlocal, scanbehavior_locate_csrel_preceding<locate_idfilesystemlocal>);
 
-	//BSCANENT(locate_level_reload_entry, &descan::g_levelreload, scanbehavior_locate_func<locate_level_reload>);
 
 #if !defined(MH_ETERNAL_V6)
 	BSCANENT(idgamesystemlocal_locator_entry, &descan::g_idgamesystemlocal_find, scanbehavior_locate_csrel_preceding<locate_idgamesystemlocal>);
@@ -428,36 +398,31 @@ namespace initial_scanners {
 	BSCANENT(sqrtf_locator_entry, &descan::g_sqrtf, scanbehavior_locate_func<locate_sqrtf>);
 	BSCANENT(sqrt_locator_entry, &descan::g_sqrt, scanbehavior_locate_func<locate_sqrt>);
 	BSCANENT(resourcelist_index_locator_entry, &descan::g_resourcelist_index, scanbehavior_locate_func<locate_resourcelist_index>);
+
+	BSCANENT(locate_rtti_typeinfo_string_entry, &descan::g_rtti_typeinfo_string, scanbehavior_locate_func<locate_rtti_typeinfo_string>);
+#define		PAR_SCANGROUP_P1_1				find_alloca_probe_entry, find_security_check_cookie_entry, find_doom_operator_new_and_idfile_memory_ctor_entry, locate_idoodle_decompress_entry, locate_idlib_vprintf_entry
+#define		PAR_SCANGROUP_P1_2				locate_game_engine_init_ptr_entry, idstr_ctor_void_locator_entry, idgamelocal_locator_entry, atomicstringset_locator_entry, getentitystate_needsoffset
+
+#define		PAR_SCANGROUP_P1_3				locate_idstr_dctor_entry, locate_idstr_assign_charptr_entry, locate_typeinfo_tools_entry, locate_getlevelmap_entry, locate_resourceManager2_entry
+
+#define		PAR_SCANGROUP_P1_4						sqrtf_locator_entry, sqrt_locator_entry, idgamesystemlocal_locator_entry,resourcelist_index_locator_entry,locate_rtti_typeinfo_string_entry
+#ifdef DISABLE_PARALLEL_SCANGROUPS
+
 	using initial_scangroup_type = scangroup_t <
-		find_alloca_probe_entry,
-		find_security_check_cookie_entry,
-		find_doom_operator_new_and_idfile_memory_ctor_entry,
-		locate_idoodle_decompress_entry,
-		locate_idlib_vprintf_entry,
-#ifndef MH_ETERNAL_V6
-		locate_idlib_hashstr_entry,
-#endif
-		locate_game_engine_init_ptr_entry,
-#if !defined(MH_ETERNAL_V6)
-		p1_memorysystem_locator_entry,
-#endif
-		idstr_ctor_void_locator_entry,
-		idgamelocal_locator_entry,
-		atomicstringset_locator_entry,
-		getentitystate_needsoffset,
-		locate_idstr_dctor_entry,
-		locate_idstr_assign_charptr_entry,
-#if !defined(MH_ETERNAL_V6)
-		locate_noclip_code_entry,
-#endif
-		locate_typeinfo_tools_entry,
-		locate_getlevelmap_entry,
-		sqrtf_locator_entry,
-		sqrt_locator_entry,
-		//locate_readfile_entry,
-	//	locate_level_reload_entry,
-		idgamesystemlocal_locator_entry
+		PAR_SCANGROUP_P1_1,
+		PAR_SCANGROUP_P1_2,
+		PAR_SCANGROUP_P1_3,
+		PAR_SCANGROUP_P1_4
 	> ;
+#else
+	using initial_scangroup_type = parallel_scangroup_group_t<
+		scangroup_t<PAR_SCANGROUP_P1_1>, 
+		scangroup_t<PAR_SCANGROUP_P1_2>,
+		scangroup_t<PAR_SCANGROUP_P1_3>,
+		scangroup_t<PAR_SCANGROUP_P1_4>>;
+
+
+#endif
 	static initial_scangroup_type initial_scangroup{};
 
 }
@@ -476,9 +441,9 @@ using locate_idmapfilelocal_write_body = memscanner_t<
 using locate_idmapfilelocal_write_body = memscanner_t<
 	scanbytes<0x48, 0x8B, 0x75>,
 	skip<1>, //skip ptr offset "0x68", might change later, but is same between v1 and v6
-	scanbytes<0x48,0x8D,0x0D>,
-	riprel32_data_equals<  0x77, 0x72, 0x69, 0x74, 0x69, 0x6E, 0x67, 0x20, 0x25, 0x73, 
-  0x2E, 0x2E, 0x2E, 0x0A, 0x00> //writing %s...\n
+	scanbytes<0x48, 0x8D, 0x0D>,
+	riprel32_data_equals<  0x77, 0x72, 0x69, 0x74, 0x69, 0x6E, 0x67, 0x20, 0x25, 0x73,
+	0x2E, 0x2E, 0x2E, 0x0A, 0x00> //writing %s...\n
 >;
 #endif
 namespace scanners_phase2 {
@@ -491,7 +456,7 @@ namespace scanners_phase2 {
 
 	BSCANENT(entry_phase2_locate_resourcelist_for_classname, &descan::g_resourcelist_for_classname, scanbehavior_locate_csrel_after<scanner_locate_resourcelist_for_classname>);
 
-	BSCANENT(entry_phase2_locate_cmd_patch_area, &descan::g_command_patch_area, scanbehavior_simple<locate_cmd_patch_area>);
+	//BSCANENT(entry_phase2_locate_cmd_patch_area, &descan::g_command_patch_area, scanbehavior_simple<locate_cmd_patch_area>);
 
 	BSCANENT(entry_phase2_locate_deserialize_from_json, &descan::g_deserialize_type_from_json, scanbehavior_locate_func<scanner_locate_deserialize_typetojson>);
 	//BSCANENT(setentitystate_locator, &descan::g_declentitydef_setentitystate, scanbehavior_locate_func<locate_setentitystate>);
@@ -503,25 +468,128 @@ namespace scanners_phase2 {
 
 	BSCANENT(locate_idlib_error_entry, &descan::g_idlib_error, scanbehavior_locate_func<locate_idlib_error_body>);
 	BSCANENT(find_next_ent_with_class_locator_entry, &descan::g_find_next_entity_with_class, scanbehavior_locate_csrel_after<locate_find_next_ent_with_class>);
-	
+
+	//9 scanners
+	#define		PAR_SCANGROUP_P2_1 				entry_phase2_locate_findclassinfo, entry_phase2_locate_idfilecompressed_getfile
+	#define		PAR_SCANGROUP_P2_2				entry_phase2_locate_resourcelist_for_classname
+	#define		PAR_SCANGROUP_P2_3				locate_idmapfilelocal_write_body_entry,locate_findenuminfo_entry
+	#define		PAR_SCANGROUP_P2_4				locate_idlib_fatalerror_entry,locate_idlib_error_entry,find_next_ent_with_class_locator_entry
+	#ifdef DISABLE_PARALLEL_SCANGROUPS
+
 	using secondary_scangroup_type = scangroup_t<
-		entry_phase2_locate_findclassinfo,
-		entry_phase2_locate_idfilecompressed_getfile,
-		entry_phase2_locate_resourcelist_for_classname,
-		entry_phase2_locate_cmd_patch_area,
-	//	entry_phase2_locate_deserialize_from_json,
-		//setentitystate_locator,
-		locate_idmapfilelocal_write_body_entry,
-		locate_findenuminfo_entry,
-		locate_idlib_fatalerror_entry,
-		locate_idlib_error_entry,
-		find_next_ent_with_class_locator_entry
+		PAR_SCANGROUP_P2_1,
+		PAR_SCANGROUP_P2_2,
+		PAR_SCANGROUP_P2_3,
+		PAR_SCANGROUP_P2_4
 	>;
 
+#else
+	using secondary_scangroup_type = parallel_scangroup_group_t<scangroup_t<PAR_SCANGROUP_P2_1>, scangroup_t<PAR_SCANGROUP_P2_2>, scangroup_t<PAR_SCANGROUP_P2_3>, scangroup_t<PAR_SCANGROUP_P2_4> >;
 
+#endif
 	static secondary_scangroup_type secondary_scangroup_pass{};
 }
 #include <cstdio>
+
+std::map<std::string_view, void*> g_str_to_rrti_type_descr{};
+
+
+static void scan_for_vftbls() {
+	
+	uint64_t* base = (uint64_t*)g_blamdll.image_base;
+
+	std::uint64_t typeinfo_vtable = *reinterpret_cast<uint64_t*>(((char*)descan::g_rtti_typeinfo_string) - 16);
+
+
+	uint64_t smallest_seen_rtti_base_descr_addr = (uint64_t)(g_blamdll.image_base + g_blamdll.image_size);
+
+	uint64_t largest_seen_rtti_base_descr_addr = (uint64_t)(g_blamdll.image_base);
+
+	std::map<unsigned, std::string_view> find_by_rtti_locator{};
+
+	for(size_t i = 0; i < (g_blamdll.image_size / 8); ++i) {
+		if(base[i] == typeinfo_vtable) {
+
+			std::string_view name = reinterpret_cast<char*>(&base[i] ) + 16;
+
+			g_str_to_rrti_type_descr[name] = &base[i];
+
+			uint64_t boundaddr =(uint64_t) &base[i];
+
+			smallest_seen_rtti_base_descr_addr = min(smallest_seen_rtti_base_descr_addr, boundaddr);
+
+			largest_seen_rtti_base_descr_addr = max(largest_seen_rtti_base_descr_addr, boundaddr);
+
+			find_by_rtti_locator[boundaddr - (uint64_t)g_blamdll.image_base] = name;
+
+		}
+	}
+
+
+
+	unsigned smallest_rva = smallest_seen_rtti_base_descr_addr - (uint64_t)g_blamdll.image_base;
+	unsigned largest_rva = largest_seen_rtti_base_descr_addr - (uint64_t)g_blamdll.image_base;
+
+	uint32_t* rvabase = (uint32_t*)g_blamdll.image_base;
+
+	uint64_t smallest_objlocator_addr = (uint64_t)(g_blamdll.image_base + g_blamdll.image_size);
+
+	uint64_t largest_objlocator_addr = (uint64_t)(g_blamdll.image_base);
+	std::map<void*, std::string_view> locator_to_name{};
+
+	for(size_t i = 0; i < (g_blamdll.image_size / 4); ++i) {
+		
+		uint32_t currva = rvabase[i];
+
+		if(currva <= largest_rva && currva >= smallest_rva) {
+			
+			auto iter = find_by_rtti_locator.find(currva);
+
+			if(iter == find_by_rtti_locator.end()) {
+				continue;
+			}
+
+
+			void* baserva = rvabase[i+2] + g_blamdll.image_base;
+
+
+			void* basecheck = &rvabase[i-3];
+
+			if (baserva != basecheck) {
+				continue;
+
+			}
+			
+			//we now have the complete object locator
+			//g_str_to_rrti_type_descr[iter->second] = baserva;
+			locator_to_name[baserva] = iter->second;
+			smallest_objlocator_addr = min((uint64_t)baserva, smallest_objlocator_addr);
+			largest_objlocator_addr = max((uint64_t)baserva, largest_objlocator_addr);
+
+		}
+	}
+	g_str_to_rrti_type_descr.clear();
+
+	//final pass to actually get the vtables
+
+	for(size_t i = 0; i < (g_blamdll.image_size / 8); ++i) {
+		
+		uint64_t currva = base[i];
+
+		if(currva <= largest_objlocator_addr && currva >= smallest_objlocator_addr) {		
+			
+			
+			auto namefor = locator_to_name.find((void*)currva);
+
+			if(namefor==locator_to_name.end())
+				continue;
+
+			g_str_to_rrti_type_descr[namefor->second] = &base[i+1];
+		}
+	}
+
+}
+
 
 volatile bool wait_for_debugger = true;
 void descan::locate_critical_features() {
@@ -532,11 +600,20 @@ void descan::locate_critical_features() {
 	FILE* DebugFileStream = nullptr;
 	if (fopen_s(&DebugFileStream, "wait_for_debugger.txt", "rb") == 0) {
 		fclose(DebugFileStream);
+		//i forgot that i had the file created and was getting frustrated, thinking i had broken something.
+		//added this so that doesnt happen again
+		MessageBoxA(nullptr, "Found wait_for_debugger.txt, looping forever!", "Debugger", 0);
+		
 		while (wait_for_debugger);
 	}
 
 	initial_scanners::initial_scangroup.execute_on_image();
-	if(descan::g_resourcelist_index) {
+
+	//end up at 0x142EF2118, typeinfo vftbl
+
+	scan_for_vftbls();
+
+	if (descan::g_resourcelist_index) {
 		descan::g_resourcelist_index = hunt_assumed_func_start_back(descan::g_resourcelist_index);
 	}
 	descan::g_declentitydef_gettextwithinheritance = hunt_assumed_func_start_back(descan::g_declentitydef_gettextwithinheritance);

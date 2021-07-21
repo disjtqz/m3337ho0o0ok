@@ -1,3 +1,5 @@
+#include "mh_defs.hpp"
+
 #include "game_exe_interface.hpp"
 #include "doomoffs.hpp"
 #include "idLib.hpp"

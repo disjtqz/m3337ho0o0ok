@@ -1,3 +1,5 @@
+#include "mh_defs.hpp"
+
 #include "game_exe_interface.hpp"
 #include "doomoffs.hpp"
 #include "meathook.h"
@@ -11,13 +13,16 @@
 #include <vector>
 #include "errorhandling_hooks.hpp"
 #include "gameapi.hpp"
+#include "idmath.hpp"
+#include "memscan.hpp"
+#include "mh_memmanip_cmds.hpp"
 void idlib_dump(idCmdArgs* args) {
 	idType::do_idlib_dump();
 	return;
 }
 
 void event_dump(idCmdArgs* args) {
-	DumpEventDefs();
+	DumpEventDefs(args->argc < 2 ? false : args->argv[1][0] != '0');
 }
 void* __fastcall idFileResourceCompressed__GetFile(__int64 a1);
 
@@ -205,15 +210,25 @@ void cmd_mh_query_type(idCmdArgs* args) {
 }
 
 void cmd_mh_printentitydef(idCmdArgs* args) {
-
+#if 0
 	if (args->argc < 2) {
 		idLib::Printf("Not enough args.\n");
 		return;
 	}
-	idLib::Printf(args->argv[1]);
 
-	void* ent = find_entity(args->argv[1]);
+#else
+	void* ent = nullptr;
 
+	if (args->argc < 2) {
+		idLib::Printf("No entity name provided, using player look target.\n");
+		ent = get_player_look_target();
+	}
+	else {
+		idLib::Printf(args->argv[1]);
+
+		ent = find_entity(args->argv[1]);
+	}
+#endif
 	if (!ent) {
 		idLib::Printf("Couldn't find entity %s.\n", args->argv[1]);
 		return;
@@ -400,6 +415,185 @@ void cmd_optimize(idCmdArgs* args) {
 
 */
 
+
+void idc_dump(idCmdArgs* args) {
+	idType::generate_idc();
+}
+
+void test_persistent_text(idCmdArgs* args) {
+
+	add_persistent_text(400, 400, ~0u, 3.0f, args->argv[1]);
+
+}
+static mh_fieldcached_t<idVec3> g_field_hphys_bodylinear{};
+
+void test_physics_op(idCmdArgs* args) {
+	void* looktarg = get_player_look_target();
+
+	if (!looktarg)
+		return;
+
+	void* ephys = get_entity_physics_obj(looktarg);
+
+	if (!ephys) {
+		idLib::Printf("Couldnt get phys obj\n");
+		return;
+	}
+
+	/*if(!is_subclass_of_rttisig(ephys, RTTISIG(".?AVidHavokPhysics_Base@@"))) {
+		idLib::Printf("Not using havokphysics\n");
+		return;
+	}*/
+	idVec3* linvel = g_field_hphys_bodylinear(ephys, "idHavokPhysics_Base", "bodyOrigin");
+
+	linvel->z += atof(args->argv[1]);
+
+}
+
+
+void mh_spawn(idCmdArgs* args) {
+
+	if (args->argc < 2) {
+		idLib::Printf("You need to supply an entitydef to spawn, foole.\n");
+		return;
+	}
+	void* our_decl = locate_resourcelist_member("idDeclEntityDef", args->argv[1]);
+
+	if (!our_decl) {
+		idLib::Printf("Failed to find entitydef %s\n", args->argv[1]);
+		return;
+	}
+
+	void* resulting_entity = spawn_entity_from_entitydef(our_decl);
+
+
+	if (!resulting_entity) {
+		idLib::Printf("Somehow spawning %s failed, game returned NULL\n", args->argv[1]);
+		return;
+
+	}
+	const char* ename = get_entity_name(resulting_entity);
+
+	if (!ename) {
+		idLib::Printf("Entity name was null?!?!?!?\n");
+		return;
+	}
+
+	idVec3 playertrace{};
+	//allow user to supply the position
+	if (args->argc >= 5) {
+
+		playertrace.x = atof(args->argv[2]);
+		playertrace.y = atof(args->argv[3]);
+		playertrace.z = atof(args->argv[4]);
+	}
+	else {
+		get_player_trace_pos(&playertrace);
+	}
+	idLib::Printf("Placing entity %s at %f,%f,%f\n", ename, playertrace.x, playertrace.y, playertrace.z);
+
+	set_entity_position(resulting_entity, &playertrace);
+
+}
+static void do_nothing() {
+
+}
+
+
+
+static int located_decl_read_prod_file = -1;
+
+
+
+
+static int init_decl_read_prod_file() {
+
+	//the first mismatch on the vftbl is the decl reload function
+	//smort, amirite?
+	void** vftblphys = get_class_vtbl(".?AVidDeclPhysics@@");
+	void** decltypeinfo = get_class_vtbl(".?AVidDeclTypeInfo@@");
+
+	for (unsigned i = 9; i < 20; ++i) {
+		if (vftblphys[i] != decltypeinfo[i]) {
+			return i;
+		}
+	}
+	return -1;
+
+
+}
+
+static void mh_reload_decl(idCmdArgs* args) {
+
+	if (args->argc < 3) {
+		idLib::Printf("mh_reload_decl <classname> <decl path>\n");
+		return;
+	}
+	if (located_decl_read_prod_file < 0) {
+		located_decl_read_prod_file = init_decl_read_prod_file();
+		if (located_decl_read_prod_file < 0) {
+			idLib::Printf("could not find required function for decl reloading!\n");
+			return;
+		}
+	}
+
+
+
+	idLib::Printf("calling decl_read_production_file\n");
+
+	idStr tmpstr{};
+
+	void* memb = locate_resourcelist_member(args->argv[1], args->argv[2]);
+
+	if (!memb) {
+		idLib::Printf("Couldnt locate %s of type %s\n", args->argv[2], args->argv[1]);
+		return;
+	}
+	auto callfn = reinterpret_cast<bool (*)(void*, idStr*)>(reinterpret_cast<void***>(memb)[0][located_decl_read_prod_file]);
+	if (callfn(memb, &tmpstr)) {
+		idLib::Printf("Failed to reload decl %s : error was %s\n", args->argv[2], tmpstr.data);
+		return;
+	}
+	idLib::Printf("Successfully reloaded %s\n", args->argv[2]);
+
+
+}
+static mh_fieldcached_t<char*> g_field_resourcelist_type{};
+static mh_fieldcached_t<char*> g_field_resourcelist_class{};
+
+static mh_fieldcached_t<void*> g_field_resourcelist_next{};
+
+static void mh_list_resource_lists(idCmdArgs* args) {
+	
+	void* listofresourcelists = *((void**)descan::g_listOfResourceLists);
+
+
+	std::string workbuf{};
+
+#define		RESLIST_TABULATION		"\t\t\t\t\t\t\t\t"
+
+
+	workbuf += "Resource lists\n\n\tCLASSNAME" RESLIST_TABULATION "TYPENAME\n";
+
+
+
+	while(listofresourcelists) {
+		const char* type = *g_field_resourcelist_type(listofresourcelists, "idResourceList", "typeName");
+		const char* classname = *g_field_resourcelist_class(listofresourcelists, "idResourceList", "className");
+
+		workbuf += "\t";
+		workbuf += classname;
+		workbuf+=RESLIST_TABULATION;
+		workbuf += type;
+		workbuf+="\n";
+
+		listofresourcelists = *g_field_resourcelist_next(listofresourcelists, "idResourceList", "next");
+	}
+
+	set_clipboard_data(workbuf.c_str());
+
+	idLib::Printf(workbuf.c_str());
+}
 void meathook_init() {
 
 
@@ -407,10 +601,30 @@ void meathook_init() {
 	//g_levelReload = redirect_to_func((void*)LevelReload_CaptureParameters, (uintptr_t)/* doomsym<void>(doomoffs::idFileResourceCompressed__GetFile)*/ descan::g_levelreload, true);
 	//g_func992170 = redirect_to_func((void*)LevelReload_PreventUninitializedTick, (uintptr_t)/* doomsym<void>(doomoffs::idFileResourceCompressed__GetFile)*/ descan::g_init_func_rva_992170, true);
 	install_error_handling_hooks();
+	//no longer needed, see below
+	//unsigned patchval_enable_commands = 0;
 
-	unsigned patchval_enable_commands = 0;
 
-	patch_memory(descan::g_command_patch_area, 4, (char*)&patchval_enable_commands);
+	//patch_memory(descan::g_command_patch_area, 4, (char*)&patchval_enable_commands);
+
+	/*
+		replace offset 16 on vftbl of idcmdsystem with a no-op function.
+		the function sets a variable on a pointer in tls, and it is called twice to disable first dev commands, then executing bound dev commands
+		swapping it out eliminates this issue, also renders g_command_patch_area useless
+	*/
+	void* cmdsystem = *(void**)descan::g_idcmdsystem;
+
+	void* cmdsystem_vftbl = *(void**)cmdsystem;
+	void* nothinfunc = (void*)do_nothing;
+
+	swap_out_ptrs(reinterpret_cast<char*>(cmdsystem_vftbl) + 16, &nothinfunc, 1, true);
+
+#ifdef MH_DEV_BUILD
+	//for array patch for expanding ai
+	//please remove for actual release
+	DWORD fuckyu;
+	VirtualProtect(g_blamdll.image_base, g_blamdll.image_size, PAGE_EXECUTE_READWRITE, &fuckyu);
+#endif
 	idCmd::register_command("mh_spawninfo", cmd_mh_spawninfo, "Copy your current position and orientation, formatted as spawnPosition and spawnOrientation to the clipboard");
 
 	idCmd::register_command("noclip", cmd_noclip, "Toggle noclip");
@@ -426,7 +640,16 @@ void meathook_init() {
 	idCmd::register_command("mh_current_checkpoint", cmd_current_checkpoint, "Get the current checkpoint name");
 	idCmd::register_command("mh_optimize", cmd_optimize, "Patches the engine to make stuff run faster. do not use online");
 	idCmd::register_command("mh_ang2mat", cmd_mh_ang2mat, "mh_ang2mat pitch yaw roll : converts the pitch, yawand roll values for idAngles to a decl - formatted matrix, copying the result to your clipboard");
-
+	idCmd::register_command("mh_dumpeventdefs", event_dump, "mh_dumpeventdefs <as enum = 0/1>");
+	idCmd::register_command("chrispy", mh_spawn, "chrispy <entitydef> <optional xyz position, uses your look direction as default> - spawns an entity at the position");
 	idCmd::register_command("idlib_dump", idlib_dump, "idlib_dump");
+
+	idCmd::register_command("mh_reload_decl", mh_reload_decl, "mh_reload_decl <classname(ex:idDeclWeapon)> <decl path>");
+	idCmd::register_command("mh_list_resource_lists",mh_list_resource_lists, "lists all resource lists by classname/typename, copying the result to the clipboard (the clipboard might not be helpful here)");
+	idCmd::register_command("idlib_idc", idc_dump, "Generates a .idc file for ida that defines all structs and enums that have typeinfo for this build of eternal");
+
+	install_memmanip_cmds();
+	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
+	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");
 	// Start rpc server.
 }

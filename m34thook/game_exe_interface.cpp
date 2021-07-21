@@ -1,3 +1,5 @@
+#include "mh_defs.hpp"
+
 #include <Windows.h>
 #include <intrin.h>
 #include "game_exe_interface.hpp"

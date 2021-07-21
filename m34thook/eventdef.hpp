@@ -45,4 +45,4 @@ struct idEventDefInterfaceLocal {
 };
 
 
-void DumpEventDefs();
+void DumpEventDefs(bool as_enum);

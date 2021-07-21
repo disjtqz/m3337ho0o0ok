@@ -1,8 +1,4 @@
-located_feature_t descan::g_idtypeinfo_findclassinfo = 0, descan::g_idtypeinfo_findenuminfo = 0;
-located_feature_t descan::g_idTypeInfoFile_readstr = 0;
-located_feature_t descan::g_resourcelist_for_classname = 0, descan::g_listOfResourceLists = 0,
-descan::g_serialize_type_to_json = 0;
-located_feature_t descan::g_deserialize_type_from_json = 0, descan::g_global_typeinfo_tools = 0;
+
 #if !defined(MH_ETERNAL_V6)
 using scanner_locate_findclassinfo = memscanner_t<
 /*	scanbytes<0x48, 0x89, 0x5c, 0x24, 0x20, 0x56, 0x48, 0x83, 0xec, 0x20, 0x48, 0x8b, 0xf2, 0x48, 0x8b, 0xd9, 0x48, 0x85, 0xd2, 0x0F, 0x84>,

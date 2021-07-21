@@ -1,17 +1,25 @@
 #pragma once
+#include "mh_defs.hpp"
 
 #include <cstring>
 #include <cstdint>
 #include "game_exe_interface.hpp"
 #include <cassert>
 #include <cstdio>
-#include <intrin.h>
+
+#include <thread>
+#include <atomic>
+#include <tuple>
+#include <mutex>
+#include <array>
 /*
 	typical l1 size is 32k
 	but we'll probably lose a chunk of that while executing
 	16k gives the best performance
 */
 #define		SCANNER_WORKGROUP_BLOCK_SIZE		(16*1024u)
+
+//#define		DISABLE_PREFETCHING_SCANNER_VARIANTS		
 #define		ASSERT_ALL_LOCATED
 struct scanstate_t {
 	unsigned char* addr;
@@ -25,7 +33,7 @@ enum class memsection_e {
 };
 
 template<memsection_e section, typename TTest>
-__forceinline
+MH_FORCEINLINE
 static inline bool test_section_address(blamdll_t* dll, TTest t) {
 	if constexpr (section == memsection_e::any) {
 		return dll->is_in_image(t);
@@ -41,55 +49,54 @@ static inline bool test_section_address(blamdll_t* dll, TTest t) {
 	}
 }
 
-#if defined(__clang__)
-__attribute__((flatten))
-__attribute__((always_inline))
-#endif
+MH_FLATTEN
+MH_FORCEINLINE
+
 static inline bool scancmp_bytes(const unsigned char* state, const unsigned char* values, size_t nvalues) {
 #if 1
 	unsigned i = 0;
-	while((i+16) < nvalues) {
-		__m128i addri = _mm_loadu_si128((const __m128i*)(state+i));
-		__m128i vali = _mm_loadu_si128((const __m128i*)(values+i));
+	while ((i + 16) < nvalues) {
+		__m128i addri = _mm_loadu_si128((const __m128i*)(state + i));
+		__m128i vali = _mm_loadu_si128((const __m128i*)(values + i));
 
-		if(_mm_movemask_epi8(_mm_cmpeq_epi8(addri, vali)) != 0xFFFF)
+		if (_mm_movemask_epi8(_mm_cmpeq_epi8(addri, vali)) != 0xFFFF)
 			return false;
 		i += 16;
 	}
 
-	while((i+8) < nvalues) {
-		uint64_t addri = *reinterpret_cast<const uint64_t*>(state+i);
-		uint64_t vali = *reinterpret_cast<const uint64_t*>(values+i);
-		if(addri!=vali)
+	while ((i + 8) < nvalues) {
+		uint64_t addri = *reinterpret_cast<const uint64_t*>(state + i);
+		uint64_t vali = *reinterpret_cast<const uint64_t*>(values + i);
+		if (addri != vali)
 			return false;
 
-		i+=8;
+		i += 8;
 	}
 
-	while((i+4) < nvalues) {
-		uint32_t addri = *reinterpret_cast<const uint32_t*>(state+i);
-		uint32_t vali = *reinterpret_cast<const uint32_t*>(values+i);
-		if(addri!=vali)
+	while ((i + 4) < nvalues) {
+		uint32_t addri = *reinterpret_cast<const uint32_t*>(state + i);
+		uint32_t vali = *reinterpret_cast<const uint32_t*>(values + i);
+		if (addri != vali)
 			return false;
 
-		i+=4;
+		i += 4;
 	}
 
-	while((i+2) < nvalues) {
-		uint32_t addri = *reinterpret_cast<const uint16_t*>(state+i);
-		uint32_t vali = *reinterpret_cast<const uint16_t*>(values+i);
-		if(addri!=vali)
+	while ((i + 2) < nvalues) {
+		uint32_t addri = *reinterpret_cast<const uint16_t*>(state + i);
+		uint32_t vali = *reinterpret_cast<const uint16_t*>(values + i);
+		if (addri != vali)
 			return false;
 
-		i+=2;
+		i += 2;
 	}
-	while(i < nvalues) {
-		uint32_t addri = *reinterpret_cast<const uint8_t*>(state+i);
-		uint32_t vali = *reinterpret_cast<const uint8_t*>(values+i);
-		if(addri!=vali)
+	while (i < nvalues) {
+		uint32_t addri = *reinterpret_cast<const uint8_t*>(state + i);
+		uint32_t vali = *reinterpret_cast<const uint8_t*>(values + i);
+		if (addri != vali)
 			return false;
 
-		i+=1;
+		i += 1;
 	}
 	return true;
 #else
@@ -104,8 +111,8 @@ struct scanbytes {
 	static constexpr unsigned required_valid_size = sizeof...(bs);
 	static constexpr unsigned matched_size = sizeof...(bs);
 
-	__forceinline
-	static bool match(scanstate_t& state) {
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
 
 #if 1
 		if constexpr (sizeof(values) == 1) {
@@ -146,7 +153,7 @@ struct scanbytes {
 
 
 			if (scancmp_bytes(state.addr, values, sizeof...(bs))) {
-			//if(scancmp_bytes<0, bs...>(state)) {
+				//if(scancmp_bytes<0, bs...>(state)) {
 				state.addr += sizeof...(bs);
 				return true;
 			}
@@ -167,8 +174,8 @@ struct match_riprel32_to {
 
 	static constexpr unsigned required_valid_size = 4;
 
-	__forceinline
-	static bool match(scanstate_t& state) {
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
 		if (!state.dll->is_in_image(state.addr))
 			return false;
 		ptrdiff_t df = *reinterpret_cast<int*>(state.addr);
@@ -187,14 +194,14 @@ struct riprel32_data_equals {
 	static constexpr unsigned char values[] = { data... };
 
 	static constexpr unsigned required_valid_size = 4;
-	__forceinline
-	static bool match(scanstate_t& state) {
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
 		unsigned char* base = state.addr + 4;
 
 		signed displ = *(signed*)state.addr;
 		base += displ;
 
-		if ((char*)base < state.dll->image_base || (((char*)base ) + sizeof...(data)) > (state.dll->image_base + state.dll->image_size))
+		if ((char*)base < state.dll->image_base || (((char*)base) + sizeof...(data)) >(state.dll->image_base + state.dll->image_size))
 			return false;
 		state.addr += 4;
 
@@ -230,8 +237,8 @@ struct match_calltarget_riprel32_recursive {
 template<unsigned N>
 struct skip {
 	static constexpr unsigned required_valid_size = N;
-	__forceinline
-	static bool match(scanstate_t& state) {
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
 		state.addr += N;
 		return true;
 	}
@@ -241,8 +248,8 @@ template<void** rva_out>
 struct skip_and_capture_rva {
 	//static inline T value{};
 	static constexpr unsigned required_valid_size = 4;
-	__forceinline
-	static bool match(scanstate_t& state) {
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
 
 
 		ptrdiff_t df = *reinterpret_cast<int*>(state.addr);
@@ -254,35 +261,35 @@ struct skip_and_capture_rva {
 	}
 };
 
-template<unsigned * number_out>
+template<unsigned* number_out>
 struct skip_and_capture_4byte_value {
 	static constexpr unsigned required_valid_size = 4;
-	__forceinline
-	static bool match(scanstate_t& state) {
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
 
 		*number_out = *reinterpret_cast<unsigned*>(state.addr);
 
 		state.addr += 4;
 		return true;
-	}	
+	}
 };
-template<unsigned * number_out>
+template<unsigned* number_out>
 struct skip_and_capture_1byte_value {
 	static constexpr unsigned required_valid_size = 4;
-	__forceinline
-	static bool match(scanstate_t& state) {
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
 
 		*number_out = *state.addr;
 
 		state.addr += 1;
 		return true;
-	}	
+	}
 };
 template<unsigned n>
 struct align_next {
 	static constexpr unsigned required_valid_size = n;
-	__forceinline
-	static bool match(scanstate_t& state) {
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
 		state.addr += (n - 1);
 		state.addr = (unsigned char*)(((uintptr_t)state.addr) & ~(uintptr_t)(n - 1));
 
@@ -302,8 +309,8 @@ struct memscanner_factory_t {
 	struct memscanner_t {
 
 		template<typename TCurr, typename... TRest>
-		__forceinline
-		static bool test_addr(scanstate_t& state) {
+		MH_FORCEINLINE
+			static bool test_addr(scanstate_t& state) {
 
 			if (!TCurr::match(state)) {
 				return false;
@@ -326,8 +333,8 @@ struct memscanner_factory_t {
 
 		static constexpr unsigned required_mapped_bytes = compute_overall_required_mapped_bytes<Ts...>();
 
-		__forceinline
-		static bool match(scanstate_t& state) {
+		MH_FORCEINLINE
+			static bool match(scanstate_t& state) {
 			if constexpr ((scanner_flags & _test_mapped_displ_in_image) != 0) {
 				if (!state.dll->is_in_image(state.addr + required_mapped_bytes))
 					return false;
@@ -343,14 +350,14 @@ struct memscanner_factory_t {
 template<unsigned within_n_bytes, typename subscanner>
 struct match_within_variable_distance {
 	static constexpr unsigned required_valid_size = within_n_bytes + subscanner::required_mapped_bytes;
-	__forceinline
-	static bool match(scanstate_t& state) {
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
 
 
-		for(unsigned i = 0; i < within_n_bytes; ++i) {
-			
+		for (unsigned i = 0; i < within_n_bytes; ++i) {
+
 			scanstate_t substate = state;
-			if(subscanner::match(substate)) {
+			if (subscanner::match(substate)) {
 				state = substate;
 				return true;
 			}
@@ -378,6 +385,7 @@ using memscanner_with_flags_t = typename memscanner_factory_t<flags>::template m
 
 
 template<typename T>
+MH_FORCEINLINE
 static inline void* run_simple_scanner() {
 
 
@@ -409,6 +417,7 @@ static inline void* run_simple_scanner() {
 }
 
 template<typename T>
+MH_FORCEINLINE
 static inline void* run_simple_data_scanner() {
 
 
@@ -426,6 +435,7 @@ static inline void* run_simple_data_scanner() {
 
 }
 template<typename T>
+MH_FORCEINLINE
 static inline void* run_simple_image_scanner() {
 
 
@@ -460,6 +470,7 @@ static inline void* locate_func() {
 
 }
 template<typename T>
+MH_FORCEINLINE
 static inline void* locate_rdata_ptr_to() {
 
 
@@ -481,6 +492,7 @@ static inline void* locate_rdata_ptr_to() {
 }
 
 template<typename T>
+MH_FORCEINLINE
 static inline void* locate_csrelative_address_preceding() {
 
 	for (unsigned i = 0; i < g_blamdll.image_size; ++i) {
@@ -503,6 +515,7 @@ static inline void* locate_csrelative_address_preceding() {
 	for extracting trivial hs function calls
 */
 template<typename T>
+MH_FORCEINLINE
 static inline void* extract_csrelative_call_address_before_first_retn_in_func(void* func_base) {
 	char* fn = (char*)func_base;
 	for (unsigned i = 0; fn[i] != 0xC3; ++i) {
@@ -536,6 +549,7 @@ static inline void* extract_csrelative_call_address_before_first_retn_in_func_la
 }
 
 template<typename T>
+MH_FORCEINLINE
 void* locate_csrelative_address_4bytes_before_end() {
 
 
@@ -552,6 +566,7 @@ void* locate_csrelative_address_4bytes_before_end() {
 
 
 template<typename T, memsection_e constrain = memsection_e::any>
+MH_FORCEINLINE
 static inline void* locate_csrelative_address_after() {
 
 
@@ -577,6 +592,7 @@ static inline void* locate_csrelative_address_after() {
 
 
 template<typename T>
+MH_FORCEINLINE
 static workgroup_result_t scanbehavior_simple(unsigned i) {
 	scanstate_t scan{ (unsigned char*)(i + g_blamdll.image_base), &g_blamdll };
 
@@ -588,6 +604,7 @@ static workgroup_result_t scanbehavior_simple(unsigned i) {
 	return nullptr;
 }
 template<typename T>
+MH_FORCEINLINE
 static workgroup_result_t scanbehavior_locate_func(unsigned i) {
 	scanstate_t scan{ (unsigned char*)(i + g_blamdll.image_base), &g_blamdll };
 
@@ -599,6 +616,7 @@ static workgroup_result_t scanbehavior_locate_func(unsigned i) {
 	return nullptr;
 }
 template<typename T>
+MH_FORCEINLINE
 static workgroup_result_t scanbehavior_locate_csrel_preceding(unsigned i) {
 	scanstate_t scan{ (unsigned char*)(i + g_blamdll.image_base), &g_blamdll };
 
@@ -614,6 +632,7 @@ static workgroup_result_t scanbehavior_locate_csrel_preceding(unsigned i) {
 	return nullptr;
 }
 template<typename T>
+MH_FORCEINLINE
 static workgroup_result_t scanbehavior_locate_csrel_after(unsigned i) {
 	scanstate_t scan{ (unsigned char*)(i + g_blamdll.image_base), &g_blamdll };
 
@@ -628,6 +647,34 @@ static workgroup_result_t scanbehavior_locate_csrel_after(unsigned i) {
 		}
 
 		return (void*)(displ);
+
+	}
+	return nullptr;
+}
+
+template<workgroup_result_t (*sub_behavior)(unsigned i)>
+MH_FORCEINLINE
+static workgroup_result_t locate_vftbl_member(void** vftbl, size_t nptrs_to_consider, size_t maxbytes_per_member) {
+	for(unsigned i = 0 ; i < nptrs_to_consider; ++i) {
+		
+		char* ptr =(char*) (vftbl[i]);
+
+		if(ptr < g_blamdll.image_base || ptr > (g_blamdll.image_base+g_blamdll.image_size) ) {
+			continue;
+		}
+
+		for(unsigned bytedispl = 0; bytedispl < maxbytes_per_member; ++bytedispl) {
+			
+			
+			unsigned newdispl = (ptr - g_blamdll.image_base) + bytedispl;
+
+
+			workgroup_result_t res = sub_behavior(newdispl);
+			if(res){
+				return res;				
+			}
+
+		}
 
 	}
 	return nullptr;
@@ -652,17 +699,20 @@ struct block_scangroup_entry_t : public scangroup_listnode_t {
 	virtual workgroup_result_t execute_on_block_prefetching(unsigned displ) = 0;
 	template<bool prefetching = false>
 	block_scangroup_entry_t* run(unsigned i) {
-
+#if !defined(DISABLE_PREFETCHING_SCANNER_VARIANTS)
 		workgroup_result_t res = prefetching ?
 			execute_on_block_prefetching(i) :
 			execute_on_block(i);
+#else
+		workgroup_result_t res = execute_on_block(i);
+#endif
 		block_scangroup_entry_t* nextscanner = m_next;
 
 		if (res) {
 			/*
 				we're done, remove us from the execution list
 			*/
-			if(m_result_receiver)
+			if (m_result_receiver)
 				*m_result_receiver = res;
 			if (m_prev) {
 				m_prev->m_next = m_next;
@@ -679,7 +729,7 @@ struct block_scangroup_entry_t : public scangroup_listnode_t {
 };
 //extradata is in case we need to add more stuff here
 template<
-	
+
 	workgroup_result_t* out_result_global,
 	worker_match_behavior_t behavior,
 	const char** bs_name = nullptr,
@@ -690,7 +740,7 @@ template<
 	struct implementer_t : public block_scangroup_entry_t {
 		implementer_t() : block_scangroup_entry_t() {
 			m_result_receiver = out_result_global;
-			m_scannode_name = (bs_name!= nullptr ? *bs_name : nullptr);
+			m_scannode_name = (bs_name != nullptr ? *bs_name : nullptr);
 		}
 
 		virtual workgroup_result_t execute_on_block(unsigned displ) override {
@@ -709,7 +759,7 @@ template<
 		}
 		virtual workgroup_result_t execute_on_block_prefetching(unsigned displ) override {
 
-
+#if !defined(DISABLE_PREFETCHING_SCANNER_VARIANTS)
 
 			unsigned end = displ + SCANNER_WORKGROUP_BLOCK_SIZE;
 			end = end > g_blamdll.image_size ? g_blamdll.image_size : end;
@@ -718,22 +768,22 @@ template<
 			unsigned prefetchiters = (end - displ) / 64;
 
 			for (unsigned iiter = 0; iiter < prefetchiters; ++iiter) {
-				_mm_prefetch((iiter * 64) +displ + SCANNER_WORKGROUP_BLOCK_SIZE + g_blamdll.image_base, _MM_HINT_T0);
+				_mm_prefetch((iiter * 64) + displ + SCANNER_WORKGROUP_BLOCK_SIZE + g_blamdll.image_base, _MM_HINT_T0);
 
 				for (unsigned j = 0; j < 64; ++j) {
-					void* res = behavior(((iiter*64)+j)+displ);
+					void* res = behavior(((iiter * 64) + j) + displ);
 					if (res)
 						return res;
 				}
 				/*
 					we're ending our usage of this block so flush it from the cache to make room for the next block
 				*/
-				_mm_clflush(((iiter*64) + displ) + g_blamdll.image_base);
+				_mm_clflush(((iiter * 64) + displ) + g_blamdll.image_base);
 			}
 
-			
+
 			//handle modulo cachesize 
-			for (unsigned i = (prefetchiters*64) + displ ; i < end; ++i) {
+			for (unsigned i = (prefetchiters * 64) + displ; i < end; ++i) {
 				//if (!(i & 63))
 			//		_mm_prefetch(i + SCANNER_WORKGROUP_BLOCK_SIZE + g_blamdll.image_base, _MM_HINT_T1);
 
@@ -744,12 +794,16 @@ template<
 				//return behavior(displ);
 			}
 			return nullptr;
+#endif
 		}
 	};
 
 	static inline implementer_t g_blockscan_node{};
 
 };
+
+__declspec(noinline)
+void scanner_failure_message(const char* scanner_name);
 
 
 template<typename... Ts>
@@ -772,13 +826,12 @@ struct scangroup_t {
 	scangroup_t() {
 		link_group<Ts...>(&m_list);
 	}
+
 #ifdef ASSERT_ALL_LOCATED
 	template<typename T, typename... TRest>
 	static void assert_all_located() {
-		if(!*(T::g_blockscan_node.m_result_receiver)) {
-			char tmpbuf[1024];
-			sprintf_s(tmpbuf, "Blockscan entry %s failed to locate its required patterns. The DLL may still function normally, but some features may not work.", T::g_blockscan_node.m_scannode_name ? T::g_blockscan_node.m_scannode_name : "<unknown>");
-			MessageBoxA(nullptr, tmpbuf, "MH Scanner Failed", 0 );
+		MH_UNLIKELY_IF (!*(T::g_blockscan_node.m_result_receiver)) {
+			scanner_failure_message(T::g_blockscan_node.m_scannode_name ? T::g_blockscan_node.m_scannode_name : "<unknown>");
 		}
 
 		if constexpr (sizeof...(TRest) != 0) {
@@ -791,11 +844,13 @@ struct scangroup_t {
 		unsigned i = 0;
 
 		unsigned end = g_blamdll.image_size;
-
+		if (end <= SCANNER_WORKGROUP_BLOCK_SIZE) {
+			__assume(0);
+		}
 		for (; i + SCANNER_WORKGROUP_BLOCK_SIZE < end; i += SCANNER_WORKGROUP_BLOCK_SIZE) {
 
-			
-			if (!m_list.m_next)
+
+			MH_UNLIKELY_IF (!m_list.m_next)
 				return;
 			block_scangroup_entry_t* entry = m_list.m_next;
 
@@ -818,6 +873,55 @@ struct scangroup_t {
 
 };
 
+template<typename T>
+struct runfunc_forwarder_t {
+	static inline T g_tval{};
+	static DWORD runfunc(void* unused) {
+		g_tval.execute_on_image();
+		return 0;
+	}
+};
+
+template<typename... Ts>
+struct parallel_scangroup_group_t {
+
+	static inline std::array< HANDLE, sizeof...(Ts)> m_threads{ nullptr };
+
+
+	parallel_scangroup_group_t() {
+		
+	}
+
+
+
+	//template<unsigned currentidx = 0>
+	template<unsigned currentidx, typename CurrentScannerT, typename... TNext>
+	static void queue_up_scanners() {
+		using scanner_type = CurrentScannerT;
+	
+		DWORD unused_id;
+		m_threads[currentidx] = CreateThread(nullptr, 65536,&runfunc_forwarder_t<CurrentScannerT>::runfunc, nullptr, 0,&unused_id); //new std::thread{ &runfunc_forwarder_t<CurrentScannerT>::runfunc };
+
+		if constexpr (sizeof...(TNext) != 0) {
+			queue_up_scanners<currentidx + 1, TNext...>();
+		}
+	}
+
+	static void execute_on_image() {
+		queue_up_scanners<0, Ts...>();
+		//delete also does join
+		//todo: should we actually run one of the scangroups on our current thread?
+		//for (auto&& thrd : m_threads) {
+			//thrd->join();
+
+			//delete thrd;
+			//thrd = nullptr;
+		//}
+		WaitForMultipleObjects(sizeof...(Ts), &m_threads[0], true, INFINITE);
+
+	}
+
+};
 
 
 
@@ -825,7 +929,7 @@ struct scangroup_t {
 	execute a memscanner on a small window of the program
 */
 template<worker_match_behavior_t ScanBehavior>
-__forceinline static void* scan_function_boundaries(void* func, unsigned assumed_size) {
+MH_FORCEINLINE static void* scan_function_boundaries(void* func, unsigned assumed_size) {
 	unsigned fdelta = (char*)func - g_blamdll.image_base;
 
 
@@ -838,7 +942,7 @@ __forceinline static void* scan_function_boundaries(void* func, unsigned assumed
 	return nullptr;
 }
 template<worker_match_behavior_t ScanBehavior>
-__forceinline static void* scan_guessed_function_boundaries(void* func) {
+MH_FORCEINLINE static void* scan_guessed_function_boundaries(void* func) {
 	unsigned char* pf = (unsigned char*)func;
 	/*
 		while in range of image and not breakpoint (in between align16 for functions) and not at ret
@@ -850,12 +954,12 @@ __forceinline static void* scan_guessed_function_boundaries(void* func) {
 	unsigned assumed_size = (char*)pf - (char*)func;
 	return scan_function_boundaries<ScanBehavior>(func, assumed_size);
 }
-__forceinline static void* hunt_assumed_func_start_back(void* func) {
+MH_FORCEINLINE static void* hunt_assumed_func_start_back(void* func) {
 	unsigned char* pf = (unsigned char*)func;
 	/*
 		while in range of image and not breakpoint (in between align16 for functions) and not at ret
 	*/
-	while ( (*pf != 0xCC && *pf != 0xC3) || (reinterpret_cast<uintptr_t>(pf + 1)&0xF)) {
+	while ((*pf != 0xCC && *pf != 0xC3) || (reinterpret_cast<uintptr_t>(pf + 1) & 0xF)) {
 		--pf;
 	}
 
