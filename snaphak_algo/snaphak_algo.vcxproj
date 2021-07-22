@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{7a2d3c55-93bd-4283-aa86-34536c8b44dc}</ProjectGuid>
+    <RootNamespace>snaphakalgo</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>ClangCL</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>ClangCL</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>..\..\..\..\..\..\faststeam\steamapps\common\DOOM</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>..\..\..\..\..\..\faststeam\steamapps\common\DOOM</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalIncludeDirectories>C:\Users\chris\source\repos\snaphak_algo\snaphak_algo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <StringPooling>true</StringPooling>
+      <AdditionalOptions>-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse41 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>SNAPHAKALGO_BUILDING;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalIncludeDirectories>C:\Users\chris\source\repos\snaphak_algo\snaphak_algo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <StringPooling>true</StringPooling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalOptions>-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2 -mcx16 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="impls\init_impls_avx2.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="impls\init_impls_avx512.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt  -mavx512f -mavx512cd -mavx512bw -mavx512dq -mavx512vl %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="impls\init_impls_generic.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2 -mcx16 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="init_snapalgo.cpp" />
+    <ClCompile Include="snaphakalgo_coro.cpp" />
+    <ClCompile Include="snaphakalgo_heap.cpp" />
+    <ClCompile Include="snaphakalgo_networking.cpp" />
+    <ClCompile Include="snaphakalgo_real.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-mlong-double-80 %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="snaphakalgo_smt.cpp" />
+    <ClCompile Include="snaphakalgo_vmem.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="impls\avx2\memops_avx2.hpp" />
+    <ClInclude Include="impls\avx512\memops_avx512.hpp" />
+    <ClInclude Include="impls\bmp_impl.hpp" />
+    <ClInclude Include="impls\bulkint_impl.hpp" />
+    <ClInclude Include="impls\generic\memops_generic.hpp" />
+    <ClInclude Include="impls\include_impls.hpp" />
+    <ClInclude Include="impls\memop_impl.hpp" />
+    <ClInclude Include="impls\rb_impl.hpp" />
+    <ClInclude Include="impls\sortnsearch_impl.hpp" />
+    <ClInclude Include="impls\str_impl.hpp" />
+    <ClInclude Include="sh_heap_shared.hpp" />
+    <ClInclude Include="snaphakalgo.hpp" />
+    <ClInclude Include="snaphakalgo_predef.hpp" />
+    <ClInclude Include="snaphak_allocator.hpp" />
+    <ClInclude Include="snaphak_bitmap.hpp" />
+    <ClInclude Include="snaphak_coro.hpp" />
+    <ClInclude Include="snaphak_dynarray.hpp" />
+    <ClInclude Include="snaphak_fmath.hpp" />
+    <ClInclude Include="snaphak_heap.hpp" />
+    <ClInclude Include="snaphak_intbulk.hpp" />
+    <ClInclude Include="snaphak_memops.hpp" />
+    <ClInclude Include="snaphak_rbtree.hpp" />
+    <ClInclude Include="snaphak_smt.hpp" />
+    <ClInclude Include="snaphak_networking.hpp" />
+    <ClInclude Include="snaphak_sortnsearch.hpp" />
+    <ClInclude Include="snaphak_string.hpp" />
+    <ClInclude Include="snaphak_vmemops.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="snaphak_coros.asm" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+  </ImportGroup>
+</Project>

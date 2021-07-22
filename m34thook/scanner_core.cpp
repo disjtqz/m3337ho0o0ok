@@ -7,7 +7,7 @@
 #include <string_view>
 #define		DISABLE_PARALLEL_SCANGROUPS
 
-//#define		PRINT_SCAN_TIME_TAKEN
+#define		PRINT_SCAN_TIME_TAKEN
 using locate_alloca_probe = memscanner_t<
 	scanbytes<0x48, 0x83, 0xec, 0x10, 0x4c, 0x89, 0x14, 0x24, 0x4c, 0x89, 0x5c, 0x24, 0x8, 0x4d, 0x33, 0xdb, 0x4c, 0x8d, 0x54, 0x24, 0x18, 0x4c, 0x2b, 0xd0, 0x4d, 0xf, 0x42, 0xd3, 0x65, 0x4c, 0x8b, 0x1c, 0x25, 0x10, 0x0, 0x0, 0x0, 0x4d, 0x3b, 0xd3, 0xf2, 0x73, 0x17, 0x66, 0x41, 0x81, 0xe2, 0x0, 0xf0, 0x4d, 0x8d, 0x9b, 0x0, 0xf0, 0xff, 0xff, 0x41, 0xc6, 0x3, 0x0, 0x4d, 0x3b, 0xd3, 0xf2, 0x75, 0xef, 0x4c, 0x8b, 0x14, 0x24, 0x4c, 0x8b, 0x5c, 0x24, 0x8, 0x48, 0x83, 0xc4, 0x10, 0xf2, 0xc3>>;
 #define		SCANNED_PTR_FEATURE(name, ...)		located_feature_t descan:: name = 0;
@@ -493,9 +493,14 @@ namespace scanners_phase2 {
 
 std::map<std::string_view, void*> g_str_to_rrti_type_descr{};
 
+/*
+	todo: this does THREE PASSES over the image. it could probably benefit from a bit of vectorization
 
+*/
 static void scan_for_vftbls() {
-	
+	#ifdef PRINT_SCAN_TIME_TAKEN
+	uint64_t tickcount = GetTickCount64();
+#endif
 	uint64_t* base = (uint64_t*)g_blamdll.image_base;
 
 	std::uint64_t typeinfo_vtable = *reinterpret_cast<uint64_t*>(((char*)descan::g_rtti_typeinfo_string) - 16);
@@ -587,8 +592,20 @@ static void scan_for_vftbls() {
 			g_str_to_rrti_type_descr[namefor->second] = &base[i+1];
 		}
 	}
+#ifdef PRINT_SCAN_TIME_TAKEN
+
+	unsigned tickstaken = (unsigned)(GetTickCount64() - tickcount);
+
+	char buffer[128];
+	sprintf_s(buffer, "Scanning for vtbls took %d ms", tickstaken);
+
+	MessageBoxA(nullptr, buffer, "Scan time", MB_OK);
+
+#endif
 
 }
+
+
 
 
 volatile bool wait_for_debugger = true;

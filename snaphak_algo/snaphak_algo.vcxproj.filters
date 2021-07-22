@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\impls">
+      <UniqueIdentifier>{04a50673-2765-4593-aaae-8397b0a84cc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\impls">
+      <UniqueIdentifier>{b3d2bbce-6865-41e8-be45-e743b68607b1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\impls\avx2">
+      <UniqueIdentifier>{34b490f1-a89b-49b8-bf2b-34c9bd30effd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\impls\avx512">
+      <UniqueIdentifier>{3563e330-7901-4a6b-966e-b480b3a232bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\impls\generic">
+      <UniqueIdentifier>{0abb1cf7-dc9c-4d4a-8cfe-d13c9dceb540}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="snaphakalgo_heap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="init_snapalgo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="impls\init_impls_avx2.cpp">
+      <Filter>Source Files\impls</Filter>
+    </ClCompile>
+    <ClCompile Include="impls\init_impls_avx512.cpp">
+      <Filter>Source Files\impls</Filter>
+    </ClCompile>
+    <ClCompile Include="impls\init_impls_generic.cpp">
+      <Filter>Source Files\impls</Filter>
+    </ClCompile>
+    <ClCompile Include="snaphakalgo_vmem.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snaphakalgo_coro.cpp">
+      <Filter>Source Files\impls</Filter>
+    </ClCompile>
+    <ClCompile Include="snaphakalgo_smt.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snaphakalgo_real.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="snaphakalgo_networking.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="snaphakalgo_predef.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphakalgo.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_rbtree.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="impls\rb_impl.hpp">
+      <Filter>Header Files\impls</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_heap.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="impls\include_impls.hpp">
+      <Filter>Header Files\impls</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_bitmap.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="impls\bmp_impl.hpp">
+      <Filter>Header Files\impls</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_string.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="impls\str_impl.hpp">
+      <Filter>Header Files\impls</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_memops.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_vmemops.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="impls\memop_impl.hpp">
+      <Filter>Header Files\impls</Filter>
+    </ClInclude>
+    <ClInclude Include="impls\avx2\memops_avx2.hpp">
+      <Filter>Header Files\impls\avx2</Filter>
+    </ClInclude>
+    <ClInclude Include="impls\avx512\memops_avx512.hpp">
+      <Filter>Header Files\impls\avx512</Filter>
+    </ClInclude>
+    <ClInclude Include="impls\generic\memops_generic.hpp">
+      <Filter>Header Files\impls\generic</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_coro.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sh_heap_shared.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_smt.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="impls\sortnsearch_impl.hpp">
+      <Filter>Header Files\impls</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_sortnsearch.hpp">
+      <Filter>Header Files\impls</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_intbulk.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="impls\bulkint_impl.hpp">
+      <Filter>Header Files\impls</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_fmath.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_networking.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_allocator.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="snaphak_dynarray.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="snaphak_coros.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
+  </ItemGroup>
+</Project>
