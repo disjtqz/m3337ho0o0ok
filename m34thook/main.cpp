@@ -7,11 +7,11 @@
 #include "meathook.h"
 #include "scanner_core.hpp"
 #include "fs_hooks.hpp"
-
+#include "snaphakalgo.hpp"
 //#define		SUPPORT_NEWER_VERSIONS
 
 static HMODULE g_real_xinput = nullptr;
-
+snaphak_algo_t g_shalgo{};
 __declspec(noinline)
 static void init_xinput() {
 	char tmpbuf[512];
@@ -109,6 +109,7 @@ BOOL WINAPI DllMain(
 ) {
 	if (g_did_init)
 		return TRUE;
+	sh_algo_init(&g_shalgo);
 	g_did_init = true;
 
 	init_reach();

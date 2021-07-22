@@ -58,3 +58,5 @@ SCANNED_PTR_FEATURE(g_resourceManager2)
 SCANNED_UINT_FEATURE(g_offset_resourcelist_length)
 
 SCANNED_UINT_FEATURE(g_vftbl_offset_getlevelmap)
+
+SCANNED_PTR_FEATURE(g_resourceStorageDiskStreamer_GetFile)

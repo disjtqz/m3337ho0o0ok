@@ -42,7 +42,7 @@ struct rb_root
 
 
 #define rb_parent(r)   ((struct rb_node *)((r)->rb_parent_color & ~3ULL))
-#define rb_color(r)   ((r)->rb_parent_color & 1)
+#define rb_color(r)   ((r)->rb_parent_color & 1ULL)
 #define rb_is_red(r)   (!rb_color(r))
 #define rb_is_black(r) rb_color(r)
 #define rb_set_red(r)  do { (r)->rb_parent_color &= ~1ULL; } while (0)
@@ -50,7 +50,7 @@ struct rb_root
 
 static inline void rb_set_parent(struct rb_node *rb, struct rb_node *p)
 {
-	rb->rb_parent_color = (rb->rb_parent_color & 3) | (unsigned long long)p;
+	rb->rb_parent_color = (rb->rb_parent_color & 3ULL) | (unsigned long long)p;
 }
 static inline void rb_set_color(struct rb_node *rb, int color)
 {

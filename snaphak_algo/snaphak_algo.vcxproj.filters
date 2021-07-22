@@ -140,9 +140,6 @@
     <ClInclude Include="snaphak_allocator.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="snaphak_dynarray.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="snaphak_coros.asm">

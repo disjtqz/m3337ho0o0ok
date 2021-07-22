@@ -955,6 +955,9 @@ MH_FORCEINLINE static void* scan_guessed_function_boundaries(void* func) {
 	return scan_function_boundaries<ScanBehavior>(func, assumed_size);
 }
 MH_FORCEINLINE static void* hunt_assumed_func_start_back(void* func) {
+	MH_UNLIKELY_IF(!func) {
+		return nullptr;
+	}
 	unsigned char* pf = (unsigned char*)func;
 	/*
 		while in range of image and not breakpoint (in between align16 for functions) and not at ret

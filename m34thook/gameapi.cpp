@@ -339,3 +339,42 @@ void** get_class_vtbl(std::string_view clsname) {
 
 	return reinterpret_cast<void**>(iter->second);
 }
+
+static int located_decl_read_prod_file = -1;
+
+
+
+
+static int init_decl_read_prod_file() {
+
+	//the first mismatch on the vftbl is the decl reload function
+	//smort, amirite?
+	void** vftblphys = get_class_vtbl(".?AVidDeclPhysics@@");
+	void** decltypeinfo = get_class_vtbl(".?AVidDeclTypeInfo@@");
+
+	for (unsigned i = 9; i < 20; ++i) {
+		if (vftblphys[i] != decltypeinfo[i]) {
+			return i;
+		}
+	}
+	return -1;
+
+
+}
+bool reload_decl(void* decl_ptr ){
+	if (located_decl_read_prod_file < 0) {
+		located_decl_read_prod_file = init_decl_read_prod_file();
+		if (located_decl_read_prod_file < 0) {
+			idLib::Printf("could not find required function for decl reloading!\n");
+			return false;
+		}
+	}
+	idStr tmpstr;
+
+	auto callfn = reinterpret_cast<bool (*)(void*, idStr*)>(reinterpret_cast<void***>(decl_ptr)[0][located_decl_read_prod_file]);
+	if (callfn(decl_ptr, &tmpstr)) {
+		idLib::Printf("Failed to reload decl : error was %s\n",  tmpstr.data);
+		return false;
+	}
+	return true;
+}

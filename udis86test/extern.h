@@ -29,14 +29,14 @@
 
 
 #include "types.h"
-#define     UD_EXPORT       extern "C" __declspec(dllexport) 
+#define     UD_EXPORT       extern "C"
 
 
 /* ============================= PUBLIC API ================================= */
 
 UD_EXPORT void ud_init(struct ud*);
 
-UD_EXPORT void ud_set_mode(struct ud*, uint8_t);
+//UD_EXPORT void ud_set_mode(struct ud*, uint8_t);
 
 UD_EXPORT void ud_set_pc(struct ud*, uint64_t);
 

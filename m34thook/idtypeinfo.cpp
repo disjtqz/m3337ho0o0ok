@@ -3,6 +3,7 @@
 #include "doomoffs.hpp"
 #include "idtypeinfo.hpp"
 #include "scanner_core.hpp"
+#include "snaphakalgo.hpp"
 #include <string>
 #include <set>
 #include <vector>
@@ -70,6 +71,7 @@ struct type_node_t {
 };
 static int g_offset_typeinfo = -1;
 static int g_offset_typeinfo2 = -1;
+MH_NOINLINE
 classTypeInfo_t* idType::FindClassInfo(const char* cname) {
 
 	void* typeinfo_tools = *(void**)descan::g_global_typeinfo_tools;
@@ -106,6 +108,7 @@ static void* get_typeinfo_generated(unsigned which = 0) {
 	return typeinfogenerated;
 
 }
+MH_NOINLINE
 enumTypeInfo_t* idType::FindEnumInfo(const char* ename) {
 
 
@@ -452,7 +455,7 @@ void idType::generate_idc() {
 
 
 }
-
+MH_NOINLINE
 classVariableInfo_t* idType::FindClassField(const char* cname, const char* fieldname) {
 	auto playerclass = idType::FindClassInfo(cname);
 	if (!playerclass)
@@ -460,7 +463,7 @@ classVariableInfo_t* idType::FindClassField(const char* cname, const char* field
 	auto headattr = playerclass->variables;
 	classVariableInfo_t* notarget_field = nullptr;
 	while (headattr && headattr->name) {
-		if (!strcmp(headattr->name, fieldname)) {
+		if (sh::string::streq(headattr->name, fieldname)) {
 			return headattr;
 		}
 		++headattr;
@@ -516,13 +519,13 @@ typedefInfo_t* idType::TypedefTypes(unsigned& out_n, unsigned whichsource) {
 
 classVariableInfo_t* idType::try_locate_var_by_name(classVariableInfo_t* from, const char* field) {
 	for (classVariableInfo_t* clvar = from; clvar->name && clvar->name[0]; ++clvar) {
-		if (!strcmp(clvar->name, field)) {
+		if (sh::string::streq(clvar->name, field)) {
 			return clvar;
 		}
 	}
 	return nullptr;
 }
-
+MH_NOINLINE
 classVariableInfo_t* idType::try_locate_var_by_name_inher(classTypeInfo_t* clstype, const char* field) {
 	classVariableInfo_t* located_var = nullptr;
 	for (classTypeInfo_t* clptr = clstype; clptr && !located_var; clptr = FindClassInfo(clptr->superType)) {
@@ -530,6 +533,7 @@ classVariableInfo_t* idType::try_locate_var_by_name_inher(classTypeInfo_t* clsty
 	}
 	return located_var;
 }
+MH_NOINLINE
 int idType::fieldspec_calculate_offset(classTypeInfo_t* onclass, char* _rwbuff) {
 
 	unsigned char* ucbuff, * priorstart;

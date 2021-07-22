@@ -17,8 +17,8 @@
 #include "snaphak_fmath.hpp"
 #include "snaphak_networking.hpp"
 #include "snaphak_allocator.hpp"
-#include "snaphak_dynarray.hpp"
 #define		SNAPHAK_SHARED_SEG		CS_CODE_SEG(".common")
+#define		SNAPHAKALGO_EXPORT		extern "C"
 enum class snaphak_cpu_lvl_t {
 	GenericCpu,
 	AVX2Cpu,
@@ -63,8 +63,9 @@ struct snaphak_algo_t {
 
 #if !defined(SNAPHAKALGO_BUILDING)
 extern snaphak_algo_t g_shalgo;
-extern "C"
-__declspec(dllimport)
+
+
+SNAPHAKALGO_EXPORT
 void sh_algo_init(snaphak_algo_t * out_algo);
 
 namespace sh{

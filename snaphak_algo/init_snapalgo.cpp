@@ -73,8 +73,7 @@ void print_cpu_info(snaphak_algo_t* alg, char* buffer, size_t maxsize) {
 		alg->m_is_under_wine);
 }
 
-extern "C"
-__declspec(dllexport)
+SNAPHAKALGO_EXPORT
 void sh_algo_init(snaphak_algo_t* out_algo) {
 	int extendedfeat[4] = { 0 };
 	__cpuidex(extendedfeat, 7, 0);

@@ -287,14 +287,17 @@ static inline unsigned int modrm(struct ud* u)
 }
 
 
-
+#if 1//def SPECIALIZE_FOR_ETERNAL
 using tablemapper_sz_t =popcnt_table_mapper_t<SZ_V, SZ_Z, SZ_Y, SZ_RDQ>;
 
 static constexpr unsigned char opr_mode_table[] = {0, 0, 16, 32, 32, 0, 64, 64};
+
+__declspec(noinline)
 static unsigned int
 resolve_operand_size(const struct ud* u, unsigned int s)
 {
-	unsigned opr_modeidx = u->opr_mode >> 3;
+	unsigned oprmode=u->opr_mode;
+	unsigned opr_modeidx = oprmode >> 3;
 
 
 	if(s > SZ_Y || !tablemapper_sz_t::isset(s))
@@ -322,14 +325,57 @@ resolve_operand_size(const struct ud* u, unsigned int s)
 	// result, result if == 16
 
 	//{store_opr_mode, store_opr_mode, 16, 32, 32, store_opr_mode, 64, 64
-	unsigned opr_mode = u->opr_mode;
+	/*unsigned opr_mode = u->opr_mode;
 
 	unsigned result = opr_mode_table[(idxfor << 1) + ((opr_mode >> 4)&1) ];
 
 	result = result ? result : opr_mode;
 
-	return result;
-	/*switch (s)
+	return result;*/
+
+	static constexpr unsigned mapped_v = tablemapper_sz_t::indexfor(SZ_V),
+		mapped_z = tablemapper_sz_t::indexfor(SZ_Z),
+		mapped_y = tablemapper_sz_t::indexfor(SZ_Y),
+		mapped_rdq = tablemapper_sz_t::indexfor(SZ_RDQ);
+		
+	
+
+	unsigned oprand16 = oprmode & 16;
+
+	unsigned zvalue = ((oprand16 ^ 16) << 1)| oprand16 ;
+	unsigned yvalue =  (oprand16 << 1) | oprmode;
+
+		//oprmode == 16 ? 32 : oprmode;
+
+	unsigned rdqvalue = 64;
+
+	unsigned vvalue = oprmode;
+	unsigned packed4 = (vvalue << (8* mapped_v )) | (zvalue << (8* mapped_z)) | (yvalue << (8* mapped_y)) | (rdqvalue << (8* mapped_rdq));
+	
+#if 0
+	switch (idxfor)
+	{
+	case tablemapper_sz_t::indexfor(SZ_V):
+		return vvalue;
+	case tablemapper_sz_t::indexfor(SZ_Z):
+		return zvalue;
+	case tablemapper_sz_t::indexfor(SZ_Y):
+		return yvalue;
+	case tablemapper_sz_t::indexfor(SZ_RDQ):
+		return rdqvalue;
+	default:
+		mh_dis_assume(false);
+		break;
+	}
+#else
+	return static_cast<unsigned char>(packed4 >> (idxfor*8));
+#endif
+}
+#else
+static unsigned int
+resolve_operand_size(const struct ud* u, unsigned int s)
+{
+	switch (s)
 	{
 	case SZ_V:
 		return (u->opr_mode);
@@ -341,9 +387,9 @@ resolve_operand_size(const struct ud* u, unsigned int s)
 		return (u->dis_mode == 64) ? 64 : 32;
 	default:
 		return s;
-	}*/
+	}
 }
-
+#endif
 
 static int resolve_mnemonic(struct ud* u)
 {
@@ -518,10 +564,9 @@ decode_reg(struct ud* u,
 #endif
 	case REGCLASS_XMM: reg = UD_R_XMM0 + num; break;
 
-#ifndef SPECIALIZE_FOR_ETERNAL
 	case REGCLASS_CR: reg = UD_R_CR0 + num; break;
 	case REGCLASS_DB: reg = UD_R_DR0 + num; break;
-#endif
+
 	case REGCLASS_SEG: {
 #ifdef GS_IS_ONLY_SEG
 		reg = UD_R_GS;

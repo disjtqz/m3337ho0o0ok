@@ -332,6 +332,19 @@ using locate_resourceManager2 = memscanner_t<
 
 using locate_rtti_typeinfo_string = memscanner_t<scanbytes<  0x2E, 0x3F, 0x41, 0x56, 0x74, 0x79, 0x70, 0x65, 0x5F, 0x69, 0x6E, 0x66, 0x6F, 0x40, 0x40, 0x00>>;
 
+//lol this scanner is so small but works on v1 and v6
+
+using locate_resourcestoragediskstreamer_getfile = memscanner_t<
+#if 0
+	scanbytes<0x69,0xc8,0x6b,0xca,0xeb,0x85,0x8b,0xc1,0xc1,0xe8,0xd,0x33,0xc1,0x48,0xb9,0xcd,0x8c,0x55,0xed,0xd7,0xaf,0x51,0xff,0x44,0x69,0xd0,0x35,0xae,0xb2,0xc2>
+#else
+	scanbytes<0x48,0x33,0xd0,0x4d,0x85,0xdb,0x74>,
+	skip<1>,
+	scanbytes<0x41,0x8b,0xca,0x8b,0xc2,0xc1,0xe9,0x10>
+#endif
+
+>;
+
 #define		BSCANENT(name, ...)\
 	const char* ___name_##name = #name;\
 	using  name = blockscan_entry_definition_t<__VA_ARGS__, &___name_##name>
@@ -400,10 +413,11 @@ namespace initial_scanners {
 	BSCANENT(resourcelist_index_locator_entry, &descan::g_resourcelist_index, scanbehavior_locate_func<locate_resourcelist_index>);
 
 	BSCANENT(locate_rtti_typeinfo_string_entry, &descan::g_rtti_typeinfo_string, scanbehavior_locate_func<locate_rtti_typeinfo_string>);
+	BSCANENT(locate_resourcestreamer_getfile, &descan::g_resourceStorageDiskStreamer_GetFile, scanbehavior_locate_func<locate_resourcestoragediskstreamer_getfile>);
 #define		PAR_SCANGROUP_P1_1				find_alloca_probe_entry, find_security_check_cookie_entry, find_doom_operator_new_and_idfile_memory_ctor_entry, locate_idoodle_decompress_entry, locate_idlib_vprintf_entry
 #define		PAR_SCANGROUP_P1_2				locate_game_engine_init_ptr_entry, idstr_ctor_void_locator_entry, idgamelocal_locator_entry, atomicstringset_locator_entry, getentitystate_needsoffset
 
-#define		PAR_SCANGROUP_P1_3				locate_idstr_dctor_entry, locate_idstr_assign_charptr_entry, locate_typeinfo_tools_entry, locate_getlevelmap_entry, locate_resourceManager2_entry
+#define		PAR_SCANGROUP_P1_3				locate_idstr_dctor_entry, locate_idstr_assign_charptr_entry, locate_typeinfo_tools_entry, locate_getlevelmap_entry, locate_resourceManager2_entry,locate_resourcestreamer_getfile
 
 #define		PAR_SCANGROUP_P1_4						sqrtf_locator_entry, sqrt_locator_entry, idgamesystemlocal_locator_entry,resourcelist_index_locator_entry,locate_rtti_typeinfo_string_entry
 #ifdef DISABLE_PARALLEL_SCANGROUPS
@@ -446,6 +460,8 @@ using locate_idmapfilelocal_write_body = memscanner_t<
 	0x2E, 0x2E, 0x2E, 0x0A, 0x00> //writing %s...\n
 >;
 #endif
+
+
 namespace scanners_phase2 {
 #if !defined(MH_ETERNAL_V6)
 	BSCANENT(entry_phase2_locate_findclassinfo, &descan::g_idtypeinfo_findclassinfo, scanbehavior_locate_func<scanner_locate_findclassinfo>);
@@ -626,6 +642,8 @@ void descan::locate_critical_features() {
 
 	initial_scanners::initial_scangroup.execute_on_image();
 
+
+	descan::g_resourceStorageDiskStreamer_GetFile = hunt_assumed_func_start_back(descan::g_resourceStorageDiskStreamer_GetFile);
 	//end up at 0x142EF2118, typeinfo vftbl
 
 	scan_for_vftbls();

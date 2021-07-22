@@ -145,7 +145,7 @@ static void* find_entity_in_mapfile(const char* entname) {
 
 		void* current_ent = entities_array[i];
 
-		idStr* originalName = (idStr*)(((char*)current_ent) + original_name_field->offset);
+		idStr* originalName = mh_lea<idStr>(current_ent, original_name_field->offset);
 
 		if (originalName->data) {
 			idLib::Printf(originalName->data);
@@ -501,27 +501,6 @@ static void do_nothing() {
 
 
 
-static int located_decl_read_prod_file = -1;
-
-
-
-
-static int init_decl_read_prod_file() {
-
-	//the first mismatch on the vftbl is the decl reload function
-	//smort, amirite?
-	void** vftblphys = get_class_vtbl(".?AVidDeclPhysics@@");
-	void** decltypeinfo = get_class_vtbl(".?AVidDeclTypeInfo@@");
-
-	for (unsigned i = 9; i < 20; ++i) {
-		if (vftblphys[i] != decltypeinfo[i]) {
-			return i;
-		}
-	}
-	return -1;
-
-
-}
 
 static void mh_reload_decl(idCmdArgs* args) {
 
@@ -529,19 +508,10 @@ static void mh_reload_decl(idCmdArgs* args) {
 		idLib::Printf("mh_reload_decl <classname> <decl path>\n");
 		return;
 	}
-	if (located_decl_read_prod_file < 0) {
-		located_decl_read_prod_file = init_decl_read_prod_file();
-		if (located_decl_read_prod_file < 0) {
-			idLib::Printf("could not find required function for decl reloading!\n");
-			return;
-		}
-	}
 
 
+	
 
-	idLib::Printf("calling decl_read_production_file\n");
-
-	idStr tmpstr{};
 
 	void* memb = locate_resourcelist_member(args->argv[1], args->argv[2]);
 
@@ -549,11 +519,11 @@ static void mh_reload_decl(idCmdArgs* args) {
 		idLib::Printf("Couldnt locate %s of type %s\n", args->argv[2], args->argv[1]);
 		return;
 	}
-	auto callfn = reinterpret_cast<bool (*)(void*, idStr*)>(reinterpret_cast<void***>(memb)[0][located_decl_read_prod_file]);
-	if (callfn(memb, &tmpstr)) {
-		idLib::Printf("Failed to reload decl %s : error was %s\n", args->argv[2], tmpstr.data);
+	idLib::Printf("calling decl_read_production_file\n");
+	if(!reload_decl(memb)) {
 		return;
 	}
+
 	idLib::Printf("Successfully reloaded %s\n", args->argv[2]);
 
 

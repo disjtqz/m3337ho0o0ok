@@ -53,21 +53,22 @@
 #endif /* UD_ATTR_PACKED */
 
 
-#define     DISABLE_ASM_TEXT
+//#define     DISABLE_ASM_TEXT
 #define     SPECIALIZE_FOR_ETERNAL
 
 
 #ifdef SPECIALIZE_FOR_ETERNAL
 
+
+#define     FORCE_64BIT_MODE
+
 #define     DONT_DECODE_MMX 
 #define     GS_IS_ONLY_SEG
 #define     DONT_DECODE_X87
-#define     FORCE_64BIT_MODE
 #define     FORCE_INTEL_VENDOR
-
 #define     DISABLE_PAUSE_REP_NOP_DECODING
-
 #define     ONLY_USE_INPUT_BUF
+
 
 #include <array>
 #include <intrin.h>
@@ -75,7 +76,7 @@
 
 //make the bytes that ud uses on ud_state full 32 bit to eliminate need for zero ext
 //and enable memory mirroring on zen
-using udstate_uint8_fast_t = unsigned;
+//using udstate_uint8_fast_t = unsigned;
 /*
     map values in range 0-32 to continuous indices
 */
@@ -94,17 +95,25 @@ struct popcnt_table_mapper_t {
 
     static constexpr unsigned m_pop_word = gentable();
 
-    static unsigned indexfor(unsigned value) {
-        return _popcnt32( ((1U << value) - 1) & m_pop_word);//_popcnt32( ((1U << value) - 1) & m_pop_word);
+    static constexpr unsigned indexfor(unsigned value) {
+
+        unsigned tmp = ((1U << value) - 1) & m_pop_word;
+
+        if(std::is_constant_evaluated()) {
+            return std::popcount(tmp);
+        }
+        else
+            return _popcnt32( tmp);
     }
     static bool isset(unsigned value) {
         return ((1U<<value)&m_pop_word)!=0;
     }
 };
 
+
 #else
-using udstate_uint8_fast_t = uint8_t;
 #endif
+using udstate_uint8_fast_t = uint8_t;
 
 #define     mh_dis_assume(...)      if(!(__VA_ARGS__))__builtin_unreachable()
 

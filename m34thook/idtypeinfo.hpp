@@ -74,9 +74,11 @@ struct classTypeInfo_t
 
 
 namespace idType {
-	
+	MH_NOINLINE
 	classTypeInfo_t* FindClassInfo(const char* cname);
+	MH_NOINLINE
 	enumTypeInfo_t* FindEnumInfo(const char* enumname);
+	MH_NOINLINE
 	classVariableInfo_t* FindClassField(const char* cname, const char* fieldname);
 
 	classTypeInfo_t* ClassTypes(unsigned& out_n, unsigned whichsource=0);
@@ -87,9 +89,9 @@ namespace idType {
 	void generate_idc();
 
 	void generate_json();
-
+	MH_NOINLINE
 	classVariableInfo_t* try_locate_var_by_name(classVariableInfo_t* from, const char* field);
-
+	MH_NOINLINE
 	classVariableInfo_t* try_locate_var_by_name_inher(classTypeInfo_t* clstype, const char* field);
 	template<typename... TRest>
 	static unsigned _impl_get_nested_field_offset_by_name(unsigned offset, classTypeInfo_t* clstype, const char* fld, TRest... restfields) {
@@ -122,6 +124,7 @@ namespace idType {
 		processes strings with format like "renderModelInfo.blah.x"
 
 	*/
+	MH_NOINLINE
 	int fieldspec_calculate_offset(classTypeInfo_t* onclass, char* rwbuff);
 }
 

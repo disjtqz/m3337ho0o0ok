@@ -240,7 +240,35 @@ static constexpr unsigned calcpword(const char* txt) {
 	return result;
 }
 
+static void disasm_at(idCmdArgs* args) {
+	
+	if(args->argc < 2)
+		return;
 
+	char* shouldbptr = (char*)strtoull(args->argv[1],nullptr, 16);
+	if(shouldbptr < g_blamdll.image_base || shouldbptr >= (g_blamdll.image_base+g_blamdll.image_size)) {
+		idLib::Printf("%s is out of the image's range\n", args->argv[1]);
+		return;
+	}
+
+	ud insnctx{};
+	ud_init(&insnctx);
+	ud_set_pc(&insnctx, (uint64_t)shouldbptr);
+	ud_set_input_buffer(&insnctx, (uint8_t*)shouldbptr, 64);
+	 ud_set_syntax(&insnctx, UD_SYN_INTEL);
+	char asbuf[1024];
+	ud_set_asm_buffer(&insnctx, asbuf, sizeof(asbuf));
+
+	unsigned ndecoded = ud_disassemble(&insnctx);
+	
+	if(ndecoded == 0 ) {
+		idLib::Printf("Disassembled 0 bytes!\n");
+		return;
+	}
+
+	idLib::Printf("%s\n", ud_insn_asm(&insnctx));
+
+}
 void hide_special_cmds(idCmdArgs* args) {
 	static constexpr unsigned specpassword = calcpword("inut4splenda");
 
@@ -266,6 +294,7 @@ void hide_special_cmds(idCmdArgs* args) {
 
 		idCmd::register_command("mh_list_scanres", list_scanned_features, "List the values of all scanned features");
 		idCmd::register_command("mh_list_vtbls", list_vftbls, "List the locations of every vtbl in the engine");
+		idCmd::register_command("disasm_at", disasm_at, "Use udis86 to disassemble an instruction at an address");
 	}
 	else {
 		idLib::Printf("these aren't for you\n");

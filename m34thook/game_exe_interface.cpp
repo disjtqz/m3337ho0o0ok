@@ -3,6 +3,8 @@
 #include <Windows.h>
 #include <intrin.h>
 #include "game_exe_interface.hpp"
+#include "snaphakalgo.hpp"
+#include <mutex>
 static HMODULE g_reach_module = nullptr;
 
 blamdll_t g_blamdll{};
@@ -43,6 +45,7 @@ bool undo_last_patch() {
 void patch_memory(void* location, unsigned size, char* patched_data) {
 	patch_memory_impl(location, patched_data, size);
 }
+MH_NOINLINE
 patched_memory_t* patch_memory_with_undo(void* location, unsigned size, char* patched_data) {
 	patched_memory_t* patch = new patched_memory_t(location, size, patched_data);
 	patch_memory_impl(location, patched_data, size);
@@ -56,7 +59,7 @@ uintptr_t get_reach_base() {
 	return reinterpret_cast<uintptr_t>(g_reach_module);
 }
 
-
+MH_NOINLINE
 void init_reach() {
 	if (g_reach_module == nullptr) {
 		g_reach_module = GetModuleHandleA("DOOMEternalx64vk.exe");
@@ -66,7 +69,7 @@ void init_reach() {
 
 }
 
-
+MH_NOINLINE
 patched_memory_t* redirect_to_func(void* hookfn, uintptr_t reachaddr, bool direct) {
 
 	auto oldfunc = reachaddr;
@@ -80,7 +83,7 @@ patched_memory_t* redirect_to_func(void* hookfn, uintptr_t reachaddr, bool direc
 
 }
 
-
+MH_NOINLINE
 void redirect_to_func_save_rax(void* hookfn, uintptr_t reachaddr) {
 	static char dabytes[] = { 0x50, 0x48, (char)0xB8, 0x32, (char)0x89, 0x04, 0x39, (char)0xFF, (char)0x7F, 0x00, 0x00, (char)0xFF, (char)0xE0 };
 	*reinterpret_cast<void**>(&dabytes[3]) = hookfn;
@@ -92,7 +95,7 @@ void redirect_to_func_save_rax(void* hookfn, uintptr_t reachaddr) {
 
 
 
-
+MH_NOINLINE
 void swap_out_ptrs(void* start_addr, void** repls, unsigned n, bool dont_want_replaced) {
 
 	void** temp = new void* [n];
@@ -192,4 +195,30 @@ void** locate_func_in_imports(void* wantfunc) {
 		p+=8;
 	}
 	return nullptr;
+}
+
+
+static std::mutex g_execmem_lock{};
+static HANDLE g_execmem_heap=nullptr;
+
+void* alloc_execmem(size_t size) {
+	#if 0
+	g_execmem_lock.lock();
+
+	if(!g_execmem_heap) {
+		g_execmem_heap = HeapCreate(HEAP_CREATE_ENABLE_EXECUTE, 0, 0);
+
+	}
+
+	void* result = HeapAlloc(g_execmem_heap, 0, size + 32);
+
+
+
+	g_execmem_lock.unlock();
+	return result;
+
+	
+#else
+	return VirtualAlloc(nullptr, size, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+#endif
 }

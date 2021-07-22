@@ -4,6 +4,10 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.30014.187
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "m34thook", "m34thook\m34thook.vcxproj", "{858FBD41-5B0F-4586-9959-9F83F73C6E49}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7A2D3C55-93BD-4283-AA86-34536C8B44DC} = {7A2D3C55-93BD-4283-AA86-34536C8B44DC}
+		{2A0BE059-BE70-4552-A0F1-9C6526DEB06C} = {2A0BE059-BE70-4552-A0F1-9C6526DEB06C}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "udis86test", "udis86test\udis86test.vcxproj", "{2A0BE059-BE70-4552-A0F1-9C6526DEB06C}"
 EndProject

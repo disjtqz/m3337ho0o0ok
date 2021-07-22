@@ -155,3 +155,5 @@ void* spawn_entity_from_entitydef(void* entdef);
 void set_entity_position(void* entity, idVec3* pos);
 
 void** get_class_vtbl(std::string_view clsname);
+
+bool reload_decl(void* decl_ptr );
