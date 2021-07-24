@@ -47,7 +47,12 @@ struct idRenderModelGui {
 		const idColor* defaultColor,
 		bool forceColor,
 		const float scale);
+	void SetViewport(int x,
+		int y,
+		int width,
+		int height);
 };
+
 
 //get the pointer to the global engine_t instance
 /*

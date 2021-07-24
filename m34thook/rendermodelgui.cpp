@@ -54,3 +54,10 @@ void idRenderModelGui::DrawString(
 	const float scale) {
 	call_as<void>(descan::g_idRenderModelGui__DrawString, this, x, y, string, defaultColor, forceColor, scale);
 }
+
+void idRenderModelGui::SetViewport(int x,
+    int y,
+    int width,
+    int height) {
+	call_as<void>(descan::g_idRenderModelGui_SetViewPort, x, y, width, height);
+}

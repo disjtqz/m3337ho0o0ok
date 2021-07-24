@@ -16,6 +16,12 @@
 #include "idStr.hpp"
 #include "id_resources_lowlevel.hpp"
 #include "cmdsystem.hpp"
+
+/*
+	the directory containing the doom exe
+	we need this for gamepass versions
+*/
+static std::string g_basepath = "";
 //idFileSystemLocal::ReadFile(char const*,void **,idFileProps *,fsPathSearch_t)	.text	0000007101D87CB0	00000178	00000040	FFFFFFFFFFFFFFF8	R	.	.	.	B	T	.
 struct idFile;
 enum fsLock_t {
@@ -406,7 +412,7 @@ FILE* get_override_for_resource(const char* name, size_t* size_out) {
 		}
 
 
-		sprintf_s(pathbuf, ".\\overrides\\%s", name);
+		sprintf_s(pathbuf, "%s\\overrides\\%s",g_basepath.c_str(), name);
 	}
 
 	if (strstr(name, ".entities") != 0) {
@@ -575,6 +581,22 @@ static idFile* idResourceStorageDiskStreamer_GetFile_replacement(idResourceStora
 
 
 void hook_idfilesystem() {
+	//wayyyy overallocate. i think the max path for win is below this but also WHO KNOWS WHAT THE FUTURE HOLDS
+
+
+	char* tmpbuffer_filename = new char[65536];
+	//hmodule is really the base of the image in memory ;)
+	unsigned bufflen = GetModuleFileNameA((HMODULE)(g_blamdll.image_base), tmpbuffer_filename, 65536);
+	//dont check for error, if this failed we have bigger problems and should have crashed before now
+	unsigned backpos;
+	//zero out the exe filename
+	for( backpos = bufflen - 1; tmpbuffer_filename[backpos] != '\\'; --backpos) {
+		tmpbuffer_filename[backpos] = 0;
+	}
+	
+	tmpbuffer_filename[backpos] = 0;
+	g_basepath = tmpbuffer_filename;
+	delete[] tmpbuffer_filename;
 
 #if 1
 	Xbyak::CodeGenerator redirector{};
