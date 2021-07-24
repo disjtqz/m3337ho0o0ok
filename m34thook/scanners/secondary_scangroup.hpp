@@ -73,6 +73,16 @@ using locate_find_next_ent_with_class = memscanner_t<
 	riprel32_data_equals<  0x69, 0x64, 0x49, 0x6E, 0x66, 0x6F, 0x4C, 0x65, 0x76, 0x65,
 	0x6C, 0x46, 0x61, 0x64, 0x65, 0x49, 0x6E, 0x00>, //idInfoLevelFadeIn
 	scanbytes<0x48, 0x8b, 0xd7, 0x48, 0x8b, 0xce, 0xe8>>;
+
+//v1=1407CE210 
+//nth call = 2
+using locate_idImage_SubImageUpload = memscanner_t<
+	scanbytes<0x48,0x8D,0x15>,
+	riprel32_data_equals<  0x5F, 0x62, 0x6C, 0x61, 0x63, 0x6B, 0x53, 0x74, 0x6F, 0x72, 
+  0x61, 0x67, 0x65, 0x00>>; //_blackStorage
+
+
+
 namespace scanners_phase2 {
 #if !defined(MH_ETERNAL_V6)
 	BSCANENT(entry_phase2_locate_findclassinfo, &descan::g_idtypeinfo_findclassinfo, scanbehavior_locate_func<scanner_locate_findclassinfo>);
@@ -96,12 +106,14 @@ namespace scanners_phase2 {
 	BSCANENT(locate_idlib_error_entry, &descan::g_idlib_error, scanbehavior_locate_func<locate_idlib_error_body>);
 	BSCANENT(find_next_ent_with_class_locator_entry, &descan::g_find_next_entity_with_class, scanbehavior_locate_csrel_after<locate_find_next_ent_with_class>);
 
+	BSCANENT(locate_subimage_upload_entry, &descan::g_idImage_SubImageUpload, scanbehavior_locate_nth_call_after<2,locate_idImage_SubImageUpload>);
+
 	//9 scanners
 #define		PAR_SCANGROUP_P2_1 				entry_phase2_locate_findclassinfo, entry_phase2_locate_idfilecompressed_getfile
-#define		PAR_SCANGROUP_P2_2				entry_phase2_locate_resourcelist_for_classname
+#define		PAR_SCANGROUP_P2_2				entry_phase2_locate_resourcelist_for_classname,locate_subimage_upload_entry
 #define		PAR_SCANGROUP_P2_3				locate_idmapfilelocal_write_body_entry,locate_findenuminfo_entry
 #define		PAR_SCANGROUP_P2_4				locate_idlib_fatalerror_entry,locate_idlib_error_entry,find_next_ent_with_class_locator_entry
-#ifdef DISABLE_PARALLEL_SCANGROUPS
+#if defined(DISABLE_PARALLEL_SCANGROUPS) && 0
 
 	using secondary_scangroup_type = scangroup_t<
 		PAR_SCANGROUP_P2_1,

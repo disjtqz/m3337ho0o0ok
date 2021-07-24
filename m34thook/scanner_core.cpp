@@ -211,7 +211,7 @@ void descan::locate_critical_features() {
 
 	descan::g_renderDebugTools = hunt_assumed_func_start_back(descan::g_renderDebugTools);
 	descan::g_idRender_PrintStats = hunt_assumed_func_start_back(descan::g_idRender_PrintStats);
-	scan_for_vftbls();
+	
 
 	if (descan::g_resourcelist_index) {
 		descan::g_resourcelist_index = hunt_assumed_func_start_back(descan::g_resourcelist_index);
@@ -229,15 +229,8 @@ void descan::locate_critical_features() {
 	g_idcvarsystem = ((void**)g_doom_memorysystem) + 1;
 	g_idcmdsystem = ((void**)g_doom_memorysystem) + 2;
 	descan::g_idfilesystemlocal = ((void**)g_doom_memorysystem) + 3;
-	scanners_phase2::secondary_scangroup_pass.execute_on_image();
-	descan::g_idtypeinfo_findclassinfo = hunt_assumed_func_start_back(descan::g_idtypeinfo_findclassinfo);
-	descan::g_idfilecompressed_getfile = hunt_assumed_func_start_back(descan::g_idfilecompressed_getfile);
-	g__ZN5idStr4IcmpEPKcS1_ =
-		scan_guessed_function_boundaries<scanbehavior_locate_csrel_after<scanner_locate_listofResourceLists_and_idstricmp>>(descan::g_resourcelist_for_classname);
 
-	descan::g_idlib_fatalerror = hunt_assumed_func_start_back(descan::g_idlib_fatalerror);
-	descan::g_idlib_error = hunt_assumed_func_start_back(descan::g_idlib_error);
-	g_idmapfile_write = hunt_assumed_func_start_back(descan::g_idmapfile_write);
+
 #ifdef PRINT_SCAN_TIME_TAKEN
 
 	unsigned tickstaken = (unsigned)(GetTickCount64() - tickcount);
@@ -254,3 +247,22 @@ void descan::locate_critical_features() {
 	//__debugbreak();
 }
 
+MH_NOINLINE
+void descan::run_late_scangroups() {
+
+	std::thread vtbl_scan_thread{scan_for_vftbls};
+
+	//scan_for_vftbls();
+	
+	scanners_phase2::secondary_scangroup_pass.execute_on_image();
+	descan::g_idtypeinfo_findclassinfo = hunt_assumed_func_start_back(descan::g_idtypeinfo_findclassinfo);
+	descan::g_idfilecompressed_getfile = hunt_assumed_func_start_back(descan::g_idfilecompressed_getfile);
+	g__ZN5idStr4IcmpEPKcS1_ =
+		scan_guessed_function_boundaries<scanbehavior_locate_csrel_after<scanner_locate_listofResourceLists_and_idstricmp>>(descan::g_resourcelist_for_classname);
+
+	descan::g_idlib_fatalerror = hunt_assumed_func_start_back(descan::g_idlib_fatalerror);
+	descan::g_idlib_error = hunt_assumed_func_start_back(descan::g_idlib_error);
+	g_idmapfile_write = hunt_assumed_func_start_back(descan::g_idmapfile_write);
+	vtbl_scan_thread.join();
+}
+	

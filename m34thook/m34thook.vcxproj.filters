@@ -197,5 +197,8 @@
     <ClInclude Include="scanners\secondary_scangroup.hpp">
       <Filter>Header Files\scanners</Filter>
     </ClInclude>
+    <ClInclude Include="scanners\tertiary_scangroup.hpp">
+      <Filter>Header Files\scanners</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

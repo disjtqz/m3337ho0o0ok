@@ -692,7 +692,29 @@ static workgroup_result_t scanbehavior_locate_csrel_after(unsigned i) {
 	}
 	return nullptr;
 }
+template<unsigned NTH, typename T>
+MH_FORCEINLINE
+static workgroup_result_t scanbehavior_locate_nth_call_after(unsigned i) {
+	scanstate_t scan{ (unsigned char*)(i + g_blamdll.image_base), &g_blamdll };
 
+	if (T::match(scan)) {
+
+
+
+		mh_disassembler_t disasm{};
+		disasm.setup_for_addr(scan.addr, ~0u);
+
+		for(unsigned i = 0; i < NTH; ++i) {
+			disasm.find_next_call(~0u);
+		}
+
+		return disasm.get_call_target();
+
+
+
+	}
+	return nullptr;
+}
 template<workgroup_result_t (*sub_behavior)(unsigned i)>
 MH_FORCEINLINE
 static workgroup_result_t locate_vftbl_member(void** vftbl, size_t nptrs_to_consider, size_t maxbytes_per_member) {

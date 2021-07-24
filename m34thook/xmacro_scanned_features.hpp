@@ -65,3 +65,4 @@ SCANNED_PTR_FEATURE(g_resourceStorageInterface2)
 SCANNED_PTR_FEATURE(g_renderDebugTools)
 //for hooking to restore debugtools
 SCANNED_PTR_FEATURE(g_idRender_PrintStats)
+SCANNED_PTR_FEATURE(g_idImage_SubImageUpload)

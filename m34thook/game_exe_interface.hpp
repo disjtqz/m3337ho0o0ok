@@ -157,6 +157,13 @@ struct mh_disassembler_t {
 		}
 		return false;
 	}
+
+	void* get_call_target() {
+		return reinterpret_cast<void*>(((int64_t)m_ctx.operand[0].lval.sdword) + m_ctx.pc);
+	}
+
+
+
 };
 
 void* alloc_execmem(size_t size);
@@ -203,4 +210,6 @@ struct feature_binder_ptr_t {
 		__nop();
 		return result;
 	}
+
+	
 };

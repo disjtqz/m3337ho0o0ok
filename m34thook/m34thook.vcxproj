@@ -309,6 +309,7 @@
     <ClInclude Include="scanners\initial_scangroup.hpp" />
     <ClInclude Include="scanners\scanners_typeinfo.hpp" />
     <ClInclude Include="scanners\secondary_scangroup.hpp" />
+    <ClInclude Include="scanners\tertiary_scangroup.hpp" />
     <ClInclude Include="scanner_core.hpp" />
     <ClInclude Include="types_with_vtables.hpp" />
     <ClInclude Include="xbyak\xbyak.h" />

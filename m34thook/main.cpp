@@ -69,6 +69,7 @@ static  void* original_gamelib_init = nullptr;
 static int gamelib_init_forwarder(void* x, void* y) {
 
 
+	descan::run_late_scangroups();
 
 	int result = reinterpret_cast<int (*)(void*, void*)>(original_gamelib_init)(x, y);///doomcall<int>(doomoffs::gamelib_initialize, x, y);
 	meathook_init();
