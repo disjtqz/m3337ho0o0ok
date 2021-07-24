@@ -685,4 +685,11 @@ namespace sh::math {
 		}
 	};
 }
+struct mh_string_view_t {
+	const char* m_text;
+	unsigned m_length;
+	unsigned m_weak_hashcode;
+};
+
 #endif
+

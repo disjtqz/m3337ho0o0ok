@@ -250,6 +250,7 @@
     <ClCompile Include="..\RPCInterface\meathook_interface_s.c" />
     <ClCompile Include="cmdsystem.cpp" />
     <ClCompile Include="compressedfile_override.cpp" />
+    <ClCompile Include="disasmscan.cpp" />
     <ClCompile Include="errorhandling_hooks.cpp" />
     <ClCompile Include="eventdef.cpp" />
     <ClCompile Include="fs_hooks.cpp" />
@@ -283,6 +284,7 @@
     <ClInclude Include="alltypes.h" />
     <ClInclude Include="clipboard_helpers.hpp" />
     <ClInclude Include="cmdsystem.hpp" />
+    <ClInclude Include="disasmscan.hpp" />
     <ClInclude Include="errorhandling_hooks.hpp" />
     <ClInclude Include="eventdef.hpp" />
     <ClInclude Include="fs_hooks.hpp" />
@@ -304,7 +306,9 @@
     <ClInclude Include="mh_memmanip_cmds.hpp" />
     <ClInclude Include="mh_native_api.hpp" />
     <ClInclude Include="resource.hpp" />
+    <ClInclude Include="scanners\initial_scangroup.hpp" />
     <ClInclude Include="scanners\scanners_typeinfo.hpp" />
+    <ClInclude Include="scanners\secondary_scangroup.hpp" />
     <ClInclude Include="scanner_core.hpp" />
     <ClInclude Include="types_with_vtables.hpp" />
     <ClInclude Include="xbyak\xbyak.h" />

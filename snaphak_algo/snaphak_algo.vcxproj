@@ -125,7 +125,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <ExceptionHandling>false</ExceptionHandling>
-      <AdditionalIncludeDirectories>C:\Users\chris\source\repos\snaphak_algo\snaphak_algo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\chris\Desktop\merge_mh\m3337ho0o0ok\snaphak_algo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <AdditionalOptions>-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse41 %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -146,7 +146,7 @@
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <ExceptionHandling>false</ExceptionHandling>
-      <AdditionalIncludeDirectories>C:\Users\chris\source\repos\snaphak_algo\snaphak_algo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\chris\Desktop\merge_mh\m3337ho0o0ok\snaphak_algo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>

@@ -84,6 +84,9 @@
     <ClCompile Include="id_resources_lowlevel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="disasmscan.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_exe_interface.hpp">
@@ -184,6 +187,15 @@
     </ClInclude>
     <ClInclude Include="id_resources_lowlevel.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="disasmscan.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="scanners\initial_scangroup.hpp">
+      <Filter>Header Files\scanners</Filter>
+    </ClInclude>
+    <ClInclude Include="scanners\secondary_scangroup.hpp">
+      <Filter>Header Files\scanners</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -144,6 +144,22 @@ unsigned fast_sse_strlen(const char* s) {
 	return l;
 }
 IMPL_CODE_SEG
+static unsigned hashfnv32(const char* s1, unsigned length) {
+	unsigned const char* recs1 = (unsigned const char*)s1;
+
+	unsigned hcode = 0x811C9DC5;
+
+   
+	for(unsigned i = 0; i < length; ++i)
+    {
+        unsigned currchar = recs1[i];
+
+        hcode = 0x1000193 * (hcode ^ currchar);
+    }
+	return hcode;
+   
+}
+IMPL_CODE_SEG
 
 static unsigned fast_strlen_func_impl(const char* s) {
 	unsigned u_p = (uintptr_t)const_cast<char*>(s);
@@ -1265,6 +1281,7 @@ static void str_algos_init(snaphak_sroutines_t* out_str) {
 	out_str->m_streq = cs_strcmpeq;
 	out_str->m_strieq = cs_stricmpeq;
 	out_str->m_strlen = fast_strlen_func_impl;
+	out_str->m_hashfnv32 = hashfnv32;
 	out_str->m_str_to_long = strconvt_str_to_long;
 	out_str->m_atoi_fast = strconvt_atoi_fast;
 	out_str->m_int2str_base10 = strconvt_int2str_base10;

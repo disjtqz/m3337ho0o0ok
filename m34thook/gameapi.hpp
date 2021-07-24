@@ -18,6 +18,8 @@ long long get_classfield_int(void* obj, const classVariableInfo_t* varinfo);
 long long get_classfield_int(void* obj, const char* clazs, const char* field);
 
 const char* get_entity_name(void* obj);
+struct idRenderModelGui;
+
 //get the pointer to the global engine_t instance
 /*
 	we already have a pointer to a sub field in it (our memorysystem pointer). the full struct on v1 looks like this

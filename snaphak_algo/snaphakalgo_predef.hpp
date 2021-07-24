@@ -17,3 +17,12 @@
 #endif
 
 #define			cs_offsetof_m(...)		__builtin_offsetof(__VA_ARGS__)
+
+static unsigned long long pair2u32(unsigned low, unsigned high) {
+	return static_cast<unsigned long long>(low) | (static_cast<unsigned long long>(high)<<32);
+}
+
+static void unpair2u32(unsigned long long paired, unsigned& lo, unsigned& hi) {
+	lo = paired;
+	hi = paired>>32;
+}

@@ -5,6 +5,8 @@ struct snaphak_sroutines_t {
 	bool (*m_streq)(const char* s1, const char* s2);
 	bool (*m_strieq)(const char* s1, const char* s2);
 	unsigned (*m_strlen)(const char* s1);
+	unsigned (*m_hashfnv32)(const char* s1, unsigned length);
+
 
 	int (*m_str_to_long)(const char* str, const char** out_endptr, unsigned base);
 

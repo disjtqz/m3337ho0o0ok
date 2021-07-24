@@ -101,9 +101,9 @@ char* get_engine() {
 	if(g_engine_t == nullptr) {
 		g_engine_t = (reinterpret_cast<char*>(descan::g_global_typeinfo_tools) - idType::FindClassField("engine_t", "typeInfoTools")->offset);
 	}
+
 	return g_engine_t;
 }
-struct idRenderModelGui;
 
 struct idDebugHUD {
 	struct idDebugHUD_vtbl* vftbl;

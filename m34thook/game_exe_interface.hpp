@@ -160,3 +160,47 @@ struct mh_disassembler_t {
 };
 
 void* alloc_execmem(size_t size);
+
+/*
+	late binding implementation 
+
+	the resolver is called once, the value is patched into the call site so that future calls just do mov rax, resolved_value
+	using regfree_call here tells the compiler that the call will only spoil rax
+*/
+
+template<void* (*resolver)()>
+struct feature_binder_ptr_t {
+
+	MH_NOINLINE
+	MH_REGFREE_CALL
+	MH_CODE_SEG(".latebind")
+	static void* execute_resolver() {
+		char** retaddr = (char**)_AddressOfReturnAddress();
+
+		char writebuf[] = {0x48,(char)0xb8,0,0,0,0,0,0,0,0,0,0};
+
+		void* result = resolver();
+		*reinterpret_cast<void**>(&writebuf[2]) = result;
+
+		patch_memory((*retaddr) - 5, 10, writebuf);
+
+		//advance past the nops we emitted for the resolver
+		*retaddr += 5;
+		return result;
+	}
+
+	MH_FORCEINLINE
+	MH_PURE
+	static void* get() {
+		//near call = 0xE8 + (4bytes rva)
+		//mov full 64 bit immediate = 10 bytes
+		void* result = execute_resolver();
+		//the nops also help prevent tail calls from being generated here
+		__nop();
+		__nop();
+		__nop();
+		__nop();
+		__nop();
+		return result;
+	}
+};

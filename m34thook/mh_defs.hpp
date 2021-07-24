@@ -55,3 +55,4 @@ template<typename TTo, mh_ptr_sized_c TFrom>
 static inline TTo* mh_lea(TFrom shouldbptr, ptrdiff_t displacement) {
 	return (TTo*)(&((char*)shouldbptr)[displacement]);
 }
+

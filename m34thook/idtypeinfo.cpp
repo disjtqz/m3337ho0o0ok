@@ -71,10 +71,18 @@ struct type_node_t {
 };
 static int g_offset_typeinfo = -1;
 static int g_offset_typeinfo2 = -1;
+
+static void* get_typeinfo_tools() {
+	return *(void**)descan::g_global_typeinfo_tools;
+
+}
+
+using typeinfo_tools_getter_t = feature_binder_ptr_t<get_typeinfo_tools>;
+
 MH_NOINLINE
 classTypeInfo_t* idType::FindClassInfo(const char* cname) {
 
-	void* typeinfo_tools = *(void**)descan::g_global_typeinfo_tools;
+	void* typeinfo_tools = typeinfo_tools_getter_t::get();
 
 
 

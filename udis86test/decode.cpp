@@ -319,7 +319,7 @@ using tablemapper_sz_t =popcnt_table_mapper_t<SZ_V, SZ_Z, SZ_Y, SZ_RDQ>;
 
 static constexpr unsigned char opr_mode_table[] = {0, 0, 16, 32, 32, 0, 64, 64};
 
-__declspec(noinline)
+//__declspec(noinline)
 static unsigned int
 resolve_operand_size(const struct ud* u, unsigned int s)
 {

@@ -188,8 +188,12 @@ ud_insn_hex(struct ud* u)
 UD_EXPORT const uint8_t* 
 ud_insn_ptr(const struct ud* u) 
 {
+#ifndef SPECIALIZE_FOR_ETERNAL
   return (u->inp_buf == NULL) ? 
             u->inp_sess : u->inp_buf + (u->inp_buf_index - u->inp_ctr);
+#else
+    return u->inp_buf + (u->inp_buf_index - u->inp_ctr);
+#endif
 }
 
 
@@ -258,16 +262,24 @@ ud_opr_is_gpr(const struct ud_operand *opr)
  *    Get/set user opaqute data pointer
  * =============================================================================
  */
+
 void
 ud_set_user_opaque_data(struct ud * u, void* opaque)
 {
+#ifndef SPECIALIZE_FOR_ETERNAL
   u->user_opaque_data = opaque;
+#endif
 }
 
 void*
 ud_get_user_opaque_data(const struct ud *u)
 {
+    #ifndef SPECIALIZE_FOR_ETERNAL
+
   return u->user_opaque_data;
+#else
+    return nullptr;
+#endif
 }
 
 
@@ -309,7 +321,9 @@ ud_set_sym_resolver(struct ud *u, const char* (*resolver)(struct ud*,
                                                           uint64_t addr,
                                                           int64_t *offset))
 {
+#ifndef SPECIALIZE_FOR_ETERNAL
   u->sym_resolver = resolver;
+#endif
 }
 
 
@@ -352,14 +366,23 @@ ud_lookup_mnemonic(enum ud_mnemonic_code c)
 static void
 ud_inp_init(struct ud *u)
 {
+#ifndef SPECIALIZE_FOR_ETERNAL
+
   u->inp_hook      = NULL;
+#endif
   u->inp_buf       = NULL;
+#ifndef SPECIALIZE_FOR_ETERNAL
   u->inp_buf_size  = 0;
+   u->inp_end       = 0;
+#endif
   u->inp_buf_index = 0;
   u->inp_curr      = 0;
   u->inp_ctr       = 0;
-  u->inp_end       = 0;
+ 
+  #ifndef SPECIALIZE_FOR_ETERNAL
+
   UD_NON_STANDALONE(u->inp_file = NULL);
+#endif
 }
 
 
@@ -372,7 +395,9 @@ void
 ud_set_input_hook( struct ud* u, int (*hook)(struct ud*))
 {
   ud_inp_init(u);
+#ifndef SPECIALIZE_FOR_ETERNAL
   u->inp_hook = hook;
+#endif
 }
 
 /* =============================================================================
@@ -385,7 +410,9 @@ ud_set_input_buffer( struct ud* u, const uint8_t* buf, size_t len)
 {
   ud_inp_init(u);
   u->inp_buf = buf;
+#ifndef SPECIALIZE_FOR_ETERNAL
   u->inp_buf_size = len;
+#endif
   u->inp_buf_index = 0;
 }
 
@@ -399,15 +426,23 @@ ud_set_input_buffer( struct ud* u, const uint8_t* buf, size_t len)
 static int 
 inp_file_hook(struct ud* u)
 {
+    #ifndef SPECIALIZE_FOR_ETERNAL
+
   return fgetc(u->inp_file);
+#else
+    return 0;
+#endif
 }
 
 void 
 ud_set_input_file( struct ud* u, FILE* f)
 {
   ud_inp_init(u);
+#ifndef SPECIALIZE_FOR_ETERNAL
+
   u->inp_hook = inp_file_hook;
   u->inp_file = f;
+#endif
 }
 #endif /* __UD_STANDALONE__ */
 
@@ -420,6 +455,7 @@ ud_set_input_file( struct ud* u, FILE* f)
 void 
 ud_input_skip(struct ud* u, size_t n)
 {
+#ifndef SPECIALIZE_FOR_ETERNAL
   if (u->inp_end) {
     return;
   }
@@ -444,6 +480,9 @@ eoi:
   u->inp_end = 1;
   UDERR(u, "cannot skip, eoi received\b");
   return;
+#else
+     u->inp_buf_index += n; 
+#endif
 }
 
 
@@ -455,7 +494,11 @@ eoi:
 int
 ud_input_end(const struct ud *u)
 {
+#ifndef SPECIALIZE_FOR_ETERNAL
   return u->inp_end;
+#else
+    return 1;
+#endif
 }
 
 /* vim:set ts=2 sw=2 expandtab */
