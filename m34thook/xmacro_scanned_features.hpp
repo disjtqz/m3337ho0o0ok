@@ -76,3 +76,5 @@ SCANNED_PTR_FEATURE(g_idRenderModelGui_AllocTris)
 
 SCANNED_PTR_FEATURE(g_idCommonLocal_Frame)
 SCANNED_PTR_FEATURE(g_idCommonLocal_Frame_CallbackPtr)
+SCANNED_PTR_FEATURE(g_idResourceList_Add)
+SCANNED_PTR_FEATURE(g_idImageManager_ScratchImage)

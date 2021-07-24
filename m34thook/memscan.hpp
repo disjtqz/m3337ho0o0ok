@@ -773,13 +773,14 @@ static workgroup_result_t scanbehavior_locate_nth_call_after(unsigned i) {
 */
 template<void** p>
 MH_FORCEINLINE
+MH_PURE
 static workgroup_result_t scanbehavior_pointer_scan(unsigned i) {
-	
+	if((i&0xF))
+		return nullptr;	
 	__m128i checker = _mm_set1_epi64x((long long)*p);
 
 
-	if((i&0xF))
-		return nullptr;
+
 
 	__m128i checkptr = _mm_load_si128((__m128i*)(i + g_blamdll.image_base));
 
@@ -892,7 +893,7 @@ template<
 		}
 
 		virtual workgroup_result_t execute_on_block(unsigned displ) override {
-
+			mh_assume_m( (((SCANNER_WORKGROUP_BLOCK_SIZE) - 1) & displ) == 0);
 			unsigned end = displ + SCANNER_WORKGROUP_BLOCK_SIZE;
 			end = end > g_blamdll.image_size ? g_blamdll.image_size : end;
 
@@ -906,6 +907,8 @@ template<
 			return nullptr;
 		}
 		virtual workgroup_result_t execute_on_block_prefetching(unsigned displ) override {
+
+			mh_assume_m( (((SCANNER_WORKGROUP_BLOCK_SIZE) - 1) & displ) == 0);
 
 #if !defined(DISABLE_PREFETCHING_SCANNER_VARIANTS)
 

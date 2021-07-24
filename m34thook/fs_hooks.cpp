@@ -572,6 +572,8 @@ static idFile* idResourceStorageDiskStreamer_GetFile_replacement(idResourceStora
 	}
 }
 
+
+
 void hook_idfilesystem() {
 
 #if 1

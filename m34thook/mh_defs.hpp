@@ -20,6 +20,8 @@
 #define			MH_SEMIPURE						
 #define			MH_PURE							
 #define			MH_NODUPLICATE	
+
+#define			mh_unreachable_m()			__assume(false)
 #else
 #define		MH_NOINLINE			__attribute__((noinline))
 #define		MH_FLATTEN			__attribute__((flatten))
@@ -37,9 +39,10 @@
 
 #define			MH_SEMIPURE						__attribute__((pure)) 
 #define			MH_PURE							__attribute__((const))
+#define			mh_unreachable_m()			__builtin_unreachable()
 #endif
 
-#define		mh_assume_m(...)			if(!(__VA_ARGS__)) __assume(false)
+#define		mh_assume_m(...)			if(!(__VA_ARGS__)) mh_unreachable_m()
 
 
 #define		MH_HEADER_NOINLINE		  MH_NOINLINE

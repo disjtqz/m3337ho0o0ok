@@ -570,13 +570,18 @@ static __int64 testdebugtools(void* x){
 	//call_as<void>(descan::g_renderDebugTools, get_rendersystem());
 	return call_as<__int64>(g_original_renderthread_run, x);
 }
+
+
 void meathook_init() {
+	install_gameapi_hooks();
 
 	void** vtbl_render = get_class_vtbl(".?AVidRenderThread@@");
 	g_original_renderthread_run = (void*)testdebugtools;
 
 
 	swap_out_ptrs(&vtbl_render[1], &g_original_renderthread_run, 1, false);
+
+	
 
 	
 

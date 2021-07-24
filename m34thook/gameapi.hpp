@@ -187,3 +187,5 @@ void set_entity_position(void* entity, idVec3* pos);
 void** get_class_vtbl(std::string_view clsname);
 
 bool reload_decl(void* decl_ptr );
+
+void install_gameapi_hooks();

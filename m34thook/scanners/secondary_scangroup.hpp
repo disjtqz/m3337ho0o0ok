@@ -104,6 +104,25 @@ using locate_idRenderModelGui_AllocTris = memscanner_t<
   0x20, 0x66, 0x6F, 0x72, 0x20, 0x6A, 0x6F, 0x62, 0x20, 0x63, 
   0x6F, 0x6D, 0x70, 0x6C, 0x65, 0x74, 0x69, 0x6F, 0x6E, 0x20, 
   0x66, 0x69, 0x72, 0x73, 0x74, 0x2E, 0x00>>;
+//v1=1408D9158
+using locate_resourcelist_add = memscanner_t<
+
+	scanbytes<0x41,0x5e,0xc3,0x48,0x8d,0xd>,
+	riprel32_data_equals<  0x52, 0x65, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x77, 
+  0x69, 0x74, 0x68, 0x20, 0x61, 0x20, 0x73, 0x65, 0x74, 0x20, 
+  0x6C, 0x69, 0x6E, 0x6B, 0x20, 0x61, 0x64, 0x64, 0x65, 0x64, 
+  0x20, 0x74, 0x6F, 0x20, 0x61, 0x20, 0x6C, 0x69, 0x73, 0x74, 
+  0x00>>;
+//v1=1407C0706
+using locate_idimagemanager_scratchimage = memscanner_t<
+	scanbytes<0x48,0x83,0xc4>,skip<1>, scanbytes<0x5f,0xc3,0x48,0x8d,0xd>,
+	riprel32_data_equals<  0x69, 0x64, 0x49, 0x6D, 0x61, 0x67, 0x65, 0x4D, 0x61, 0x6E, 
+  0x61, 0x67, 0x65, 0x72, 0x3A, 0x3A, 0x53, 0x63, 0x72, 0x61, 
+  0x74, 0x63, 0x68, 0x49, 0x6D, 0x61, 0x67, 0x65, 0x20, 0x63, 
+  0x61, 0x6C, 0x6C, 0x65, 0x64, 0x20, 0x77, 0x69, 0x74, 0x68, 
+  0x20, 0x65, 0x6D, 0x70, 0x74, 0x79, 0x20, 0x6E, 0x61, 0x6D, 
+  0x65, 0x00>>;
+
 
 namespace scanners_phase2 {
 #if !defined(MH_ETERNAL_V6)
@@ -132,11 +151,15 @@ namespace scanners_phase2 {
 	BSCANENT(locate_rendermodelgui_alloctris_entry, &descan::g_idRenderModelGui_AllocTris, scanbehavior_locate_func_with_start_search<locate_idRenderModelGui_AllocTris>);
 
 	BSCANENT(locate_commonlocal_frame_job_pointer, &descan::g_idCommonLocal_Frame_CallbackPtr, scanbehavior_pointer_scan<&descan::g_idCommonLocal_Frame>);
+	BSCANENT(locate_resourcelist_add_entry, &descan::g_idResourceList_Add, scanbehavior_locate_func_with_start_search<locate_resourcelist_add>);
+
+	BSCANENT(locate_idimagemanager_scratchimage_entry, &descan::g_idImageManager_ScratchImage, scanbehavior_locate_func_with_start_search<locate_idimagemanager_scratchimage>);
+
 	//9 scanners
-#define		PAR_SCANGROUP_P2_1 				entry_phase2_locate_findclassinfo, entry_phase2_locate_idfilecompressed_getfile
+#define		PAR_SCANGROUP_P2_1 				entry_phase2_locate_findclassinfo, entry_phase2_locate_idfilecompressed_getfile,locate_resourcelist_add_entry
 #define		PAR_SCANGROUP_P2_2				entry_phase2_locate_resourcelist_for_classname,locate_subimage_upload_entry,locate_commonlocal_frame_job_pointer
 #define		PAR_SCANGROUP_P2_3				locate_idmapfilelocal_write_body_entry,locate_findenuminfo_entry,locate_rendermodelgui_alloctris_entry
-#define		PAR_SCANGROUP_P2_4				locate_idlib_fatalerror_entry,locate_idlib_error_entry,find_next_ent_with_class_locator_entry
+#define		PAR_SCANGROUP_P2_4				locate_idlib_fatalerror_entry,locate_idlib_error_entry,find_next_ent_with_class_locator_entry,locate_idimagemanager_scratchimage_entry
 #if defined(DISABLE_PARALLEL_SCANGROUPS) && 0
 
 	using secondary_scangroup_type = scangroup_t<
