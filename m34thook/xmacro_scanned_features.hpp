@@ -66,3 +66,13 @@ SCANNED_PTR_FEATURE(g_renderDebugTools)
 //for hooking to restore debugtools
 SCANNED_PTR_FEATURE(g_idRender_PrintStats)
 SCANNED_PTR_FEATURE(g_idImage_SubImageUpload)
+
+SCANNED_PTR_FEATURE(g_idRenderModelGui__DrawString)
+//?DrawStretchPic@idRenderModelGui@@QEAAXMMMMMMMMMPEBVidMaterial@@@Z
+SCANNED_PTR_FEATURE(g_idRenderModelGui__DrawStretchPic)
+SCANNED_PTR_FEATURE(g_idRenderModelGui__DrawChar)
+
+SCANNED_PTR_FEATURE(g_idRenderModelGui_AllocTris)
+
+SCANNED_PTR_FEATURE(g_idCommonLocal_Frame)
+SCANNED_PTR_FEATURE(g_idCommonLocal_Frame_CallbackPtr)

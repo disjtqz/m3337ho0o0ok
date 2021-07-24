@@ -152,3 +152,4 @@ public:
 		return reinterpret_cast<TRet*>(((char*)obj) + m_offset);
 	}
 };
+

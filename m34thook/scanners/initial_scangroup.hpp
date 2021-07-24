@@ -318,6 +318,16 @@ using locate_idrender_printstats = memscanner_t<
   0x3D, 0x20, 0x74, 0x79, 0x70, 0x65, 0x20, 0x29, 0x3A, 0x20, 
   0x0A, 0x00>>;
 
+using locate_idcommonlocal_frame = memscanner_t<
+	scanbytes<0x48,0x81,0xc4>,skip<2>,scanbytes<0x0,0x0,0x5f,0xc3,0x48,0x8d,0xd>,
+	riprel32_data_equals<  0x69, 0x64, 0x43, 0x6F, 0x6D, 0x6D, 0x6F, 0x6E, 0x4C, 0x6F, 
+  0x63, 0x61, 0x6C, 0x3A, 0x3A, 0x46, 0x72, 0x61, 0x6D, 0x65, 
+  0x20, 0x2D, 0x20, 0x66, 0x72, 0x61, 0x6D, 0x65, 0x49, 0x6E, 
+  0x66, 0x6F, 0x2D, 0x3E, 0x6D, 0x61, 0x70, 0x49, 0x6E, 0x73, 
+  0x74, 0x61, 0x6E, 0x63, 0x65, 0x20, 0x3D, 0x3D, 0x20, 0x4E, 
+  0x55, 0x4C, 0x4C, 0x21, 0x00> //idCommonLocal::Frame - frameInfo->mapInstance == NULL!
+>;
+
 namespace initial_scanners {
 
 	/*
@@ -353,7 +363,7 @@ namespace initial_scanners {
 #else
 	BSCANENT(atomicstringset_locator_entry, &descan::g_atomic_string_set, scanbehavior_locate_csrel_after<locate_atomicstring_set>);
 #endif
-	BSCANENT(getentitystate_needsoffset, &descan::g_declentitydef_gettextwithinheritance, scanbehavior_simple<locate_getentitystate_in_body>);
+	BSCANENT(getentitystate_needsoffset, &descan::g_declentitydef_gettextwithinheritance, scanbehavior_locate_func_with_start_search<locate_getentitystate_in_body>);
 #if !defined(MH_ETERNAL_V6)
 	BSCANENT(locate_idstr_dctor_entry, &descan::g_idstr_dctor, scanbehavior_locate_csrel_after<locate_idstr_dctor>);
 
@@ -380,19 +390,22 @@ namespace initial_scanners {
 
 	BSCANENT(sqrtf_locator_entry, &descan::g_sqrtf, scanbehavior_locate_func<locate_sqrtf>);
 	BSCANENT(sqrt_locator_entry, &descan::g_sqrt, scanbehavior_locate_func<locate_sqrt>);
-	BSCANENT(resourcelist_index_locator_entry, &descan::g_resourcelist_index, scanbehavior_locate_func<locate_resourcelist_index>);
+	BSCANENT(resourcelist_index_locator_entry, &descan::g_resourcelist_index, scanbehavior_locate_func_with_start_search<locate_resourcelist_index>);
 
 	BSCANENT(locate_rtti_typeinfo_string_entry, &descan::g_rtti_typeinfo_string, scanbehavior_locate_func<locate_rtti_typeinfo_string>);
-	BSCANENT(locate_resourcestreamer_getfile, &descan::g_resourceStorageDiskStreamer_GetFile, scanbehavior_locate_func<locate_resourcestoragediskstreamer_getfile>);
-	BSCANENT(locate_renderdebugtools_entry, &descan::g_renderDebugTools, scanbehavior_locate_func<locate_renderdebugtools>);
-	BSCANENT(locate_idrender_printstats_entry,&descan::g_idRender_PrintStats, scanbehavior_locate_func<locate_idrender_printstats> );
+	BSCANENT(locate_resourcestreamer_getfile, &descan::g_resourceStorageDiskStreamer_GetFile, scanbehavior_locate_func_with_start_search<locate_resourcestoragediskstreamer_getfile>);
+	BSCANENT(locate_renderdebugtools_entry, &descan::g_renderDebugTools, scanbehavior_locate_func_with_start_search<locate_renderdebugtools>);
+	BSCANENT(locate_idrender_printstats_entry,&descan::g_idRender_PrintStats, scanbehavior_locate_func_with_start_search<locate_idrender_printstats> );
+	BSCANENT(locate_idcommonlocal_frame_entry, &descan::g_idCommonLocal_Frame, scanbehavior_locate_func_with_start_search<locate_idcommonlocal_frame>);
+
 #define		PAR_SCANGROUP_P1_1				find_alloca_probe_entry, find_security_check_cookie_entry, find_doom_operator_new_and_idfile_memory_ctor_entry, locate_idoodle_decompress_entry, locate_idlib_vprintf_entry
 #define		PAR_SCANGROUP_P1_2				locate_game_engine_init_ptr_entry, idstr_ctor_void_locator_entry, idgamelocal_locator_entry, atomicstringset_locator_entry, getentitystate_needsoffset
 
 #define		PAR_SCANGROUP_P1_3				locate_idstr_dctor_entry, locate_idstr_assign_charptr_entry, locate_typeinfo_tools_entry, locate_getlevelmap_entry, locate_resourceManager2_entry,locate_resourcestreamer_getfile
 
-#define		PAR_SCANGROUP_P1_4						sqrtf_locator_entry, sqrt_locator_entry, idgamesystemlocal_locator_entry,resourcelist_index_locator_entry,locate_rtti_typeinfo_string_entry
+#define		PAR_SCANGROUP_P1_4				sqrtf_locator_entry, sqrt_locator_entry, idgamesystemlocal_locator_entry,resourcelist_index_locator_entry,locate_rtti_typeinfo_string_entry,locate_idcommonlocal_frame_entry
 #ifdef DISABLE_PARALLEL_SCANGROUPS
+
 
 	using initial_scangroup_type = scangroup_t <
 		PAR_SCANGROUP_P1_1,

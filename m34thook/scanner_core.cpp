@@ -7,7 +7,8 @@
 #include <string_view>
 #include "snaphakalgo.hpp"
 #include <cstdio>
-
+#include "idtypeinfo.hpp"
+#include "gameapi.hpp"
 #define		DISABLE_PARALLEL_SCANGROUPS
 
 #define		PRINT_SCAN_TIME_TAKEN
@@ -205,18 +206,9 @@ void descan::locate_critical_features() {
 
 	initial_scanners::initial_scangroup.execute_on_image();
 
-
-	descan::g_resourceStorageDiskStreamer_GetFile = hunt_assumed_func_start_back(descan::g_resourceStorageDiskStreamer_GetFile);
-	//end up at 0x142EF2118, typeinfo vftbl
-
-	descan::g_renderDebugTools = hunt_assumed_func_start_back(descan::g_renderDebugTools);
-	descan::g_idRender_PrintStats = hunt_assumed_func_start_back(descan::g_idRender_PrintStats);
 	
 
-	if (descan::g_resourcelist_index) {
-		descan::g_resourcelist_index = hunt_assumed_func_start_back(descan::g_resourcelist_index);
-	}
-	descan::g_declentitydef_gettextwithinheritance = hunt_assumed_func_start_back(descan::g_declentitydef_gettextwithinheritance);
+//	descan::g_declentitydef_gettextwithinheritance = hunt_assumed_func_start_back(descan::g_declentitydef_gettextwithinheritance);
 #if !defined(MH_ETERNAL_V6)
 	descan::g_noclip_func = hunt_assumed_func_start_back(descan::g_noclip_func);
 
@@ -246,6 +238,17 @@ void descan::locate_critical_features() {
 
 	//__debugbreak();
 }
+#define		DRAWSTRING_VFTBL_INDEX 0x11
+#define		DRAWSTRETCHPIC_VFTBL_INDEX 0xC
+#define		DRAWCHAR_VFTBL_INDEX	0x10
+MH_NOINLINE
+void obtain_rendermodelgui_stuff() {
+	void** dbgmodel = get_class_vtbl(".?AVidDebugModelGui@@");
+
+	descan::g_idRenderModelGui__DrawString = mh_disassembler_t::first_jump_target(dbgmodel[DRAWSTRING_VFTBL_INDEX]);
+	descan::g_idRenderModelGui__DrawStretchPic = mh_disassembler_t::first_call_target(dbgmodel[DRAWSTRETCHPIC_VFTBL_INDEX]);
+	descan::g_idRenderModelGui__DrawChar = mh_disassembler_t::first_jump_target(dbgmodel[DRAWCHAR_VFTBL_INDEX]);
+}
 
 MH_NOINLINE
 void descan::run_late_scangroups() {
@@ -264,5 +267,8 @@ void descan::run_late_scangroups() {
 	descan::g_idlib_error = hunt_assumed_func_start_back(descan::g_idlib_error);
 	g_idmapfile_write = hunt_assumed_func_start_back(descan::g_idmapfile_write);
 	vtbl_scan_thread.join();
+
+	obtain_rendermodelgui_stuff();
+
 }
 	

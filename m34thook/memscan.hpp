@@ -18,7 +18,7 @@
 	16k gives the best performance
 */
 #define		SCANNER_WORKGROUP_BLOCK_SIZE		(16*1024u)
-
+#define		DONT_FLUSH_MEM
 //#define		DISABLE_PREFETCHING_SCANNER_VARIANTS		
 #define		ASSERT_ALL_LOCATED
 struct scanstate_t {
@@ -423,7 +423,51 @@ template<uint64_t flags, typename... Ts>
 using memscanner_with_flags_t = typename memscanner_factory_t<flags>::template memscanner_t<Ts...>;
 
 
+/*
+	execute a memscanner on a small window of the program
+*/
+template<worker_match_behavior_t ScanBehavior>
+MH_FORCEINLINE static void* scan_function_boundaries(void* func, unsigned assumed_size) {
+	unsigned fdelta = (char*)func - g_blamdll.image_base;
 
+
+	unsigned fend = fdelta + assumed_size;
+	for (; fdelta < fend; ++fdelta) {
+		void* res = ScanBehavior(fdelta);
+		if (res)
+			return res;
+	}
+	return nullptr;
+}
+template<worker_match_behavior_t ScanBehavior>
+MH_FORCEINLINE static void* scan_guessed_function_boundaries(void* func) {
+	unsigned char* pf = (unsigned char*)func;
+	/*
+		while in range of image and not breakpoint (in between align16 for functions) and not at ret
+	*/
+	while (pf >= (unsigned char*)g_blamdll.image_base && pf < (unsigned char*)(g_blamdll.image_base + g_blamdll.image_size) && *pf != 0xCC && *pf != 0xC3) {
+		++pf;
+	}
+
+	unsigned assumed_size = (char*)pf - (char*)func;
+	return scan_function_boundaries<ScanBehavior>(func, assumed_size);
+}
+MH_FORCEINLINE static void* hunt_assumed_func_start_back(void* func) {
+	MH_UNLIKELY_IF(!func) {
+		return nullptr;
+	}
+	unsigned char* pf = (unsigned char*)func;
+	/*
+		while in range of image and not breakpoint (in between align16 for functions) and not at ret
+	*/
+	while ((*pf != 0xCC && *pf != 0xC3) || (reinterpret_cast<uintptr_t>(pf + 1) & 0xF)) {
+		--pf;
+	}
+
+
+
+	return pf + 1;
+}
 
 template<typename T>
 MH_FORCEINLINE
@@ -510,6 +554,7 @@ static inline void* locate_func() {
 	return nullptr;
 
 }
+
 template<typename T>
 MH_FORCEINLINE
 static inline void* locate_rdata_ptr_to() {
@@ -657,6 +702,13 @@ static workgroup_result_t scanbehavior_locate_func(unsigned i) {
 	return nullptr;
 }
 template<typename T>
+static inline void* scanbehavior_locate_func_with_start_search(unsigned i) {
+	void* res = scanbehavior_locate_func<T>(i);
+
+	return hunt_assumed_func_start_back(res);
+}
+
+template<typename T>
 MH_FORCEINLINE
 static workgroup_result_t scanbehavior_locate_csrel_preceding(unsigned i) {
 	scanstate_t scan{ (unsigned char*)(i + g_blamdll.image_base), &g_blamdll };
@@ -715,6 +767,39 @@ static workgroup_result_t scanbehavior_locate_nth_call_after(unsigned i) {
 	}
 	return nullptr;
 }
+
+/*
+	locate a pointer to another pointer
+*/
+template<void** p>
+MH_FORCEINLINE
+static workgroup_result_t scanbehavior_pointer_scan(unsigned i) {
+	
+	__m128i checker = _mm_set1_epi64x((long long)*p);
+
+
+	if((i&0xF))
+		return nullptr;
+
+	__m128i checkptr = _mm_load_si128((__m128i*)(i + g_blamdll.image_base));
+
+	
+	__m128i checkres = _mm_cmpeq_epi8(checker, checkptr);
+
+	unsigned checkval = _mm_movemask_epi8(checkres);
+
+	MH_UNLIKELY_IF((checkval&0xFF) == 0xFF) {
+		return i + g_blamdll.image_base;
+	}
+	MH_UNLIKELY_IF((checkval&0xFF00) == 0xFF00){
+		return i + g_blamdll.image_base+8;
+	}
+
+	return nullptr;
+
+
+}
+
 template<workgroup_result_t (*sub_behavior)(unsigned i)>
 MH_FORCEINLINE
 static workgroup_result_t locate_vftbl_member(void** vftbl, size_t nptrs_to_consider, size_t maxbytes_per_member) {
@@ -841,7 +926,9 @@ template<
 				/*
 					we're ending our usage of this block so flush it from the cache to make room for the next block
 				*/
+#ifndef DONT_FLUSH_MEM
 				_mm_clflush(((iiter * 64) + displ) + g_blamdll.image_base);
+#endif
 			}
 
 
@@ -936,6 +1023,8 @@ struct scangroup_t {
 
 };
 
+
+
 template<typename T>
 struct runfunc_forwarder_t {
 	static inline T g_tval{};
@@ -988,48 +1077,3 @@ struct parallel_scangroup_group_t {
 
 
 
-/*
-	execute a memscanner on a small window of the program
-*/
-template<worker_match_behavior_t ScanBehavior>
-MH_FORCEINLINE static void* scan_function_boundaries(void* func, unsigned assumed_size) {
-	unsigned fdelta = (char*)func - g_blamdll.image_base;
-
-
-	unsigned fend = fdelta + assumed_size;
-	for (; fdelta < fend; ++fdelta) {
-		void* res = ScanBehavior(fdelta);
-		if (res)
-			return res;
-	}
-	return nullptr;
-}
-template<worker_match_behavior_t ScanBehavior>
-MH_FORCEINLINE static void* scan_guessed_function_boundaries(void* func) {
-	unsigned char* pf = (unsigned char*)func;
-	/*
-		while in range of image and not breakpoint (in between align16 for functions) and not at ret
-	*/
-	while (pf >= (unsigned char*)g_blamdll.image_base && pf < (unsigned char*)(g_blamdll.image_base + g_blamdll.image_size) && *pf != 0xCC && *pf != 0xC3) {
-		++pf;
-	}
-
-	unsigned assumed_size = (char*)pf - (char*)func;
-	return scan_function_boundaries<ScanBehavior>(func, assumed_size);
-}
-MH_FORCEINLINE static void* hunt_assumed_func_start_back(void* func) {
-	MH_UNLIKELY_IF(!func) {
-		return nullptr;
-	}
-	unsigned char* pf = (unsigned char*)func;
-	/*
-		while in range of image and not breakpoint (in between align16 for functions) and not at ret
-	*/
-	while ((*pf != 0xCC && *pf != 0xC3) || (reinterpret_cast<uintptr_t>(pf + 1) & 0xF)) {
-		--pf;
-	}
-
-
-
-	return pf + 1;
-}

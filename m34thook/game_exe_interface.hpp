@@ -126,7 +126,7 @@ struct rtti_obj_locator_t {
 
 struct mh_disassembler_t {
 	ud m_ctx;
-	void setup_for_addr(void* addr, size_t maxsize) {
+	void setup_for_addr(void* addr, size_t maxsize = ~0u) {
 		ud_init(&m_ctx);
 		ud_set_pc(&m_ctx, (uint64_t)addr);
 		ud_set_input_buffer(&m_ctx, (uint8_t*)addr, maxsize);
@@ -146,6 +146,21 @@ struct mh_disassembler_t {
 		*continuation_out = mh_lea<char>(addr, ngot);
 	}
 
+	template<ud_mnemonic_code_t mnem>
+	bool find_next_of_mnem() {
+
+		while(true) {
+			int disres=ud_disassemble(&m_ctx);
+
+			if(disres<=0)
+				return false;
+			auto mnme = ud_insn_mnemonic(&m_ctx);
+			if(mnme == mnem) {
+				return true;
+			}
+		}
+	}
+
 	bool find_next_call(size_t limit) {
 		size_t nb=0;
 		while(nb < limit) {
@@ -158,13 +173,37 @@ struct mh_disassembler_t {
 		return false;
 	}
 
+	void* extract_pcrel_value(unsigned which_operand) {
+		return reinterpret_cast<void*>(((int64_t)m_ctx.operand[which_operand].lval.sdword) + m_ctx.pc);
+	}
+
 	void* get_call_target() {
 		return reinterpret_cast<void*>(((int64_t)m_ctx.operand[0].lval.sdword) + m_ctx.pc);
 	}
 
 
+	static void* first_jump_target(void* funcaddr) {
+		mh_disassembler_t dis{};
+		dis.setup_for_addr(funcaddr);
+		if(!dis.find_next_of_mnem<UD_Ijmp>())
+			return nullptr;
 
+		return dis.extract_pcrel_value(0);
+
+	}
+
+	static void* first_call_target(void* funcaddr) {
+		mh_disassembler_t dis{};
+		dis.setup_for_addr(funcaddr);
+		if(!dis.find_next_of_mnem<UD_Icall>())
+			return nullptr;
+
+		return dis.extract_pcrel_value(0);
+
+	}
 };
+
+
 
 void* alloc_execmem(size_t size);
 
