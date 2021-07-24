@@ -4,6 +4,8 @@
 #include "game_exe_interface.hpp"
 //#include "doomoffs.hpp"
 #include "scanner_core.hpp"
+#include "idtypeinfo.hpp"
+#include "gameapi.hpp"
 void idCmd::register_command(const char* name, cmdcb_t cb, const char* description) {
 	//auto cmdSystem = *doomsym<char**>(doomoffs::cmdSystem);
 
@@ -66,4 +68,11 @@ void idCmd::add_command(const char* txt)
 void idCmd::execute_command_buffer() {
 	auto cmdsys = cmdSystem_get();
 	cmdsys->vftbl->_ZN16idCmdSystemLocal20ExecuteCommandBufferEv(cmdsys);
+}
+
+idCVar* idCVar::Find(const char* name) {
+	void* sys = get_cvarsystem();
+	void* tocall = *mh_lea<void*>(reinterpret_cast<void**>(sys)[0], 32);
+
+	return call_as<idCVar*>(tocall, sys, name);
 }

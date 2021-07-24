@@ -81,6 +81,9 @@
     <ClCompile Include="mh_memmanip_cmds.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="id_resources_lowlevel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_exe_interface.hpp">
@@ -177,6 +180,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mh_memmanip_cmds.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="id_resources_lowlevel.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

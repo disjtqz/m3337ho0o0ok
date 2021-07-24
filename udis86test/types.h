@@ -68,7 +68,7 @@
 #define     FORCE_INTEL_VENDOR
 #define     DISABLE_PAUSE_REP_NOP_DECODING
 #define     ONLY_USE_INPUT_BUF
-
+#define     INP_READ_FULL_TYPE
 
 #include <array>
 #include <intrin.h>

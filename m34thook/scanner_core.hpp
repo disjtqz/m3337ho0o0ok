@@ -17,7 +17,7 @@ namespace descan {
 
 
 
-
+	MH_NOINLINE
 	void locate_critical_features();
 
 	

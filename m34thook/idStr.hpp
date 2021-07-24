@@ -14,7 +14,7 @@ struct idStr {
 		call_as<void>(descan::g_idstr__idstr, this);
 		//doomcall<void>(doomoffs::_ZN5idStrC2Ev, this);
 	}
-	
+
 
 	~idStr() {
 		call_as<void>(descan::g_idstr_dctor, this);
@@ -28,5 +28,22 @@ struct idStr {
 
 struct idAtomicString
 {
-  char *str;
+	char* str;
+};
+template<size_t N, bool canbdynamic = false>
+struct idStrStaticBase
+{
+	idStr base;
+	char buffer[N];
+};
+
+template<size_t N>
+struct idStrStatic
+{
+	idStrStaticBase<N, false> base;
+};
+template<size_t N>
+struct idStrDynStatic
+{
+	idStrStaticBase<N, true> base;
 };

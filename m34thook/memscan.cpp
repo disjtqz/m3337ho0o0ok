@@ -1,6 +1,11 @@
 #include "mh_defs.hpp"
 
 #include "memscan.hpp"
+#include "cmdsystem.hpp"
+#include "game_exe_interface.hpp"
+#include "scanner_core.hpp"
+#include "idtypeinfo.hpp"
+#include "gameapi.hpp"
 
 static std::mutex g_failure_message_mutex{};
 
@@ -13,4 +18,8 @@ void scanner_failure_message(const char* scanner_name) {
 		MessageBoxA(nullptr, tmpbuf, "M347h00k (XINPUT1_3.dll, in your Doom Eternal directory) ->  Scanner Failed", 0);
 	}
 	g_failure_message_mutex.unlock();
+}
+
+void* scanner_late_get_cvar(const char* s) {
+	return idCVar::Find(s);
 }

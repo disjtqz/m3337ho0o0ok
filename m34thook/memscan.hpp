@@ -370,6 +370,47 @@ struct match_within_variable_distance {
 	}
 };
 
+void* scanner_late_get_cvar(const char* s);
+
+
+/*
+	late-stage scanner types
+*/
+template<const char (*const strparm)()>
+struct late_riprel_to_cvar_data {
+
+	static constexpr const char* parm = strparm();
+
+	static inline void* g_cvarloc = nullptr;
+	static constexpr unsigned required_valid_size = 4;
+
+	MH_NOINLINE
+	MH_REGFREE_CALL
+	static void init_cvar() {
+		g_cvarloc = scanner_late_get_cvar(parm);
+	}
+
+	MH_FORCEINLINE
+	static bool match(scanstate_t& state) {
+		MH_UNLIKELY_IF(!g_cvarloc) {
+			init_cvar();
+		}
+		if (!state.dll->is_in_image(state.addr))
+			return false;
+		ptrdiff_t df = *reinterpret_cast<int*>(state.addr);
+
+		if (g_cvarloc != (void*)(state.addr + 4 + df)) {
+			return false;
+		}
+
+		state.addr += 4;
+		return true;
+
+
+	}
+};
+#define		late_riprel_to_cvar_data_m(...)		late_riprel_to_cvar_data<[](){return __VA_ARGS__;}>
+
 using workgroup_result_t = void*;
 
 

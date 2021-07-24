@@ -1,4 +1,5 @@
 #pragma once
+
 #include "idmath.hpp"
 void* find_entity(const char* name);
 /*
@@ -110,9 +111,36 @@ const char* get_entity_name(void* obj);
 	idProfileManager* profileManagerForTransfer
 
 */
+MH_NOINLINE
 char* get_engine();
 
+MH_NOINLINE
+void* get_cvarsystem();
+MH_NOINLINE
 void* get_eventdef_interface();
+MH_NOINLINE
+void* get_rendersystem();
+
+MH_NOINLINE
+void* get_cursor();
+
+
+MH_NOINLINE
+void* get_editor_interface();
+
+
+
+
+/*
+	get rendermodelgui for idConsole
+*/
+/*MH_NOINLINE
+idRenderModelGui get_console_rendermodel();
+*/
+
+MH_NOINLINE
+idRenderModelGui* get_cursor_rendermodel();
+
 
 void add_persistent_text(unsigned x, unsigned y, unsigned RGBA, float scale,  const char* fmt, ...);
 

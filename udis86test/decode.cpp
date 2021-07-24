@@ -76,10 +76,23 @@ inp_start(struct ud* u)
 	u->inp_ctr = 0;
 }
 
-
-static uint8_t
+template<typename T = uint8_t>
+static T
 inp_next(struct ud* u)
 {
+
+#ifdef INP_READ_FULL_TYPE
+	u->inp_ctr += sizeof(T);
+	
+	unsigned currpos = u->inp_buf_index;
+	u->inp_buf_index += sizeof(T);
+
+	u->inp_curr = u->inp_buf[currpos + (sizeof(T) - 1)];
+
+	T result = *reinterpret_cast<const T*>(&u->inp_buf[currpos]);
+	return result;
+	//return (u->inp_curr = u->inp_buf[u->inp_buf_index++]);
+#else
 	if (u->inp_end == 0) {
 #ifndef ONLY_USE_INPUT_BUF
 		if (u->inp_buf != NULL) {
@@ -106,6 +119,7 @@ inp_next(struct ud* u)
 	u->inp_end = 1;
 	UDERR(u, "byte expected, eoi received\n");
 	return 0;
+#endif
 }
 
 static uint8_t
@@ -131,16 +145,22 @@ inp_uint8(struct ud* u)
 static uint16_t
 inp_uint16(struct ud* u)
 {
+
+#ifndef INP_READ_FULL_TYPE
 	uint16_t r, ret;
 
 	ret = inp_next(u);
 	r = inp_next(u);
 	return ret | (r << 8);
+#else
+	return inp_next<uint64_t>(u);
+#endif
 }
 
 static uint32_t
 inp_uint32(struct ud* u)
 {
+#ifndef INP_READ_FULL_TYPE
 	uint32_t r, ret;
 
 	ret = inp_next(u);
@@ -150,11 +170,15 @@ inp_uint32(struct ud* u)
 	ret = ret | (r << 16);
 	r = inp_next(u);
 	return ret | (r << 24);
+#else
+	return inp_next<uint32_t>(u);
+#endif
 }
 
 static uint64_t
 inp_uint64(struct ud* u)
 {
+#ifndef INP_READ_FULL_TYPE
 	uint64_t r, ret;
 
 	ret = inp_next(u);
@@ -172,6 +196,9 @@ inp_uint64(struct ud* u)
 	ret = ret | (r << 48);
 	r = inp_next(u);
 	return ret | (r << 56);
+#else
+	return inp_next<uint64_t>(u);
+#endif
 }
 
 

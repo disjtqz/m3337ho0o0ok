@@ -95,6 +95,7 @@ const char* get_entity_name(void* obj) {
 	return reinterpret_cast<idStr*>(reinterpret_cast<char*>(obj) + idType::FindClassField("idEntity", "name")->offset)->data;
 }
 static char* g_engine_t = nullptr;
+MH_NOINLINE
 char* get_engine() {
 
 	if(g_engine_t == nullptr) {
@@ -241,9 +242,34 @@ bool is_subclass_of_rttisig(void* obj, rttisig_ref_t rsig) {
 }
 
 static mh_fieldcached_t<void*> g_eventdef_offset{};
+MH_NOINLINE
 void* get_eventdef_interface() {
 	return *g_eventdef_offset(get_engine(), "engine_t", "eventDefInterface");
 }
+static mh_fieldcached_t<void*> g_rendersys_offset{};
+MH_NOINLINE
+void* get_rendersystem() {
+	return *g_rendersys_offset(get_engine(), "engine_t", "renderSystem");
+}
+static mh_fieldcached_t<void*> g_cursor_offset{};
+
+MH_NOINLINE
+void* get_cursor() {
+	return *g_cursor_offset(get_engine(), "engine_t", "cursor");
+}
+
+static mh_fieldcached_t<void*> g_editor_iface_offset{};
+MH_NOINLINE
+void* get_editor_interface() {
+	return *g_editor_iface_offset(get_engine(), "engine_t", "editorInterface");	
+}
+
+static mh_fieldcached_t<idRenderModelGui*> g_cursor_model_offset{};
+MH_NOINLINE
+idRenderModelGui* get_cursor_rendermodel() {
+	return *g_cursor_model_offset(get_cursor(), "idCursor", "gui");
+}
+
 static mh_fieldcached_t<idVec3> g_player_focus_trace{};
 void get_player_trace_pos(idVec3* outvec) {
 	void* player = find_entity("player1");
@@ -377,4 +403,14 @@ bool reload_decl(void* decl_ptr ){
 		return false;
 	}
 	return true;
+}
+static mh_fieldcached_t<void*> g_cvarsystem_field{};
+MH_NOINLINE
+void* get_cvarsystem() {
+	
+	void* engine = get_engine();
+
+
+	return *g_cvarsystem_field(engine, "engine_t", "cvarSystemForTransfer");
+	
 }

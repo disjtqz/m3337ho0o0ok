@@ -60,3 +60,8 @@ SCANNED_UINT_FEATURE(g_offset_resourcelist_length)
 SCANNED_UINT_FEATURE(g_vftbl_offset_getlevelmap)
 
 SCANNED_PTR_FEATURE(g_resourceStorageDiskStreamer_GetFile)
+
+SCANNED_PTR_FEATURE(g_resourceStorageInterface2)
+SCANNED_PTR_FEATURE(g_renderDebugTools)
+//for hooking to restore debugtools
+SCANNED_PTR_FEATURE(g_idRender_PrintStats)

@@ -202,7 +202,7 @@ static std::mutex g_execmem_lock{};
 static HANDLE g_execmem_heap=nullptr;
 
 void* alloc_execmem(size_t size) {
-	#if 0
+	#if 1
 	g_execmem_lock.lock();
 
 	if(!g_execmem_heap) {

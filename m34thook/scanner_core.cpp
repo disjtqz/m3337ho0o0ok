@@ -5,6 +5,7 @@
 #include "scanner_core.hpp"
 #include <map>
 #include <string_view>
+#include "snaphakalgo.hpp"
 #define		DISABLE_PARALLEL_SCANGROUPS
 
 #define		PRINT_SCAN_TIME_TAKEN
@@ -316,35 +317,76 @@ using locate_find_next_ent_with_class = memscanner_t<
 //scanbytes<0x33,0xd2,0x49,0x8b,0xce,0xE8>>;//then a call to it
 //v1=14094E568
 using locate_resourceManager2 = memscanner_t<
-	scanbytes<0x48,0x8D,0x4C,0x24>,
+	scanbytes<0x48, 0x8D, 0x4C, 0x24>,
 	skip<1>, //skip offs 30, may change
 	scanbytes<0xE8>, //call2sub
 	skip<4>,
-	scanbytes<0x48,0x8D,0x15>, //lea
-	riprel32_data_equals<  0x72, 0x65, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x4D, 0x61, 
-  0x6E, 0x61, 0x67, 0x65, 0x72, 0x2D, 0x3E, 0x49, 0x6E, 0x69, 
-  0x74, 0x00>, //"resourceManager->Init"
-	scanbytes<0x48,0x8D,0x4C,0x24>,
+	scanbytes<0x48, 0x8D, 0x15>, //lea
+	riprel32_data_equals<  0x72, 0x65, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x4D, 0x61,
+	0x6E, 0x61, 0x67, 0x65, 0x72, 0x2D, 0x3E, 0x49, 0x6E, 0x69,
+	0x74, 0x00>, //"resourceManager->Init"
+	scanbytes<0x48, 0x8D, 0x4C, 0x24>,
 	skip<1>, //another ref to spoffs 0x30
 	scanbytes<0xE8>,
 	skip<4>,
-	scanbytes<0x48,0x8B,0x0D>>; //load rcx with cs:resmanager2, last 4 bytes = rva
+	scanbytes<0x48, 0x8B, 0x0D>>; //load rcx with cs:resmanager2, last 4 bytes = rva
 
 using locate_rtti_typeinfo_string = memscanner_t<scanbytes<  0x2E, 0x3F, 0x41, 0x56, 0x74, 0x79, 0x70, 0x65, 0x5F, 0x69, 0x6E, 0x66, 0x6F, 0x40, 0x40, 0x00>>;
 
 //lol this scanner is so small but works on v1 and v6
 
-using locate_resourcestoragediskstreamer_getfile = memscanner_t<
+using locate_resourcestoragediskstreamer_getfile = memscanner_t <
 #if 0
-	scanbytes<0x69,0xc8,0x6b,0xca,0xeb,0x85,0x8b,0xc1,0xc1,0xe8,0xd,0x33,0xc1,0x48,0xb9,0xcd,0x8c,0x55,0xed,0xd7,0xaf,0x51,0xff,0x44,0x69,0xd0,0x35,0xae,0xb2,0xc2>
+#if 0
+	scanbytes<0x69, 0xc8, 0x6b, 0xca, 0xeb, 0x85, 0x8b, 0xc1, 0xc1, 0xe8, 0xd, 0x33, 0xc1, 0x48, 0xb9, 0xcd, 0x8c, 0x55, 0xed, 0xd7, 0xaf, 0x51, 0xff, 0x44, 0x69, 0xd0, 0x35, 0xae, 0xb2, 0xc2>
 #else
-	scanbytes<0x48,0x33,0xd0,0x4d,0x85,0xdb,0x74>,
+	scanbytes<0x48, 0x33, 0xd0, 0x4d, 0x85, 0xdb, 0x74>,
 	skip<1>,
-	scanbytes<0x41,0x8b,0xca,0x8b,0xc2,0xc1,0xe9,0x10>
+	scanbytes<0x41, 0x8b, 0xca, 0x8b, 0xc2, 0xc1, 0xe9, 0x10>
 #endif
+#else
+	//idResourceStorageDiskStreamer::GetFile failed to find entry for 
+	//v1 = 1408EC2E2
 
->;
+	
 
+
+	scanbytes<0x83>,
+	skip<1>, 
+	scanbytes<0xff, 0x75>,
+	skip<1>, //jshort
+	scanbytes<0x48, 0x8B, 0x0D>, //next is rva to resourceStorageInterface2
+	skip_and_capture_rva<&descan::g_resourceStorageInterface2>,
+	scanbytes<0x49, 0x8B, 0xD1, 0xE8>, //next four is rva for call, we're going to try something different here, and actually capture the high byte of the rva, which should be 0xFF, meaning a call in a backwards direction
+	skip<3>,
+	scanbytes<0xFF, 0x48, 0x8b, 0xd0, 0x48, 0x8d, 0xd>,
+	riprel32_data_equals<  0x69, 0x64, 0x52, 0x65, 0x73, 0x6F, 0x75, 0x72, 0x63, 0x65,
+	0x53, 0x74, 0x6F, 0x72, 0x61, 0x67, 0x65, 0x44, 0x69, 0x73,
+	0x6B, 0x53, 0x74, 0x72, 0x65, 0x61, 0x6D, 0x65, 0x72, 0x3A,
+	0x3A, 0x47, 0x65, 0x74, 0x46, 0x69, 0x6C, 0x65, 0x20, 0x66,
+	0x61, 0x69, 0x6C, 0x65, 0x64, 0x20, 0x74, 0x6F, 0x20, 0x66,
+	0x69, 0x6E, 0x64, 0x20, 0x65, 0x6E, 0x74, 0x72, 0x79, 0x20,
+	0x66, 0x6F, 0x72, 0x20, 0x27, 0x25, 0x73, 0x27, 0x0A, 0x00>
+
+
+#endif
+> ;
+//v1=140846EEC
+using locate_renderdebugtools = memscanner_t<
+	scanbytes<0x48,0x83,0xc4>,skip<1>, scanbytes<0x5f,0xc3,0x48,0x8d,0xd>,
+	riprel32_data_equals<  0x52, 0x65, 0x65, 0x6E, 0x74, 0x72, 0x61, 0x6E, 0x74, 0x20, 
+  0x63, 0x61, 0x6C, 0x6C, 0x20, 0x74, 0x6F, 0x20, 0x64, 0x65, 
+  0x62, 0x75, 0x67, 0x47, 0x65, 0x6F, 0x6D, 0x65, 0x74, 0x72, 
+  0x79, 0x2E, 0x46, 0x72, 0x61, 0x6D, 0x65, 0x42, 0x65, 0x67, 
+  0x69, 0x6E, 0x28, 0x29, 0x00>>;
+//v1 = 0x1407DE2BC
+using locate_idrender_printstats = memscanner_t<
+	scanbytes<0x48,0x8D,0x0D>,
+	riprel32_data_equals<  0x6C, 0x69, 0x67, 0x68, 0x74, 0x73, 0x20, 0x28, 0x20, 0x24, 
+  0x20, 0x3D, 0x20, 0x63, 0x61, 0x73, 0x74, 0x73, 0x20, 0x73, 
+  0x68, 0x61, 0x64, 0x6F, 0x77, 0x73, 0x2C, 0x20, 0x54, 0x20, 
+  0x3D, 0x20, 0x74, 0x79, 0x70, 0x65, 0x20, 0x29, 0x3A, 0x20, 
+  0x0A, 0x00>>;
 #define		BSCANENT(name, ...)\
 	const char* ___name_##name = #name;\
 	using  name = blockscan_entry_definition_t<__VA_ARGS__, &___name_##name>
@@ -414,6 +456,8 @@ namespace initial_scanners {
 
 	BSCANENT(locate_rtti_typeinfo_string_entry, &descan::g_rtti_typeinfo_string, scanbehavior_locate_func<locate_rtti_typeinfo_string>);
 	BSCANENT(locate_resourcestreamer_getfile, &descan::g_resourceStorageDiskStreamer_GetFile, scanbehavior_locate_func<locate_resourcestoragediskstreamer_getfile>);
+	BSCANENT(locate_renderdebugtools_entry, &descan::g_renderDebugTools, scanbehavior_locate_func<locate_renderdebugtools>);
+	BSCANENT(locate_idrender_printstats_entry,&descan::g_idRender_PrintStats, scanbehavior_locate_func<locate_idrender_printstats> );
 #define		PAR_SCANGROUP_P1_1				find_alloca_probe_entry, find_security_check_cookie_entry, find_doom_operator_new_and_idfile_memory_ctor_entry, locate_idoodle_decompress_entry, locate_idlib_vprintf_entry
 #define		PAR_SCANGROUP_P1_2				locate_game_engine_init_ptr_entry, idstr_ctor_void_locator_entry, idgamelocal_locator_entry, atomicstringset_locator_entry, getentitystate_needsoffset
 
@@ -427,10 +471,10 @@ namespace initial_scanners {
 		PAR_SCANGROUP_P1_2,
 		PAR_SCANGROUP_P1_3,
 		PAR_SCANGROUP_P1_4
-	> ;
+	>;
 #else
 	using initial_scangroup_type = parallel_scangroup_group_t<
-		scangroup_t<PAR_SCANGROUP_P1_1>, 
+		scangroup_t<PAR_SCANGROUP_P1_1>,
 		scangroup_t<PAR_SCANGROUP_P1_2>,
 		scangroup_t<PAR_SCANGROUP_P1_3>,
 		scangroup_t<PAR_SCANGROUP_P1_4>>;
@@ -486,11 +530,11 @@ namespace scanners_phase2 {
 	BSCANENT(find_next_ent_with_class_locator_entry, &descan::g_find_next_entity_with_class, scanbehavior_locate_csrel_after<locate_find_next_ent_with_class>);
 
 	//9 scanners
-	#define		PAR_SCANGROUP_P2_1 				entry_phase2_locate_findclassinfo, entry_phase2_locate_idfilecompressed_getfile
-	#define		PAR_SCANGROUP_P2_2				entry_phase2_locate_resourcelist_for_classname
-	#define		PAR_SCANGROUP_P2_3				locate_idmapfilelocal_write_body_entry,locate_findenuminfo_entry
-	#define		PAR_SCANGROUP_P2_4				locate_idlib_fatalerror_entry,locate_idlib_error_entry,find_next_ent_with_class_locator_entry
-	#ifdef DISABLE_PARALLEL_SCANGROUPS
+#define		PAR_SCANGROUP_P2_1 				entry_phase2_locate_findclassinfo, entry_phase2_locate_idfilecompressed_getfile
+#define		PAR_SCANGROUP_P2_2				entry_phase2_locate_resourcelist_for_classname
+#define		PAR_SCANGROUP_P2_3				locate_idmapfilelocal_write_body_entry,locate_findenuminfo_entry
+#define		PAR_SCANGROUP_P2_4				locate_idlib_fatalerror_entry,locate_idlib_error_entry,find_next_ent_with_class_locator_entry
+#ifdef DISABLE_PARALLEL_SCANGROUPS
 
 	using secondary_scangroup_type = scangroup_t<
 		PAR_SCANGROUP_P2_1,
@@ -513,8 +557,9 @@ std::map<std::string_view, void*> g_str_to_rrti_type_descr{};
 	todo: this does THREE PASSES over the image. it could probably benefit from a bit of vectorization
 
 */
+MH_NOINLINE
 static void scan_for_vftbls() {
-	#ifdef PRINT_SCAN_TIME_TAKEN
+#ifdef PRINT_SCAN_TIME_TAKEN
 	uint64_t tickcount = GetTickCount64();
 #endif
 	uint64_t* base = (uint64_t*)g_blamdll.image_base;
@@ -528,20 +573,52 @@ static void scan_for_vftbls() {
 
 	std::map<unsigned, std::string_view> find_by_rtti_locator{};
 
-	for(size_t i = 0; i < (g_blamdll.image_size / 8); ++i) {
-		if(base[i] == typeinfo_vtable) {
+	struct find_by_rtti_node_t {	
+		rb_node m_node;
+		unsigned m_rvakey;
 
-			std::string_view name = reinterpret_cast<char*>(&base[i] ) + 16;
+		std::string_view m_text;
+		
+
+	};
+
+	find_by_rtti_node_t* tmp_rva_nodes = (find_by_rtti_node_t* )malloc(sizeof(find_by_rtti_node_t) * 200000);//new find_by_rtti_node_t[200000];
+	unsigned current_tmpnode = 0;
+
+	rb_root root_find_by_rtti{};
+	
+
+	for (size_t i = 0; i < (g_blamdll.image_size / 8); ++i) {
+		if (base[i] == typeinfo_vtable) {
+
+			std::string_view name = reinterpret_cast<char*>(&base[i]) + 16;
 
 			g_str_to_rrti_type_descr[name] = &base[i];
 
-			uint64_t boundaddr =(uint64_t) &base[i];
+			uint64_t boundaddr = (uint64_t)&base[i];
 
 			smallest_seen_rtti_base_descr_addr = min(smallest_seen_rtti_base_descr_addr, boundaddr);
 
 			largest_seen_rtti_base_descr_addr = max(largest_seen_rtti_base_descr_addr, boundaddr);
 
-			find_by_rtti_locator[boundaddr - (uint64_t)g_blamdll.image_base] = name;
+			unsigned newrva=boundaddr - (uint64_t)g_blamdll.image_base;
+
+			find_by_rtti_node_t* newnode = &tmp_rva_nodes[current_tmpnode++];
+			rb_init_node(&newnode->m_node);
+			sh::rb::insert_hint_t hint;
+			find_by_rtti_node_t* willbnull = sh::rb::rbnode_find<find_by_rtti_node_t, 0>(&root_find_by_rtti, newrva, [](find_by_rtti_node_t* l, unsigned r) {
+					return static_cast<ptrdiff_t>(static_cast<int>(l->m_rvakey - r));
+				},&hint
+				);
+			newnode->m_rvakey = newrva;
+			newnode->m_text = name;
+
+
+			mh_assume_m(!willbnull);
+			hint.insert(&newnode->m_node, &root_find_by_rtti);
+			
+				
+			//find_by_rtti_locator[boundaddr - (uint64_t)g_blamdll.image_base] = name;
 
 		}
 	}
@@ -558,32 +635,37 @@ static void scan_for_vftbls() {
 	uint64_t largest_objlocator_addr = (uint64_t)(g_blamdll.image_base);
 	std::map<void*, std::string_view> locator_to_name{};
 
-	for(size_t i = 0; i < (g_blamdll.image_size / 4); ++i) {
-		
+	for (size_t i = 0; i < (g_blamdll.image_size / 4); ++i) {
+
 		uint32_t currva = rvabase[i];
 
-		if(currva <= largest_rva && currva >= smallest_rva) {
-			
-			auto iter = find_by_rtti_locator.find(currva);
+		if (currva <= largest_rva && currva >= smallest_rva) {
+			sh::rb::insert_hint_t unused_hint;
 
-			if(iter == find_by_rtti_locator.end()) {
+			find_by_rtti_node_t* foundnode = sh::rb::rbnode_find<find_by_rtti_node_t, 0>(&root_find_by_rtti, currva, [](find_by_rtti_node_t* l, unsigned r) {
+					return static_cast<ptrdiff_t>(static_cast<int>(l->m_rvakey - r));
+				},&unused_hint
+				);
+			//auto iter = find_by_rtti_locator.find(currva);
+
+			if (!foundnode) {
 				continue;
 			}
 
 
-			void* baserva = rvabase[i+2] + g_blamdll.image_base;
+			void* baserva = rvabase[i + 2] + g_blamdll.image_base;
 
 
-			void* basecheck = &rvabase[i-3];
+			void* basecheck = &rvabase[i - 3];
 
 			if (baserva != basecheck) {
 				continue;
 
 			}
-			
+
 			//we now have the complete object locator
 			//g_str_to_rrti_type_descr[iter->second] = baserva;
-			locator_to_name[baserva] = iter->second;
+			locator_to_name[baserva] = foundnode->m_text;
 			smallest_objlocator_addr = min((uint64_t)baserva, smallest_objlocator_addr);
 			largest_objlocator_addr = max((uint64_t)baserva, largest_objlocator_addr);
 
@@ -593,21 +675,22 @@ static void scan_for_vftbls() {
 
 	//final pass to actually get the vtables
 
-	for(size_t i = 0; i < (g_blamdll.image_size / 8); ++i) {
-		
+	for (size_t i = 0; i < (g_blamdll.image_size / 8); ++i) {
+
 		uint64_t currva = base[i];
 
-		if(currva <= largest_objlocator_addr && currva >= smallest_objlocator_addr) {		
-			
-			
+		if (currva <= largest_objlocator_addr && currva >= smallest_objlocator_addr) {
+
+
 			auto namefor = locator_to_name.find((void*)currva);
 
-			if(namefor==locator_to_name.end())
+			if (namefor == locator_to_name.end())
 				continue;
 
-			g_str_to_rrti_type_descr[namefor->second] = &base[i+1];
+			g_str_to_rrti_type_descr[namefor->second] = &base[i + 1];
 		}
 	}
+	free(tmp_rva_nodes);
 #ifdef PRINT_SCAN_TIME_TAKEN
 
 	unsigned tickstaken = (unsigned)(GetTickCount64() - tickcount);
@@ -623,8 +706,8 @@ static void scan_for_vftbls() {
 
 
 
-
 volatile bool wait_for_debugger = true;
+MH_NOINLINE
 void descan::locate_critical_features() {
 
 #ifdef PRINT_SCAN_TIME_TAKEN
@@ -636,7 +719,7 @@ void descan::locate_critical_features() {
 		//i forgot that i had the file created and was getting frustrated, thinking i had broken something.
 		//added this so that doesnt happen again
 		MessageBoxA(nullptr, "Found wait_for_debugger.txt, looping forever!", "Debugger", 0);
-		
+
 		while (wait_for_debugger);
 	}
 
@@ -646,6 +729,8 @@ void descan::locate_critical_features() {
 	descan::g_resourceStorageDiskStreamer_GetFile = hunt_assumed_func_start_back(descan::g_resourceStorageDiskStreamer_GetFile);
 	//end up at 0x142EF2118, typeinfo vftbl
 
+	descan::g_renderDebugTools = hunt_assumed_func_start_back(descan::g_renderDebugTools);
+	descan::g_idRender_PrintStats = hunt_assumed_func_start_back(descan::g_idRender_PrintStats);
 	scan_for_vftbls();
 
 	if (descan::g_resourcelist_index) {

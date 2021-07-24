@@ -564,9 +564,23 @@ static void mh_list_resource_lists(idCmdArgs* args) {
 
 	idLib::Printf(workbuf.c_str());
 }
+static void* g_original_renderthread_run = nullptr;
+static __int64 testdebugtools(void* x){
+	
+	//call_as<void>(descan::g_renderDebugTools, get_rendersystem());
+	return call_as<__int64>(g_original_renderthread_run, x);
+}
 void meathook_init() {
 
+	void** vtbl_render = get_class_vtbl(".?AVidRenderThread@@");
+	g_original_renderthread_run = (void*)testdebugtools;
 
+
+	swap_out_ptrs(&vtbl_render[1], &g_original_renderthread_run, 1, false);
+
+	
+
+	//redirect_to_func(descan::g_renderDebugTools, (uintptr_t)descan::g_idRender_PrintStats, true);
 	redirect_to_func((void*)idFileResourceCompressed__GetFile, (uintptr_t)/* doomsym<void>(doomoffs::idFileResourceCompressed__GetFile)*/ descan::g_idfilecompressed_getfile, true);
 	//g_levelReload = redirect_to_func((void*)LevelReload_CaptureParameters, (uintptr_t)/* doomsym<void>(doomoffs::idFileResourceCompressed__GetFile)*/ descan::g_levelreload, true);
 	//g_func992170 = redirect_to_func((void*)LevelReload_PreventUninitializedTick, (uintptr_t)/* doomsym<void>(doomoffs::idFileResourceCompressed__GetFile)*/ descan::g_init_func_rva_992170, true);
