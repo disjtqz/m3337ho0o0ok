@@ -87,6 +87,9 @@
     <ClCompile Include="disasmscan.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="rendermodelgui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_exe_interface.hpp">

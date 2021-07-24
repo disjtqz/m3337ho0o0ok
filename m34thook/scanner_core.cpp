@@ -31,7 +31,7 @@
 #include "scanners/initial_scangroup.hpp"
 #include "scanners/secondary_scangroup.hpp"
 
-
+#include "scanners/tertiary_scangroup.hpp"
 std::map<std::string_view, void*> g_str_to_rrti_type_descr{};
 
 /*
@@ -269,6 +269,6 @@ void descan::run_late_scangroups() {
 	vtbl_scan_thread.join();
 
 	obtain_rendermodelgui_stuff();
-
+	scanners_phase3::tertiary_scangroup_pass.execute_on_image();
 }
 	

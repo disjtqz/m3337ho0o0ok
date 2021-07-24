@@ -24,6 +24,9 @@
 struct scanstate_t {
 	unsigned char* addr;
 	blamdll_t* dll;
+	unsigned char* backref_stack[8];
+	uintptr_t backref_position;
+	scanstate_t(unsigned char* _addr, blamdll_t* _dll) : addr(_addr), dll(_dll), backref_position(0) {}
 };
 enum class memsection_e {
 	any,
@@ -243,7 +246,17 @@ struct skip {
 		return true;
 	}
 };
+template<unsigned N>
+struct skip_and_push {
+	static constexpr unsigned required_valid_size = N;
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
+		state.backref_stack[state.backref_position++] = state.addr;
 
+		state.addr += N;
+		return true;
+	}
+};
 template<void** rva_out>
 struct skip_and_capture_rva {
 	//static inline T value{};
@@ -297,7 +310,21 @@ struct align_next {
 	}
 };
 
+template<unsigned stackdelta, unsigned nbytes>
+struct cmp_backref {
+	static constexpr unsigned required_valid_size = nbytes;
+	MH_FORCEINLINE
+	static bool match(scanstate_t& state) {
 
+		
+		if(!scancmp_bytes(state.backref_stack[state.backref_position - stackdelta], state.addr, nbytes ))
+			return false;
+
+		state.addr+=nbytes;
+
+		return true;
+	}
+};
 
 enum memscanner_flags_e {
 	_test_mapped_displ_in_image = 1,

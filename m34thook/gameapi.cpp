@@ -426,20 +426,30 @@ static void* g_original_rendergui = nullptr;
 
 static void mh_rendergui_callback(idDebugHUD* dbghud, idRenderModelGui* rgui) {
 	//always show debughud
+	//com_debugHUD->data->valueInteger=1;
+	if(!com_debugHUD) {
+		com_debugHUD = idCVar::Find("com_debugHUD");
+	}
 	com_debugHUD->data->valueInteger=1;
+
 	call_as<void>(g_original_rendergui, dbghud, rgui);
+	rgui->DrawFilled(colorBrown, 0, 0, 200, 200);
+	rgui->DrawString(500, 500, "yo yo yo, we got some text baybee", &colorCyan, true, 3);
 }
 #define idDebugHUDLocal_Render_VtblIdx	1
 
 void install_gameapi_hooks() {
 	*reinterpret_cast<void**>(descan::g_idCommonLocal_Frame_CallbackPtr) = (void*)meathook_game_frame;
-
-	com_debugHUD = idCVar::Find("com_debugHUD");
+#if 1
 
 	void** debughudvtbl = get_class_vtbl(".?AVidDebugHUDLocal@@");
 
 
 	g_original_rendergui = (void*)mh_rendergui_callback;
-	swap_out_ptrs(&debughudvtbl[idDebugHUDLocal_Render_VtblIdx], &g_original_rendergui, false);
+	swap_out_ptrs(&debughudvtbl[idDebugHUDLocal_Render_VtblIdx], &g_original_rendergui,1,  false);
+#endif
+}
 
+void* get_material(const char* name) {
+	return locate_resourcelist_member("idMaterial2", name);
 }

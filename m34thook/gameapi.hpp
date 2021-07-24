@@ -6,7 +6,7 @@ void* find_entity(const char* name);
 	iterate over all entities with a given classname
 	returns null when done
 */
-void* find_next_entity_with_class(const char* classname, void* entity_iterator=nullptr);
+void* find_next_entity_with_class(const char* classname, void* entity_iterator = nullptr);
 
 void* get_level_map();
 
@@ -18,7 +18,36 @@ long long get_classfield_int(void* obj, const classVariableInfo_t* varinfo);
 long long get_classfield_int(void* obj, const char* clazs, const char* field);
 
 const char* get_entity_name(void* obj);
-struct idRenderModelGui;
+
+void* get_material(const char* name);
+#if 0
+#define		RENDERMODELGUI_VERTEXCOLOR_OFFSET		1200
+#else
+#define		RENDERMODELGUI_VERTEXCOLOR_OFFSET		(*reinterpret_cast<unsigned*>(descan::g_idRenderModelGui_VertexColorOffsPtr))
+#endif
+struct idRenderModelGui {
+	void DrawFilled(const idColor& color, float x, float y, float w, float h);
+	void DrawStretchPic(
+		float x,
+		float y,
+		float z,
+		float w,
+		float h,
+		float s1,
+		float t1,
+		float s2,
+		float t2,
+		const void* material);
+	idDrawVert* AllocTris(int numVerts, unsigned short* indexes, int numIndexes, void* material);
+	void DrawChar(float x, float y, int character, float scale);
+	void DrawString(
+		float x,
+		float y,
+		const char* string,
+		const idColor* defaultColor,
+		bool forceColor,
+		const float scale);
+};
 
 //get the pointer to the global engine_t instance
 /*
@@ -144,7 +173,7 @@ MH_NOINLINE
 idRenderModelGui* get_cursor_rendermodel();
 
 
-void add_persistent_text(unsigned x, unsigned y, unsigned RGBA, float scale,  const char* fmt, ...);
+void add_persistent_text(unsigned x, unsigned y, unsigned RGBA, float scale, const char* fmt, ...);
 
 void remove_persistent_text(unsigned x, unsigned y);
 
@@ -159,11 +188,11 @@ struct idManagedClass;
 
 struct idManagedClassPtr
 {
-  idSpawnId spawnId;
-  idSpawnId serializedSpawnId;
-  idManagedClass *ptr;
-  idManagedClassPtr *next;
-  idManagedClassPtr *prev;
+	idSpawnId spawnId;
+	idSpawnId serializedSpawnId;
+	idManagedClass* ptr;
+	idManagedClassPtr* next;
+	idManagedClassPtr* prev;
 };
 
 
@@ -186,6 +215,6 @@ void set_entity_position(void* entity, idVec3* pos);
 
 void** get_class_vtbl(std::string_view clsname);
 
-bool reload_decl(void* decl_ptr );
+bool reload_decl(void* decl_ptr);
 
 void install_gameapi_hooks();

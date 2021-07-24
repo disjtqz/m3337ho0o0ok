@@ -267,6 +267,7 @@
     <ClCompile Include="mh_dev_hooks.cpp" />
     <ClCompile Include="mh_memmanip_cmds.cpp" />
     <ClCompile Include="mh_native_api.cpp" />
+    <ClCompile Include="rendermodelgui.cpp" />
     <ClCompile Include="scanner_core.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Full</Optimization>
       <InlineFunctionExpansion Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AnySuitable</InlineFunctionExpansion>

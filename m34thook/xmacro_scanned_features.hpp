@@ -78,3 +78,7 @@ SCANNED_PTR_FEATURE(g_idCommonLocal_Frame)
 SCANNED_PTR_FEATURE(g_idCommonLocal_Frame_CallbackPtr)
 SCANNED_PTR_FEATURE(g_idResourceList_Add)
 SCANNED_PTR_FEATURE(g_idImageManager_ScratchImage)
+SCANNED_PTR_FEATURE(g_idcolor_packcolor)
+SCANNED_PTR_FEATURE(g_idRenderModelGui_SetViewPort)
+//pointer to an int, which is the offset to vertexcolor on idRenderModelGui
+SCANNED_PTR_FEATURE(g_idRenderModelGui_VertexColorOffsPtr)
