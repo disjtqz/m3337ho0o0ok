@@ -433,7 +433,7 @@ static void mh_rendergui_callback(idDebugHUD* dbghud, idRenderModelGui* rgui) {
 	com_debugHUD->data->valueInteger=1;
 
 	call_as<void>(g_original_rendergui, dbghud, rgui);
-/*	rgui->DrawFilled(colorBrown, 0, 0, 200, 200);
+	/*rgui->DrawFilled(colorBrown, 0, 0, 200, 200);
 	rgui->DrawString(500, 500, "yo yo yo, we got some text baybee", &colorCyan, true, 3);*/
 }
 #define idDebugHUDLocal_Render_VtblIdx	1
