@@ -414,8 +414,13 @@ void* get_cvarsystem() {
 	return *g_cvarsystem_field(engine, "engine_t", "cvarSystemForTransfer");
 	
 }
+static bool g_isfirstframe = true;
+
 static __int64 meathook_game_frame(__int64 framearg) {
-	
+	if(g_isfirstframe) {
+		g_isfirstframe = false;
+		descan::run_gamelib_postinit_scangroups();
+	}
 
 	return call_as<__int64>(descan::g_idCommonLocal_Frame, framearg);
 

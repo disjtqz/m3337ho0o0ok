@@ -638,7 +638,7 @@ void meathook_init() {
 	idCmd::register_command("idlib_idc", idc_dump, "Generates a .idc file for ida that defines all structs and enums that have typeinfo for this build of eternal");
 
 	install_memmanip_cmds();
-	idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
+	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
 	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");
 	// Start rpc server.
 }

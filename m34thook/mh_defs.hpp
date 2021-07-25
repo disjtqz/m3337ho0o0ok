@@ -59,3 +59,7 @@ static inline TTo* mh_lea(TFrom shouldbptr, ptrdiff_t displacement) {
 	return (TTo*)(&((char*)shouldbptr)[displacement]);
 }
 
+MH_NOINLINE
+void mh_error_message(const char* fmt, ...);
+
+#define		mh_tmpl_strarg_m(...)		decltype([](){return __VA_ARGS__;})

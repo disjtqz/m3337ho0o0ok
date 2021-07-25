@@ -9,7 +9,17 @@
 #include "fs_hooks.hpp"
 #include "snaphakalgo.hpp"
 //#define		SUPPORT_NEWER_VERSIONS
+MH_NOINLINE
+void mh_error_message(const char* fmt, ...) {
+	va_list ap;
+	va_start(ap, fmt);
+	char errbuf[65536];
+	vsprintf_s(errbuf, fmt, ap);
 
+	MessageBoxA(nullptr, errbuf, "M347h00k Error", MB_ICONERROR);
+
+	va_end(ap);
+}
 static HMODULE g_real_xinput = nullptr;
 snaphak_algo_t g_shalgo{};
 __declspec(noinline)
@@ -72,6 +82,8 @@ static int gamelib_init_forwarder(void* x, void* y) {
 	descan::run_late_scangroups();
 
 	int result = reinterpret_cast<int (*)(void*, void*)>(original_gamelib_init)(x, y);///doomcall<int>(doomoffs::gamelib_initialize, x, y);
+
+	//descan::run_gamelib_postinit_scangroups();
 	meathook_init();
 
 	hook_idfilesystem();

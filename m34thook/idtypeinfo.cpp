@@ -82,7 +82,7 @@ using typeinfo_tools_getter_t = feature_binder_ptr_t<get_typeinfo_tools>;
 MH_NOINLINE
 classTypeInfo_t* idType::FindClassInfo(const char* cname) {
 
-	void* typeinfo_tools = typeinfo_tools_getter_t::get();
+	void* typeinfo_tools =get_typeinfo_tools();
 
 
 

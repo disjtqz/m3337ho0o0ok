@@ -23,3 +23,7 @@ void scanner_failure_message(const char* scanner_name) {
 void* scanner_late_get_cvar(const char* s) {
 	return idCVar::Find(s);
 }
+
+unsigned scanner_late_get_struct_size(const char* s) {
+	return idType::FindClassInfo(s)->size;
+}

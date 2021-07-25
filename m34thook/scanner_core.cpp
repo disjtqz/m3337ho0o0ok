@@ -10,6 +10,8 @@
 #include "idtypeinfo.hpp"
 #include "gameapi.hpp"
 #define		DISABLE_PARALLEL_SCANGROUPS
+//#define		DISABLE_PHASE2_PARALLEL_SCANGROUPS
+
 
 #define		PRINT_SCAN_TIME_TAKEN
 //only 8k in my db but lets overestimate to be safe
@@ -54,20 +56,20 @@ static void scan_for_vftbls() {
 
 	std::map<unsigned, std::string_view> find_by_rtti_locator{};
 
-	struct find_by_rtti_node_t {	
+	struct find_by_rtti_node_t {
 		rb_node m_node;
 		unsigned m_rvakey;
 
 		std::string_view m_text;
-		
+
 
 	};
 
-	find_by_rtti_node_t* tmp_rva_nodes = (find_by_rtti_node_t* )malloc(sizeof(find_by_rtti_node_t) * ASSUMED_MAX_VTBLS);//new find_by_rtti_node_t[200000];
+	find_by_rtti_node_t* tmp_rva_nodes = (find_by_rtti_node_t*)malloc(sizeof(find_by_rtti_node_t) * ASSUMED_MAX_VTBLS);//new find_by_rtti_node_t[200000];
 	unsigned current_tmpnode = 0;
 
 	rb_root root_find_by_rtti{};
-	
+
 
 	for (size_t i = 0; i < (g_blamdll.image_size / 8); ++i) {
 		if (base[i] == typeinfo_vtable) {
@@ -82,14 +84,14 @@ static void scan_for_vftbls() {
 
 			largest_seen_rtti_base_descr_addr = max(largest_seen_rtti_base_descr_addr, boundaddr);
 
-			unsigned newrva=boundaddr - (uint64_t)g_blamdll.image_base;
+			unsigned newrva = boundaddr - (uint64_t)g_blamdll.image_base;
 
 			find_by_rtti_node_t* newnode = &tmp_rva_nodes[current_tmpnode++];
 			rb_init_node(&newnode->m_node);
 			sh::rb::insert_hint_t hint;
 			find_by_rtti_node_t* willbnull = sh::rb::rbnode_find<find_by_rtti_node_t, 0>(&root_find_by_rtti, newrva, [](find_by_rtti_node_t* l, unsigned r) {
-					return static_cast<ptrdiff_t>(static_cast<int>(l->m_rvakey - r));
-				},&hint
+				return static_cast<ptrdiff_t>(static_cast<int>(l->m_rvakey - r));
+				}, &hint
 				);
 			newnode->m_rvakey = newrva;
 			newnode->m_text = name;
@@ -97,8 +99,8 @@ static void scan_for_vftbls() {
 
 			mh_assume_m(!willbnull);
 			hint.insert(&newnode->m_node, &root_find_by_rtti);
-			
-				
+
+
 			//find_by_rtti_locator[boundaddr - (uint64_t)g_blamdll.image_base] = name;
 
 		}
@@ -124,8 +126,8 @@ static void scan_for_vftbls() {
 			sh::rb::insert_hint_t unused_hint;
 
 			find_by_rtti_node_t* foundnode = sh::rb::rbnode_find<find_by_rtti_node_t, 0>(&root_find_by_rtti, currva, [](find_by_rtti_node_t* l, unsigned r) {
-					return static_cast<ptrdiff_t>(static_cast<int>(l->m_rvakey - r));
-				},&unused_hint
+				return static_cast<ptrdiff_t>(static_cast<int>(l->m_rvakey - r));
+				}, &unused_hint
 				);
 			//auto iter = find_by_rtti_locator.find(currva);
 
@@ -206,9 +208,9 @@ void descan::locate_critical_features() {
 
 	initial_scanners::initial_scangroup.execute_on_image();
 
-	
 
-//	descan::g_declentitydef_gettextwithinheritance = hunt_assumed_func_start_back(descan::g_declentitydef_gettextwithinheritance);
+
+	//	descan::g_declentitydef_gettextwithinheritance = hunt_assumed_func_start_back(descan::g_declentitydef_gettextwithinheritance);
 #if !defined(MH_ETERNAL_V6)
 	descan::g_noclip_func = hunt_assumed_func_start_back(descan::g_noclip_func);
 
@@ -250,13 +252,54 @@ void obtain_rendermodelgui_stuff() {
 	descan::g_idRenderModelGui__DrawChar = mh_disassembler_t::first_jump_target(dbgmodel[DRAWCHAR_VFTBL_INDEX]);
 }
 
+
+using scanner_extract_staticmodel_ctor = memscanner_t<
+	scanbytes<0xb9>,
+	match_sizeof_type_m(unsigned, "idStaticModel"),
+	scanbytes<0xe8>,
+	match_riprel32_to<&descan::g_doom_operator_new>,
+	scanbytes<0x48, 0x85, 0xc0, 0x74>,
+	skip<1>,
+	scanbytes<0x48, 0x8b, 0xc8, 0xe8>>;//last four is riprel to staticmodel
+
+//v1=140646F2F
+using scanner_extract_maketexturedcube = memscanner_t<
+	scanbytes<0xf3,0xf,0x10,0x15>,
+
+	riprel32_data_equals<  0xBF, 0x0E, 0x1C, 0x3E>,
+	scanbytes<0x48,0x8b,0xcb, 0xf3,0xf,0x10,0xd>,
+	riprel32_data_equals<  0xBF, 0x0E, 0x1C, 0xBE>,
+
+	scanbytes<0xe8>>;
+
+static void run_scanners_over_staticmodelmanager_init() {
+
+	void** vftbl_for = get_class_vtbl(".?AVidStaticModelManagerLocal@@");
+
+	void* initfunc = vftbl_for[0];
+
+	void* endpos = vftbl_for[0x30 / 8]; //in all versions, this vtbl function is placed directly after init, so we can use it to save processing time on finding the func end
+
+	if (endpos < initfunc) {
+
+		endpos = mh_disassembler_t::after_first_return(initfunc);
+
+		if (!endpos) {
+			mh_error_message("Failed to run idStaticModelManagerLocal::Init scanners!");
+			return;
+		}
+	}
+	descan::g_idStaticModel_ctor = run_range_scanner<scanbehavior_locate_csrel_after<scanner_extract_staticmodel_ctor>>(initfunc, endpos);
+	descan::g_idStaticModel_MakeTexturedCube = run_range_scanner<scanbehavior_locate_csrel_after<scanner_extract_maketexturedcube>>(initfunc, endpos);
+}
+
 MH_NOINLINE
 void descan::run_late_scangroups() {
 
-	std::thread vtbl_scan_thread{scan_for_vftbls};
+	std::thread vtbl_scan_thread{ scan_for_vftbls };
 
 	//scan_for_vftbls();
-	
+
 	scanners_phase2::secondary_scangroup_pass.execute_on_image();
 	descan::g_idtypeinfo_findclassinfo = hunt_assumed_func_start_back(descan::g_idtypeinfo_findclassinfo);
 	descan::g_idfilecompressed_getfile = hunt_assumed_func_start_back(descan::g_idfilecompressed_getfile);
@@ -269,6 +312,13 @@ void descan::run_late_scangroups() {
 	vtbl_scan_thread.join();
 
 	obtain_rendermodelgui_stuff();
+
+}
+/*
+	at this point we have access to things like typeinfotools
+*/
+MH_NOINLINE
+void descan::run_gamelib_postinit_scangroups() {
+	run_scanners_over_staticmodelmanager_init();
 	scanners_phase3::tertiary_scangroup_pass.execute_on_image();
 }
-	

@@ -146,6 +146,9 @@ struct mh_disassembler_t {
 		*continuation_out = mh_lea<char>(addr, ngot);
 	}
 
+	void* current_pc() {
+		return (void*)(m_ctx.pc);
+	}
 	template<ud_mnemonic_code_t mnem>
 	bool find_next_of_mnem() {
 
@@ -181,10 +184,16 @@ struct mh_disassembler_t {
 		return reinterpret_cast<void*>(((int64_t)m_ctx.operand[0].lval.sdword) + m_ctx.pc);
 	}
 
-
+	/*
+		intended for non-short jmps
+	*/
 	static void* first_jump_target(void* funcaddr) {
 		mh_disassembler_t dis{};
 		dis.setup_for_addr(funcaddr);
+		/*
+			todo: technically, we dont need to disassemble, we can just decode
+			and check the first byte to see if its 0xE9
+		*/
 		if(!dis.find_next_of_mnem<UD_Ijmp>())
 			return nullptr;
 
@@ -195,11 +204,30 @@ struct mh_disassembler_t {
 	static void* first_call_target(void* funcaddr) {
 		mh_disassembler_t dis{};
 		dis.setup_for_addr(funcaddr);
+		/*
+			todo: technically, we dont need to disassemble, we can just decode
+			and check the first byte to see if its 0xE8
+		*/
 		if(!dis.find_next_of_mnem<UD_Icall>())
 			return nullptr;
 
 		return dis.extract_pcrel_value(0);
 
+	}
+
+	static void* after_first_return(void* funcaddr) {
+		mh_disassembler_t dis{};
+		dis.setup_for_addr(funcaddr);
+		
+		/*
+			todo: technically, we dont need to disassemble, we can just decode
+			and check the first byte
+		*/
+		if(!dis.find_next_of_mnem<UD_Iret>()) {
+			return nullptr;
+		}
+
+		return dis.current_pc();
 	}
 };
 

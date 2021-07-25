@@ -82,3 +82,9 @@ SCANNED_PTR_FEATURE(g_idcolor_packcolor)
 SCANNED_PTR_FEATURE(g_idRenderModelGui_SetViewPort)
 //pointer to an int, which is the offset to vertexcolor on idRenderModelGui
 SCANNED_PTR_FEATURE(g_idRenderModelGui_VertexColorOffsPtr)
+
+SCANNED_PTR_FEATURE(g_idRenderModelStatic_FinishStaticModel)
+
+
+SCANNED_PTR_FEATURE(g_idStaticModel_ctor)
+SCANNED_PTR_FEATURE(g_idStaticModel_MakeTexturedCube)

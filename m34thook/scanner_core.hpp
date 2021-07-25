@@ -18,9 +18,15 @@ namespace descan {
 
 
 	MH_NOINLINE
-	void locate_critical_features();
+		void locate_critical_features();
 
 	MH_NOINLINE
-	void run_late_scangroups();
-	
+		void run_late_scangroups();
+
+	/*
+	at this point we have access to things like typeinfotools, 
+	runs on very first frame of idCommonLocal::Frame
+*/
+	MH_NOINLINE
+		void run_gamelib_postinit_scangroups();
 }

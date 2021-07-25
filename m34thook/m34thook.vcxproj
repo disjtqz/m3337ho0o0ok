@@ -263,6 +263,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="meathook.cpp" />
     <ClCompile Include="memscan.cpp" />
+    <ClCompile Include="mhgui.cpp" />
     <ClCompile Include="mhserver.cpp" />
     <ClCompile Include="mh_dev_hooks.cpp" />
     <ClCompile Include="mh_memmanip_cmds.cpp" />
@@ -302,6 +303,7 @@
     <ClInclude Include="meathook_plugin_api.hpp" />
     <ClInclude Include="memorySystem.hpp" />
     <ClInclude Include="memscan.hpp" />
+    <ClInclude Include="mhgui.hpp" />
     <ClInclude Include="mh_defs.hpp" />
     <ClInclude Include="mh_dev_hooks.hpp" />
     <ClInclude Include="mh_memmanip_cmds.hpp" />

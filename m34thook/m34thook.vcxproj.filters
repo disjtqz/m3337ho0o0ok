@@ -90,6 +90,9 @@
     <ClCompile Include="rendermodelgui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mhgui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_exe_interface.hpp">
@@ -202,6 +205,9 @@
     </ClInclude>
     <ClInclude Include="scanners\tertiary_scangroup.hpp">
       <Filter>Header Files\scanners</Filter>
+    </ClInclude>
+    <ClInclude Include="mhgui.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
