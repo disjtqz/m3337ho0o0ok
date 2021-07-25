@@ -18,6 +18,7 @@
 #include <map>
 #include <string_view>
 #include <bit>
+#include "snaphakalgo.hpp"
 void mh_fieldoffs(idCmdArgs* args) {
 	
 	classTypeInfo_t* cls = idType::FindClassInfo(args->argv[1]);
@@ -225,6 +226,11 @@ static void list_vftbls(idCmdArgs* args) {
 	
 	for(auto&& vf : g_str_to_rrti_type_descr) {
 		
+		if(args->argc == 2) {
+			if(!sh::string::strstr( vf.first.data(), args->argv[1])) {
+				continue;
+			}
+		}
 		idLib::Printf("Vftbl %s at %p\n", vf.first.data(), vf.second );
 	}
 

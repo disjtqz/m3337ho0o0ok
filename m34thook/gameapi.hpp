@@ -51,6 +51,11 @@ struct idRenderModelGui {
 		int y,
 		int width,
 		int height);
+
+	MH_PURE
+	static float get_SMALLCHAR_WIDTH();
+	MH_PURE
+	static float get_SMALLCHAR_HEIGHT();
 };
 
 
@@ -164,7 +169,8 @@ void* get_cursor();
 MH_NOINLINE
 void* get_editor_interface();
 
-
+MH_NOINLINE
+void* get_console();
 
 
 /*

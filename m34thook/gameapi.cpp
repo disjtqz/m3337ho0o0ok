@@ -251,6 +251,8 @@ MH_NOINLINE
 void* get_rendersystem() {
 	return *g_rendersys_offset(get_engine(), "engine_t", "renderSystem");
 }
+
+
 static mh_fieldcached_t<void*> g_cursor_offset{};
 
 MH_NOINLINE
@@ -270,6 +272,12 @@ idRenderModelGui* get_cursor_rendermodel() {
 	return *g_cursor_model_offset(get_cursor(), "idCursor", "gui");
 }
 
+
+static mh_fieldcached_t<void*> g_console_offset{};
+MH_NOINLINE
+void* get_console() {
+	return *g_console_offset(get_engine(), "engine_t", "console");
+}
 static mh_fieldcached_t<idVec3> g_player_focus_trace{};
 void get_player_trace_pos(idVec3* outvec) {
 	void* player = find_entity("player1");

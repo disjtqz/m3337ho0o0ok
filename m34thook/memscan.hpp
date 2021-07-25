@@ -585,6 +585,26 @@ MH_FORCEINLINE static void* hunt_assumed_func_start_back(void* func) {
 	return pf + 1;
 }
 
+MH_FORCEINLINE static void* hunt_assumed_func_start_forward(void* func) {
+	MH_UNLIKELY_IF(!func) {
+		return nullptr;
+	}
+	unsigned char* pf = (unsigned char*)func;
+	/*
+		while in range of image and not breakpoint (in between align16 for functions) and not at ret
+	*/
+
+	
+	while (!((reinterpret_cast<uintptr_t>(pf) & 0xF) == 0 && pf[-1] == 0xCC)) {
+		pf++;
+	}
+
+
+
+	return pf;
+}
+
+
 template<typename T>
 MH_FORCEINLINE
 static inline void* run_simple_scanner() {

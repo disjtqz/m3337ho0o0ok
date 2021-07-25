@@ -61,3 +61,23 @@ void idRenderModelGui::SetViewport(int x,
     int height) {
 	call_as<void>(descan::g_idRenderModelGui_SetViewPort, x, y, width, height);
 }
+
+#define		DEFAULT_SMALLCHAR_WIDTH		48.0f
+#define		DEFAULT_SMALLCHAR_HEIGHT	48.0f
+float idRenderModelGui::get_SMALLCHAR_WIDTH() {
+	MH_UNLIKELY_IF(!descan::g_SMALLCHAR_WIDTH) {
+		return DEFAULT_SMALLCHAR_WIDTH;
+	}
+	else {
+		return *reinterpret_cast<float*>(descan::g_SMALLCHAR_WIDTH);
+	}
+}
+
+float idRenderModelGui::get_SMALLCHAR_HEIGHT(){
+	MH_UNLIKELY_IF(!descan::g_SMALLCHAR_HEIGHT) {
+		return DEFAULT_SMALLCHAR_HEIGHT;
+	}
+	else {
+		return *reinterpret_cast<float*>(descan::g_SMALLCHAR_HEIGHT);
+	}
+}

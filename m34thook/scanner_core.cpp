@@ -290,10 +290,18 @@ using scanner_get_smallchar_height = memscanner_t<
 	scanbytes<0x0,0x0,0x20,0x41>>;
 
 static void run_scanners_over_idconsolelocal_draw() {
-	void* consolelocal_draw = get_class_vtbl(".?AVidConsoleLocal@@")[IDCONSOLELOCAL_DRAW_OFFSET];
+	/*
+		weird issue with idconsolelocal - theres a duplicate typeinfo object that claims to be it, but in reality
+		it points to idprintlistener or something, so instead we use the actual console instance, hence why this needs to run after init
+	*/
+	void* consolelocal_draw = reinterpret_cast<void***>(get_console())[0][IDCONSOLELOCAL_DRAW_OFFSET];
+
+		//get_class_vtbl(".?AVidConsoleLocal@@")[IDCONSOLELOCAL_DRAW_OFFSET];
 
 
-	void* end = mh_disassembler_t::after_first_return(consolelocal_draw);
+	//void* end = mh_disassembler_t::after_first_return(consolelocal_draw);
+
+	void* end = hunt_assumed_func_start_forward(reinterpret_cast<unsigned char*>(consolelocal_draw) + 1);
 
 	MH_UNLIKELY_IF(!end) {
 		mh_error_message("Failed to find end of idConsoleLocal::Draw!");
