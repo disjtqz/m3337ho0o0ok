@@ -272,6 +272,43 @@ using scanner_extract_maketexturedcube = memscanner_t<
 
 	scanbytes<0xe8>>;
 
+//same in v1 and v6
+#define		IDCONSOLELOCAL_DRAW_OFFSET		(0x70 / 8)
+//v1 = 014043CCA4
+using scanner_get_smallchar_height = memscanner_t<
+	scanbytes<0x48,0x8b,0xd>,
+	skip_and_capture_rva<&descan::g_renderSystem2>,
+	scanbytes<0x48,0x8b,0x1>,
+	scanbytes<0xff,0x90>,
+	skip<2>,
+	scanbytes<0x0,0x0,0xf3,0xf,0x10,0x5>,
+	skip_and_capture_rva<&descan::g_SMALLCHAR_HEIGHT>,
+	scanbytes<0xf3,0xf,0x59>,
+	masked_eq_byte<0xF0, 0xC0>, //c7 (xmm7) in v6, c6 (xmm6) in v1
+	scanbytes<0xc6,0xc7,0x45>,
+	skip<1>,
+	scanbytes<0x0,0x0,0x20,0x41>>;
+
+static void run_scanners_over_idconsolelocal_draw() {
+	void* consolelocal_draw = get_class_vtbl(".?AVidConsoleLocal@@")[IDCONSOLELOCAL_DRAW_OFFSET];
+
+
+	void* end = mh_disassembler_t::after_first_return(consolelocal_draw);
+
+	MH_UNLIKELY_IF(!end) {
+		mh_error_message("Failed to find end of idConsoleLocal::Draw!");
+		return;
+	}
+
+	run_range_scanner<scanbehavior_identity<&descan::g_SMALLCHAR_HEIGHT, scanner_get_smallchar_height>>(consolelocal_draw, end);
+	MH_LIKELY_IF(descan::g_SMALLCHAR_HEIGHT) {
+		/*
+			smallchar_width has been located 4 bytes before smallchar height
+			since at least Doom 2016, although in TNO it comes after
+		*/
+		descan::g_SMALLCHAR_WIDTH = mh_lea<void>(descan::g_SMALLCHAR_HEIGHT, -4LL);
+	}
+}
 static void run_scanners_over_staticmodelmanager_init() {
 
 	void** vftbl_for = get_class_vtbl(".?AVidStaticModelManagerLocal@@");
@@ -320,5 +357,6 @@ void descan::run_late_scangroups() {
 MH_NOINLINE
 void descan::run_gamelib_postinit_scangroups() {
 	run_scanners_over_staticmodelmanager_init();
+	run_scanners_over_idconsolelocal_draw();
 	scanners_phase3::tertiary_scangroup_pass.execute_on_image();
 }

@@ -419,7 +419,10 @@ static bool g_isfirstframe = true;
 static __int64 meathook_game_frame(__int64 framearg) {
 	if(g_isfirstframe) {
 		g_isfirstframe = false;
-		descan::run_gamelib_postinit_scangroups();
+		//run the late stage scanners, load all plugins
+		meathook_final_init();
+
+		
 	}
 
 	return call_as<__int64>(descan::g_idCommonLocal_Frame, framearg);

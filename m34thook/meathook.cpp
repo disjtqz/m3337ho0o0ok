@@ -570,7 +570,9 @@ static __int64 testdebugtools(void* x){
 	//call_as<void>(descan::g_renderDebugTools, get_rendersystem());
 	return call_as<__int64>(g_original_renderthread_run, x);
 }
-
+void meathook_final_init() {
+	descan::run_gamelib_postinit_scangroups();
+}
 
 void meathook_init() {
 	install_gameapi_hooks();
