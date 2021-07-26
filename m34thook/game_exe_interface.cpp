@@ -1,3 +1,5 @@
+#include "xbyak/xbyak.h"
+
 #include "mh_defs.hpp"
 
 #include <Windows.h>
@@ -5,6 +7,7 @@
 #include "game_exe_interface.hpp"
 #include "snaphakalgo.hpp"
 #include <mutex>
+#include "scanner_core.hpp"
 static HMODULE g_reach_module = nullptr;
 
 blamdll_t g_blamdll{};
@@ -122,7 +125,7 @@ void get_blamdll_info(blamdll_t* out) {
 	char* ntdllc = reinterpret_cast<char*>(get_reach_base());
 	auto base = reinterpret_cast<IMAGE_DOS_HEADER*>(get_reach_base());
 	auto winheader = reinterpret_cast<IMAGE_NT_HEADERS*>(ntdllc + base->e_lfanew);
-
+#if 0
 	out->image_headers = winheader;
 	out->text_base = ntdllc +
 		winheader->OptionalHeader.BaseOfCode;
@@ -162,6 +165,7 @@ void get_blamdll_info(blamdll_t* out) {
 		out->arch_base = out->data_base;
 		out->arch_size = out->data_size;
 	}
+#endif
 	/*
 	out->rdata_base = ntdllc + winheader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].VirtualAddress +  winheader->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT].Size;
 
@@ -180,21 +184,6 @@ void get_blamdll_info(blamdll_t* out) {
 void undo_all_reach_patches() {
 	while (undo_last_patch())
 		;
-}
-
-void** locate_func_in_imports(void* wantfunc) {
-	char* p = g_blamdll.idata_base;
-
-	char* end = g_blamdll.idata_size+p;
-
-	
-	while(p!= end) {
-		
-		if(reinterpret_cast<void**>(p)[0] == wantfunc )
-			return (void**)p;
-		p+=8;
-	}
-	return nullptr;
 }
 
 
@@ -221,4 +210,69 @@ void* alloc_execmem(size_t size) {
 #else
 	return VirtualAlloc(nullptr, size, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 #endif
+}
+
+
+void* detour_with_thunk_for_original(void* detour_from, void* detour_to, bool use_r9_instead) {
+	Xbyak::CodeGenerator redirector{};
+	Xbyak::CodeGenerator reporiginal_thunk{};
+	redirector.mov(redirector.rax, (uintptr_t)detour_to);
+	redirector.jmp(redirector.rax);
+
+
+	auto redirector_reg = use_r9_instead ? redirector.r9 : redirector.rax;
+
+
+	mh_disassembler_t disas{};
+	void* original_getfile_continuation = nullptr;
+	size_t savesize = 0;
+	disas.decode_enough_to_make_space(detour_from, redirector.getSize(), &original_getfile_continuation, &savesize);
+
+
+	Xbyak::CodeGenerator original_thunk{};
+
+	original_thunk.mov(redirector_reg, (uintptr_t)original_getfile_continuation);
+	original_thunk.jmp(redirector_reg);
+
+
+
+	void* g_original_ds_getfile = alloc_execmem(original_thunk.getSize() + savesize + 32);
+	size_t setupsize = savesize;
+
+	memcpy(g_original_ds_getfile, detour_from, setupsize);
+
+	disas.setup_for_addr(g_original_ds_getfile, 128);
+
+	Xbyak::CodeGenerator* to_use = &original_thunk;
+
+	if (disas.find_next_call(setupsize)) {
+		if(disas.get_call_target() == descan::g_alloca_probe) {
+		memset((void*)(disas.m_ctx.pc - 5), 0x90, 5);
+
+
+
+		reporiginal_thunk.mov(redirector_reg, (uintptr_t)descan::g_alloca_probe);
+		reporiginal_thunk.call(redirector_reg);
+
+		reporiginal_thunk.mov(redirector_reg, (uintptr_t)original_getfile_continuation);
+		reporiginal_thunk.jmp(redirector_reg);
+
+		to_use = &reporiginal_thunk;
+		}
+		else {
+			mh_error_message("Unimplemented call redirect handler!");
+			return nullptr;
+		}
+
+
+
+	}
+
+	memcpy(mh_lea<char>(g_original_ds_getfile, savesize), to_use->getCode(), to_use->getSize());
+
+
+	//g_original_ds_getfile now has the bytes we will clobber on the original + the instructions to jump back to the function, past the part we overwrote
+
+	patch_memory(detour_from, redirector.getSize(), (char*)redirector.getCode());
+	return g_original_ds_getfile;
 }

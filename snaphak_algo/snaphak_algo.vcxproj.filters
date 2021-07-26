@@ -60,6 +60,9 @@
     <ClCompile Include="snaphakalgo_networking.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="syscall_interface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="snaphakalgo_predef.hpp">
@@ -140,9 +143,15 @@
     <ClInclude Include="snaphak_allocator.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="syscall_list.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="snaphak_coros.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
+    <MASM Include="win_syscall_list.asm">
       <Filter>Source Files</Filter>
     </MASM>
   </ItemGroup>

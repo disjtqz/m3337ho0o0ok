@@ -1,3 +1,4 @@
+#include "xbyak/xbyak.h"
 #include "mh_defs.hpp"
 
 #include "game_exe_interface.hpp"
@@ -14,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "gameapi.hpp"
+
 void* find_entity(const char* name) {
 	void* gamloc = *reinterpret_cast<void**>(descan::g_gamelocal);
 
@@ -453,8 +455,58 @@ static void mh_rendergui_callback(idDebugHUD* dbghud, idRenderModelGui* rgui) {
 	rgui->DrawString(500, 500, "yo yo yo, we got some text baybee", &colorCyan, true, 3);*/
 }
 #define idDebugHUDLocal_Render_VtblIdx	1
+static void* g_original_queueevent = nullptr;
+static __int64  idInputEventQueue_QueueEvent(
+        __int64 a1,
+        int evtype,
+        int evval,
+        int evvalue2,
+        int evptrlength,
+        void *evptr,
+        unsigned int inpdevice) {
+	
+
+	return call_as<__int64>(g_original_queueevent, a1, evtype, evval, evvalue2, evptrlength, evptr, inpdevice);
+}
+
+
+static void meathook_hook_input() {
+	//same in v1 and v6
+	void* queue_event_func = get_class_vtbl(".?AVidInputLocalWin32@@")[0x60 / 8];
+
+	if(reinterpret_cast<unsigned char*>(queue_event_func)[1] == 0x8D) {//check if lea eventqueue jmp queuevent, which is done for v1 
+		//jit it so we can call both possible versions seamlessly
+		void* orig =  mh_disassembler_t::first_jump_target(queue_event_func);
+
+		void* event_queue_ptr = mh_lea<char>(queue_event_func, 7) + *mh_lea<int>(queue_event_func, 3);
+		
+		Xbyak::CodeGenerator e{};
+
+		e.mov(e.rcx, (uintptr_t)event_queue_ptr);
+		e.mov(e.rax, (uintptr_t)orig);
+		e.jmp(e.rax);
+
+		void* thunkmem = alloc_execmem(e.getSize());
+
+		memcpy(thunkmem, e.getCode(), e.getSize());
+
+
+		g_original_queueevent = thunkmem;
+		redirect_to_func(idInputEventQueue_QueueEvent, (uintptr_t)queue_event_func, true);
+	}
+	else {
+		g_original_queueevent = detour_with_thunk_for_original(queue_event_func, (void*)idInputEventQueue_QueueEvent);
+
+	}
+
+}
+static bool g_gameapihooks_installed = false;
 
 void install_gameapi_hooks() {
+	if(g_gameapihooks_installed)
+		return;
+
+	g_gameapihooks_installed = true;
 	*reinterpret_cast<void**>(descan::g_idCommonLocal_Frame_CallbackPtr) = (void*)meathook_game_frame;
 #if 1
 
@@ -464,6 +516,7 @@ void install_gameapi_hooks() {
 	g_original_rendergui = (void*)mh_rendergui_callback;
 	swap_out_ptrs(&debughudvtbl[idDebugHUDLocal_Render_VtblIdx], &g_original_rendergui,1,  false);
 #endif
+	meathook_hook_input();
 }
 
 void* get_material(const char* name) {

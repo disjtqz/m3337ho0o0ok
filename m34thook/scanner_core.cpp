@@ -9,6 +9,10 @@
 #include <cstdio>
 #include "idtypeinfo.hpp"
 #include "gameapi.hpp"
+
+std::map<std::string_view, void*> g_str_to_rrti_type_descr{};
+
+
 #define		DISABLE_PARALLEL_SCANGROUPS
 //#define		DISABLE_PHASE2_PARALLEL_SCANGROUPS
 
@@ -34,7 +38,7 @@
 #include "scanners/secondary_scangroup.hpp"
 
 #include "scanners/tertiary_scangroup.hpp"
-std::map<std::string_view, void*> g_str_to_rrti_type_descr{};
+
 
 /*
 	todo: this does THREE PASSES over the image. it could probably benefit from a bit of vectorization
@@ -190,8 +194,12 @@ static void scan_for_vftbls() {
 
 
 volatile bool wait_for_debugger = true;
+
+static std::atomic_bool g_did_locate_p1 = false;
 MH_NOINLINE
 void descan::locate_critical_features() {
+	if(g_did_locate_p1.exchange(true) == true)
+		return;
 
 #ifdef PRINT_SCAN_TIME_TAKEN
 	uint64_t tickcount = GetTickCount64();
@@ -240,16 +248,43 @@ void descan::locate_critical_features() {
 
 	//__debugbreak();
 }
+//v1=0140C6CF58
+//allowing constant offsets because they're the same in v1 and v6, and probably wont change
+using scanner_extract_getvirtualdims = memscanner_t<
+	scanbytes<0x48,0x8b,0x4b,0x40,0xe8>,
+	skip_and_capture_rva<&descan::g_idRenderModelGui_GetVirtualWidth>,
+	scanbytes<0xf3,0xf,0x2c,0xc8,0x8b,0xc7,0x39,0x0d>,
+	skip<4>,
+	scanbytes<0xf,0x4c,0xd>,
+	skip<4>,
+	scanbytes<0x85,0xc9, 0xf,0x4f,0xc1,0x89,0x5>,
+	skip<4>,
+	scanbytes<0x48,0x8b,0x4b,0x40,0xe8>
+>; //last 4 = rva to getvirtualheight
 #define		DRAWSTRING_VFTBL_INDEX 0x11
 #define		DRAWSTRETCHPIC_VFTBL_INDEX 0xC
 #define		DRAWCHAR_VFTBL_INDEX	0x10
 MH_NOINLINE
-void obtain_rendermodelgui_stuff() {
+static void obtain_rendermodelgui_stuff() {
 	void** dbgmodel = get_class_vtbl(".?AVidDebugModelGui@@");
 
 	descan::g_idRenderModelGui__DrawString = mh_disassembler_t::first_jump_target(dbgmodel[DRAWSTRING_VFTBL_INDEX]);
 	descan::g_idRenderModelGui__DrawStretchPic = mh_disassembler_t::first_call_target(dbgmodel[DRAWSTRETCHPIC_VFTBL_INDEX]);
+	descan::g_idRenderModelGui__DrawStretchPicVec4Version = mh_disassembler_t::first_call_target(descan::g_idRenderModelGui__DrawStretchPic);
 	descan::g_idRenderModelGui__DrawChar = mh_disassembler_t::first_jump_target(dbgmodel[DRAWCHAR_VFTBL_INDEX]);
+
+	void** aasgui = get_class_vtbl(".?AVidAASGUI@@");
+	//renderdebuggui function
+	void* start = aasgui[3];
+
+	void* end = mh_disassembler_t::after_first_return(start);
+
+
+	descan::g_idRenderModelGui_GetVirtualHeight = run_range_scanner<scanbehavior_locate_csrel_after<scanner_extract_getvirtualdims>>(start, end);
+	/*
+		todo: scan for getvirtualwidth/height
+	*/
+
 }
 
 
@@ -317,6 +352,39 @@ static void run_scanners_over_idconsolelocal_draw() {
 		descan::g_SMALLCHAR_WIDTH = mh_lea<void>(descan::g_SMALLCHAR_HEIGHT, -4LL);
 	}
 }
+//v1=140644932
+using scanner_extract_many_from_maketexturedcube = memscanner_t<
+	scanbytes<0xf,0x28,0xf2,0xf,0x28,0xf9,0xe8>,
+	skip_and_capture_rva<&descan::g_idStaticModel_FreeSurfaces>,
+	scanbytes<0xba>,
+	skip<1>, //skip memtag arg
+	scanbytes<0x0,0x0,0x0,0xb9>,
+	skip_and_capture_4byte_value<&descan::g_idTriangles_sizeof>,
+	scanbytes<0xe8>,
+	match_riprel32_to<&descan::g_doom_operator_new>,
+	scanbytes<0x48,0x85,0xc0,0x74>,
+	skip<1>,
+
+	scanbytes<0x48,0x8b,0xc8, 0xe8>,
+	skip_and_capture_rva<&descan::g_idTriangles_ctor>
+
+>;
+
+using scanner_find_allocstatictrisurfverts = memscanner_t<
+	scanbytes<0xba,0x18,0x0,0x0,0x0,0x48,0x8b,0xcb,
+	0xe8>, skip_and_capture_rva<&descan::g_idTriangles_AllocStaticTriSurfVerts>,
+	scanbytes<
+	0xba,0x24,0x0,0x0,0x0,0x48,0x8b,0xcb,
+	0xe8>,
+	skip_and_capture_rva<&descan::g_idTriangles_AllocStaticTriSurfIndexes>
+>;
+
+using scanner_find_updatebuffers = memscanner_t<
+	scanbytes<0xe8>,
+	match_riprel32_to<&descan::g_idRenderModelStatic_FinishStaticModel>,
+	scanbytes<0x45,0x33,0xc0,0x33,0xd2,0x48,0x8b,0xcf,0xe8>,
+	skip_and_capture_rva<&descan::g_idStaticModel_UpdateBuffers>
+>;
 static void run_scanners_over_staticmodelmanager_init() {
 
 	void** vftbl_for = get_class_vtbl(".?AVidStaticModelManagerLocal@@");
@@ -336,6 +404,20 @@ static void run_scanners_over_staticmodelmanager_init() {
 	}
 	descan::g_idStaticModel_ctor = run_range_scanner<scanbehavior_locate_csrel_after<scanner_extract_staticmodel_ctor>>(initfunc, endpos);
 	descan::g_idStaticModel_MakeTexturedCube = run_range_scanner<scanbehavior_locate_csrel_after<scanner_extract_maketexturedcube>>(initfunc, endpos);
+
+	void* start = descan::g_idStaticModel_MakeTexturedCube;
+
+	void* end = hunt_assumed_func_start_forward(mh_lea<char>(start,1));
+
+	void* end_of_first_part = run_range_scanner<scanbehavior_simple<scanner_extract_many_from_maketexturedcube>>(start, end);
+
+	void* cubeface_next = run_range_scanner<scanbehavior_simple<scanner_find_allocstatictrisurfverts>>(end_of_first_part, end);
+
+	descan::g_idTriangles_AddCubeFace = mh_disassembler_t::first_call_target(cubeface_next);
+
+	void* nextjmp_is_freecpu = run_range_scanner<scanbehavior_simple<scanner_find_updatebuffers>>(cubeface_next, end);
+
+	descan::g_idStaticModel_FreeCPUData = mh_disassembler_t::first_jump_target(nextjmp_is_freecpu);
 }
 
 MH_NOINLINE

@@ -38,6 +38,17 @@ struct idRenderModelGui {
 		float s2,
 		float t2,
 		const void* material);
+	void DrawStretchPic(
+		const idVec4* topLeft,
+		const idVec4* topRight,
+		const idVec4* bottomRight,
+		const idVec4* bottomLeft,
+		const void* material,
+		float z);
+
+	/*
+		use non-temporal writes to write out the verts
+	*/
 	idDrawVert* AllocTris(int numVerts, unsigned short* indexes, int numIndexes, void* material);
 	void DrawChar(float x, float y, int character, float scale);
 	void DrawString(
@@ -51,11 +62,16 @@ struct idRenderModelGui {
 		int y,
 		int width,
 		int height);
+	//added for compat with snaphak version so shingamegui can be ported over
+	void set_current_vertexcolor(unsigned vcolor);
+	MH_PURE
+		static float get_SMALLCHAR_WIDTH();
+	MH_PURE
+		static float get_SMALLCHAR_HEIGHT();
 
-	MH_PURE
-	static float get_SMALLCHAR_WIDTH();
-	MH_PURE
-	static float get_SMALLCHAR_HEIGHT();
+	float GetVirtualWidth();
+	float GetVirtualHeight();
+
 };
 
 

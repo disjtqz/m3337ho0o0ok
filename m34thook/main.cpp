@@ -76,9 +76,11 @@ DWORD XInputSetState(
 	return reinterpret_cast<DWORD(*)(DWORD, void*)>(xinputsetstate_ptr)(dwUserIndex, pVibration);
 }
 static  void* original_gamelib_init = nullptr;
+static std::atomic_bool g_did_gamelib_init_already = false;
+
 static int gamelib_init_forwarder(void* x, void* y) {
 
-
+	if(g_did_gamelib_init_already.exchange(true) == false) {
 	descan::run_late_scangroups();
 
 	int result = reinterpret_cast<int (*)(void*, void*)>(original_gamelib_init)(x, y);///doomcall<int>(doomoffs::gamelib_initialize, x, y);
@@ -88,6 +90,10 @@ static int gamelib_init_forwarder(void* x, void* y) {
 
 	hook_idfilesystem();
 	return result;
+	}
+	else {
+		return 0;
+	}
 
 }
 static bool g_did_init = false;
@@ -108,11 +114,15 @@ static void patch_engine_after_unpack() {
 	*ourguy = (void*)gamelib_init_forwarder;
 }
 
+static std::atomic_bool g_did_sysinf_hook_already = false;
+
 static void getsysinf(LPSYSTEM_INFO inf) {
 
 	reinterpret_cast<void (*)(LPSYSTEM_INFO)>(GetProcAddress(GetModuleHandleA("KernelBase.dll"), "GetSystemInfo"))(inf);
 	patch_memory(g_kernel32_getsysinfo_ptr, 16, g_old_getsysteminfo_bytes);
-	patch_engine_after_unpack();
+	FlushInstructionCache(GetCurrentProcess(), nullptr, 0);
+	if(g_did_sysinf_hook_already.exchange(true) == false)
+		patch_engine_after_unpack();
 }
 //static HMODULE g_idt7 = nullptr;
 BOOL WINAPI DllMain(
@@ -120,6 +130,9 @@ BOOL WINAPI DllMain(
 	_In_ DWORD     fdwReason,
 	_In_ LPVOID    lpvReserved
 ) {
+	if(DLL_PROCESS_DETACH == fdwReason) {
+		undo_all_reach_patches();
+	}
 	if (g_did_init)
 		return TRUE;
 	sh_algo_init(&g_shalgo);
@@ -130,7 +143,7 @@ BOOL WINAPI DllMain(
 	memcpy(g_old_getsysteminfo_bytes, g_kernel32_getsysinfo_ptr, 16);
 
 	redirect_to_func((void*)getsysinf, (uintptr_t)g_kernel32_getsysinfo_ptr, true);
-
+	FlushInstructionCache(GetCurrentProcess(), nullptr, 0);
 	return TRUE;
 }
 static void* xinputgetcaps_ptr = nullptr;

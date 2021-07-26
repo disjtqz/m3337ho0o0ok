@@ -62,14 +62,15 @@ SCANNED_UINT_FEATURE(g_vftbl_offset_getlevelmap)
 SCANNED_PTR_FEATURE(g_resourceStorageDiskStreamer_GetFile)
 
 SCANNED_PTR_FEATURE(g_resourceStorageInterface2)
-SCANNED_PTR_FEATURE(g_renderDebugTools)
-//for hooking to restore debugtools
-SCANNED_PTR_FEATURE(g_idRender_PrintStats)
+
 SCANNED_PTR_FEATURE(g_idImage_SubImageUpload)
 
 SCANNED_PTR_FEATURE(g_idRenderModelGui__DrawString)
 //?DrawStretchPic@idRenderModelGui@@QEAAXMMMMMMMMMPEBVidMaterial@@@Z
 SCANNED_PTR_FEATURE(g_idRenderModelGui__DrawStretchPic)
+
+//_ZN16idRenderModelGui14DrawStretchPicERK6idVec4S2_S2_S2_PK10idMaterialf
+SCANNED_PTR_FEATURE(g_idRenderModelGui__DrawStretchPicVec4Version)
 SCANNED_PTR_FEATURE(g_idRenderModelGui__DrawChar)
 
 SCANNED_PTR_FEATURE(g_idRenderModelGui_AllocTris)
@@ -91,5 +92,17 @@ SCANNED_PTR_FEATURE(g_idStaticModel_MakeTexturedCube)
 
 SCANNED_PTR_FEATURE(g_SMALLCHAR_HEIGHT)
 SCANNED_PTR_FEATURE(g_SMALLCHAR_WIDTH)
-
+SCANNED_PTR_FEATURE(g_idRenderModelGui_GetVirtualWidth)
+SCANNED_PTR_FEATURE(g_idRenderModelGui_GetVirtualHeight)
 SCANNED_PTR_FEATURE(g_renderSystem2)
+
+SCANNED_PTR_FEATURE(g_idStaticModel_FreeSurfaces)
+SCANNED_UINT_FEATURE(g_idTriangles_sizeof)
+SCANNED_PTR_FEATURE(g_idTriangles_ctor)
+SCANNED_PTR_FEATURE(g_idTriangles_AllocStaticTriSurfVerts)
+SCANNED_PTR_FEATURE(g_idTriangles_AllocStaticTriSurfIndexes)
+
+SCANNED_PTR_FEATURE(g_idTriangles_AddCubeFace)
+
+SCANNED_PTR_FEATURE(g_idStaticModel_UpdateBuffers)
+SCANNED_PTR_FEATURE(g_idStaticModel_FreeCPUData)

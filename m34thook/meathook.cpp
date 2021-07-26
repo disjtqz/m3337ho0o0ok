@@ -1,3 +1,4 @@
+#include "xbyak/xbyak.h"
 #include "mh_defs.hpp"
 
 #include "game_exe_interface.hpp"
@@ -16,6 +17,7 @@
 #include "idmath.hpp"
 #include "memscan.hpp"
 #include "mh_memmanip_cmds.hpp"
+
 void idlib_dump(idCmdArgs* args) {
 	idType::do_idlib_dump();
 	return;

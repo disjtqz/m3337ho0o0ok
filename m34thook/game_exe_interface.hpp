@@ -4,6 +4,7 @@
 #include "extern.h"
 
 struct blamdll_t {
+#if 0
 	char* text_base;
 	char* rdata_base;
 	char* data_base;
@@ -20,20 +21,11 @@ struct blamdll_t {
 	char* reloc_base;
 	unsigned image_size;
 	IMAGE_NT_HEADERS* image_headers;
-	template<typename T>
-	bool is_in_text(T v) {
-		return (char*)v >= text_base && (char*)v < (text_base + text_size);
-	}
 
-	template<typename T>
-	bool is_in_rdata(T v) {
-		return (char*)v >= rdata_base && (char*)v < (rdata_base + rdata_size);
-	}
-	template<typename T>
-	bool is_in_data(T v) {
-		return (char*)v >= data_base && (char*)v < (data_base + data_size);
-	}
-
+#else
+	char* image_base;
+	unsigned image_size; //todo: might want to change this to size_t so that no zero extension is needed to add to image_base
+#endif
 	template<typename T>
 	bool is_in_image(T v) {
 		return (char*)v >= image_base && (char*)v < (image_base + image_size);
@@ -93,11 +85,6 @@ void swap_out_ptrs(void* start_addr, void** repls, unsigned n, bool dont_want_re
 
 void undo_all_reach_patches();
 
-/*
-	finds the address in the import section of a pointer to wantfunc
-	or returns null
-*/
-void** locate_func_in_imports(void* wantfunc);
 
 extern blamdll_t g_blamdll;
 void** locate_import_ptr(const char* impname);
@@ -188,6 +175,8 @@ struct mh_disassembler_t {
 		intended for non-short jmps
 	*/
 	static void* first_jump_target(void* funcaddr) {
+		MH_UNLIKELY_IF(!funcaddr)
+			return nullptr;
 		mh_disassembler_t dis{};
 		dis.setup_for_addr(funcaddr);
 		/*
@@ -202,6 +191,8 @@ struct mh_disassembler_t {
 	}
 
 	static void* first_call_target(void* funcaddr) {
+		MH_UNLIKELY_IF(!funcaddr)
+			return nullptr;
 		mh_disassembler_t dis{};
 		dis.setup_for_addr(funcaddr);
 		/*
@@ -216,6 +207,8 @@ struct mh_disassembler_t {
 	}
 
 	static void* after_first_return(void* funcaddr) {
+		MH_UNLIKELY_IF(!funcaddr)
+			return nullptr;
 		mh_disassembler_t dis{};
 		dis.setup_for_addr(funcaddr);
 		
@@ -233,6 +226,10 @@ struct mh_disassembler_t {
 
 
 
+/*
+	makes from jump to to, while also generating a callable thunk that can be used to invoke the original function!
+*/
+void* detour_with_thunk_for_original(void* detour_from, void* detour_to, bool use_r9_instead = false);
 void* alloc_execmem(size_t size);
 
 /*

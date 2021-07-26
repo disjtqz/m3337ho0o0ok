@@ -17,6 +17,7 @@
 #include "snaphak_fmath.hpp"
 #include "snaphak_networking.hpp"
 #include "snaphak_allocator.hpp"
+#include "syscall_list.hpp"
 #define		SNAPHAK_SHARED_SEG		CS_CODE_SEG(".common")
 #define		SNAPHAKALGO_EXPORT		extern "C"
 enum class snaphak_cpu_lvl_t {
@@ -28,6 +29,9 @@ enum class snaphak_cpu_lvl_t {
 	top level structure with all function pointers for implementations
 */
 struct snaphak_algo_t {
+
+	unsigned (*m_get_syscall_code)(unsigned swi);
+	void* (*m_get_syscall_func)(unsigned swi);
 	void (*m_print_cpu_info)(struct snaphak_algo_t* alg, char* buffer, size_t maxsize);
 	snaphak_cpu_lvl_t m_cpulevel;
 	struct {
@@ -77,6 +81,15 @@ namespace sh{
 	static inline void fatal(const char* fmt, Ts... args) {
 		g_shalgo.m_fatal_raise(fmt, args...);
 	}
+
+	static inline bool syscall_interface_available() {
+		return !g_shalgo.m_is_under_wine;
+	}
+	template<unsigned swicode, typename RetType, typename... Argtypes>
+	static RetType perform_syscall(Argtypes... args) {
+		return reinterpret_cast<RetType(*)(Argtypes...)>(g_shalgo.m_get_syscall_func(swicode))(args...);
+	}
+
 }
 namespace sh::heap {
 #include "sh_heap_shared.hpp"

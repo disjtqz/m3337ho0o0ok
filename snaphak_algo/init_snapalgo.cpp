@@ -4,7 +4,7 @@
 
 #include <intrin.h>
 #include <Windows.h>
-
+#include "syscall_list.hpp"
 //#define		FORCE_GENERIC
 CS_NOINLINE
 CS_COLD_CODE
@@ -92,9 +92,19 @@ void sh_algo_init(snaphak_algo_t* out_algo) {
 		};
 	}flagtest;
 	out_algo->m_fatal_raise=_fatal_raise;
-	out_algo->m_is_under_wine = (GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_server_call") != nullptr) ;
+	//https://wiki.winehq.org/Developer_FAQ
+	out_algo->m_is_under_wine = (GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_version") != nullptr) ;
 		
-	
+	if(out_algo->m_is_under_wine) {
+		out_algo->m_get_syscall_code = nullptr;
+		out_algo->m_get_syscall_func = nullptr;
+	}
+	else {
+		win_syscalls::initialize_syscall_table();
+		out_algo->m_get_syscall_code = win_syscalls::get_syscall_code;
+		out_algo->m_get_syscall_func = win_syscalls::get_syscall_func_ptr;
+
+	}
 	int cpuflags[4] = {0};
 	//EAX, EBX, ECX, and EDX
 	__cpuid(cpuflags, 1);

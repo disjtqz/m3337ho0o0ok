@@ -76,18 +76,8 @@ struct _yuckystring_t {
 template<memsection_e section, typename TTest>
 MH_FORCEINLINE
 static inline bool test_section_address(blamdll_t* dll, TTest t) {
-	if constexpr (section == memsection_e::any) {
-		return dll->is_in_image(t);
-	}
-	else if constexpr (section == memsection_e::text) {
-		return dll->is_in_text(t);
-	}
-	else if constexpr (section == memsection_e::rdata) {
-		return dll->is_in_rdata(t);
-	}
-	else {
-		return dll->is_in_data(t);
-	}
+	return dll->is_in_image(t);
+
 }
 
 MH_FLATTEN
@@ -96,6 +86,20 @@ MH_FORCEINLINE
 static inline bool scancmp_bytes(const unsigned char* state, const unsigned char* values, size_t nvalues) {
 #if 1
 	unsigned i = 0;
+
+	
+#ifdef __AVX2__
+	
+	while ((i + 32) < nvalues) {
+		__m256i addri = _mm256_loadu_si256((const __m256i*)(state + i));
+		__m256i vali = _mm256_loadu_si256((const __m256i*)(values + i));
+
+		if (_mm256_movemask_epi8(_mm256_cmpeq_epi8(addri, vali)) != 0xFFFFFFFF)
+			return false;
+		i += 32;
+	}
+#endif
+
 	while ((i + 16) < nvalues) {
 		__m128i addri = _mm_loadu_si128((const __m128i*)(state + i));
 		__m128i vali = _mm_loadu_si128((const __m128i*)(values + i));
@@ -568,7 +572,9 @@ MH_FORCEINLINE static void* scan_guessed_function_boundaries(void* func) {
 	unsigned assumed_size = (char*)pf - (char*)func;
 	return scan_function_boundaries<ScanBehavior>(func, assumed_size);
 }
-MH_FORCEINLINE static void* hunt_assumed_func_start_back(void* func) {
+//made this noinline since it executes after scanners typically
+MH_NOINLINE
+static void* hunt_assumed_func_start_back(void* func) {
 	MH_UNLIKELY_IF(!func) {
 		return nullptr;
 	}
@@ -585,7 +591,8 @@ MH_FORCEINLINE static void* hunt_assumed_func_start_back(void* func) {
 	return pf + 1;
 }
 
-MH_FORCEINLINE static void* hunt_assumed_func_start_forward(void* func) {
+MH_NOINLINE
+static void* hunt_assumed_func_start_forward(void* func) {
 	MH_UNLIKELY_IF(!func) {
 		return nullptr;
 	}

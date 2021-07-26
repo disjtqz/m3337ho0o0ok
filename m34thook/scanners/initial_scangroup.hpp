@@ -394,8 +394,6 @@ namespace initial_scanners {
 
 	BSCANENT(locate_rtti_typeinfo_string_entry, &descan::g_rtti_typeinfo_string, scanbehavior_locate_func<locate_rtti_typeinfo_string>);
 	BSCANENT(locate_resourcestreamer_getfile, &descan::g_resourceStorageDiskStreamer_GetFile, scanbehavior_locate_func_with_start_search<locate_resourcestoragediskstreamer_getfile>);
-	BSCANENT(locate_renderdebugtools_entry, &descan::g_renderDebugTools, scanbehavior_locate_func_with_start_search<locate_renderdebugtools>);
-	BSCANENT(locate_idrender_printstats_entry,&descan::g_idRender_PrintStats, scanbehavior_locate_func_with_start_search<locate_idrender_printstats> );
 	BSCANENT(locate_idcommonlocal_frame_entry, &descan::g_idCommonLocal_Frame, scanbehavior_locate_func_with_start_search<locate_idcommonlocal_frame>);
 
 #define		PAR_SCANGROUP_P1_1				find_alloca_probe_entry, find_security_check_cookie_entry, find_doom_operator_new_and_idfile_memory_ctor_entry, locate_idoodle_decompress_entry, locate_idlib_vprintf_entry

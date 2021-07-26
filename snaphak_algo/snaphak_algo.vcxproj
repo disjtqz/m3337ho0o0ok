@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="ClangCLDebug|Win32">
+      <Configuration>ClangCLDebug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ClangCLDebug|x64">
+      <Configuration>ClangCLDebug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
       <Platform>Win32</Platform>
@@ -39,6 +47,13 @@
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -46,6 +61,13 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>ClangCL</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>ClangCL</PlatformToolset>
@@ -64,10 +86,16 @@
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -77,11 +105,18 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>../staticlibs</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>../staticlibs</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>../staticlibs</OutDir>
   </PropertyGroup>
@@ -101,6 +136,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -162,15 +213,45 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>SNAPHAKALGO_BUILDING;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <ExceptionHandling>false</ExceptionHandling>
+      <AdditionalIncludeDirectories>C:\Users\chris\Desktop\merge_mh\m3337ho0o0ok\snaphak_algo;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <StringPooling>true</StringPooling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalOptions>-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2 -mcx16 %(AdditionalOptions)</AdditionalOptions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="impls\init_impls_avx2.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="impls\init_impls_avx512.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt  -mavx512f -mavx512cd -mavx512bw -mavx512dq -mavx512vl %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt  -mavx512f -mavx512cd -mavx512bw -mavx512dq -mavx512vl %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="impls\init_impls_generic.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2 -mcx16 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2 -mcx16 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="init_snapalgo.cpp" />
     <ClCompile Include="snaphakalgo_coro.cpp" />
@@ -178,9 +259,11 @@
     <ClCompile Include="snaphakalgo_networking.cpp" />
     <ClCompile Include="snaphakalgo_real.cpp">
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-mlong-double-80 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">-mlong-double-80 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="snaphakalgo_smt.cpp" />
     <ClCompile Include="snaphakalgo_vmem.cpp" />
+    <ClCompile Include="syscall_interface.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="impls\avx2\memops_avx2.hpp" />
@@ -209,9 +292,11 @@
     <ClInclude Include="snaphak_sortnsearch.hpp" />
     <ClInclude Include="snaphak_string.hpp" />
     <ClInclude Include="snaphak_vmemops.hpp" />
+    <ClInclude Include="syscall_list.hpp" />
   </ItemGroup>
   <ItemGroup>
     <MASM Include="snaphak_coros.asm" />
+    <MASM Include="win_syscall_list.asm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

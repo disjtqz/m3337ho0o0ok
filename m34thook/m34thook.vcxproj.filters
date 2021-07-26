@@ -209,5 +209,8 @@
     <ClInclude Include="mhgui.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="scanners\scanner_core_incl.hpp">
+      <Filter>Header Files\scanners</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

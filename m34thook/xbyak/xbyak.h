@@ -22,6 +22,9 @@
 #include <iostream>
 #endif
 #define		MH_XB_CONSTEXPR constexpr
+#include <intrin.h>
+#define		MH_XB_FIXED_SIZE_BUFFER		
+#define		MH_XB_FIXED_SIZE_BUFFER_SIZE		512
 // #define XBYAK_DISABLE_AVX512
 
 #if !defined(XBYAK_USE_MMAP_ALLOCATOR) && !defined(XBYAK_DONT_USE_MMAP_ALLOCATOR)
@@ -322,6 +325,7 @@ namespace Xbyak {
 	/*
 		custom allocator
 	*/
+#ifndef MH_XB_FIXED_SIZE_BUFFER
 	struct Allocator {
 		uint8* alloc(size_t size) { return reinterpret_cast<uint8*>(AlignedMalloc(size, inner::ALIGN_PAGE_SIZE)); }
 		void free(uint8* p) { AlignedFree(p); }
@@ -329,6 +333,20 @@ namespace Xbyak {
 		/* override to return false if you call protect() manually */
 		bool useProtect() const { return true; }
 	};
+#else
+	struct Allocator {
+		char buffer[MH_XB_FIXED_SIZE_BUFFER_SIZE];
+
+		uint8* alloc(size_t size) {
+			return (uint8*)buffer;
+		}
+		static constexpr void free(uint8* p) { }
+		~Allocator() {}
+		/* override to return false if you call protect() manually */
+		static constexpr bool useProtect()  { return false; }
+	};
+#endif
+
 
 #ifdef XBYAK_USE_MMAP_ALLOCATOR
 #ifdef XBYAK_USE_MAP_JIT
@@ -928,12 +946,19 @@ namespace Xbyak {
 		void growMemory()
 		{
 			const size_t newSize = (std::max<size_t>)(DEFAULT_MAX_CODE_SIZE, maxSize_ * 2);
+#ifdef MH_XB_FIXED_SIZE_BUFFER
+			maxSize_ = newSize;
+			if(maxSize_ >= MH_XB_FIXED_SIZE_BUFFER_SIZE)
+				__debugbreak();
+#else
+			
 			uint8* newTop = alloc_->alloc(newSize);
 			if (newTop == 0) XBYAK_THROW_ERROW(ERR_CANT_ALLOC);
 			for (size_t i = 0; i < size_; i++) newTop[i] = top_[i];
 			alloc_->free(top_);
 			top_ = newTop;
 			maxSize_ = newSize;
+#endif
 		}
 		/*
 			calc jmp address for AutoGrow mode

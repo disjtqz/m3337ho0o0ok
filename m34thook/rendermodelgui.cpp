@@ -38,6 +38,21 @@ void idRenderModelGui::DrawStretchPic(
 	const void* material) {
 	call_as<void>(descan::g_idRenderModelGui__DrawStretchPic, this, x, y, z, w, h, s1, t1, s2, t2, material);
 }
+
+void idRenderModelGui::DrawStretchPic(
+	const idVec4* topLeft,
+	const idVec4* topRight,
+	const idVec4* bottomRight,
+	const idVec4* bottomLeft,
+	const void* material,
+	float z) {
+	call_as<void>(descan::g_idRenderModelGui__DrawStretchPicVec4Version, this, topLeft, topRight, bottomRight, bottomLeft, material, z);
+
+}
+
+void idRenderModelGui::set_current_vertexcolor(unsigned vcolor) {
+	GET_VERTEXCOLOR() = vcolor;
+}
 idDrawVert* idRenderModelGui::AllocTris(int numVerts, unsigned short* indexes, int numIndexes, void* material) {
 	return call_as<idDrawVert*>(descan::g_idRenderModelGui_AllocTris, this, numVerts, indexes, numIndexes, material);
 }
@@ -80,4 +95,14 @@ float idRenderModelGui::get_SMALLCHAR_HEIGHT(){
 	else {
 		return *reinterpret_cast<float*>(descan::g_SMALLCHAR_HEIGHT);
 	}
+}
+
+
+float idRenderModelGui::GetVirtualWidth() {
+
+	return call_as<float>(descan::g_idRenderModelGui_GetVirtualWidth, this);
+
+}
+float idRenderModelGui::GetVirtualHeight() {
+	return call_as<float>(descan::g_idRenderModelGui_GetVirtualHeight, this);
 }

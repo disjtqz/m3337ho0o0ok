@@ -122,7 +122,7 @@ struct cs_idfile_override_t : public idFile {
 	}
 
 	static size_t do_read(idFile* thiz, void* buffer, unsigned int len) {
-
+		
 		return STDIOFN_LOCK(fread, buffer, 1, len, reinterpret_cast<cs_idfile_override_t*>(thiz)->m_cfile);
 	}
 	static size_t do_write(idFile* thiz, const void* buffer, unsigned int len) {
@@ -579,8 +579,12 @@ static idFile* idResourceStorageDiskStreamer_GetFile_replacement(idResourceStora
 }
 
 
-
+static bool g_installed_fs_hooks = false;
 void hook_idfilesystem() {
+	if(g_installed_fs_hooks)
+		return;
+
+	g_installed_fs_hooks =true;
 	//wayyyy overallocate. i think the max path for win is below this but also WHO KNOWS WHAT THE FUTURE HOLDS
 
 
@@ -651,6 +655,8 @@ void hook_idfilesystem() {
 
 	patch_memory(descan::g_resourceStorageDiskStreamer_GetFile, redirector.getSize(), (char*)redirector.getCode());
 
+#else
+	g_original_ds_getfile = detour_with_thunk_for_original(descan::g_resourceStorageDiskStreamer_GetFile,(void*)idResourceStorageDiskStreamer_GetFile_replacement, true );
 #endif
 
 
