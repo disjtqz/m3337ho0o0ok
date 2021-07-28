@@ -30,3 +30,13 @@ namespace descan {
 	MH_NOINLINE
 		void run_gamelib_postinit_scangroups();
 }
+
+struct scanner_ops_t {
+	void (*locate_critical_features)();
+	void (*run_late_scangroups)();
+	void (*run_gamelib_postinit_scangroups)();
+};
+
+extern scanner_ops_t g_scanops_generic;
+extern scanner_ops_t g_scanops_avx2;
+extern scanner_ops_t g_scanops_avx512;

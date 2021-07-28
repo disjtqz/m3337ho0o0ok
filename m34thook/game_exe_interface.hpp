@@ -3,7 +3,7 @@
 #include <cstddef>
 #include "extern.h"
 
-struct blamdll_t {
+struct alignas(64) blamdll_t {
 #if 0
 	char* text_base;
 	char* rdata_base;
@@ -23,7 +23,12 @@ struct blamdll_t {
 	IMAGE_NT_HEADERS* image_headers;
 
 #else
+#ifdef __clang__
+	char*  image_base __attribute__((align_value(4096)));
+	
+#else
 	char* image_base;
+#endif
 	unsigned image_size; //todo: might want to change this to size_t so that no zero extension is needed to add to image_base
 #endif
 	template<typename T>

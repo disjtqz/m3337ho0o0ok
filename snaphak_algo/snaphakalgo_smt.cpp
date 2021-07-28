@@ -181,6 +181,9 @@ struct cpuInfo_t {
 };
 
 /*
+	from Doom3BFG
+*/
+/*
 ========================
 GetCPUInfo
 ========================

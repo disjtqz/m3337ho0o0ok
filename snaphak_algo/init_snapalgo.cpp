@@ -44,7 +44,7 @@ CS_COLD_CODE
 static
 void print_cpu_info(snaphak_algo_t* alg, char* buffer, size_t maxsize) {
 	sprintf_s(buffer, maxsize, 
-		"Snaphak Algo CpuInfo\n"
+		"Meathook Algo CpuInfo\n"
 		"ISA Profile:%s\n\t"
 		"Has SMT: %d\n\t"
 		"SMT width:%d\n\t"

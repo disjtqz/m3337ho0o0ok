@@ -146,6 +146,53 @@ using locate_idstaticmodel_finish = memscanner_t<
 
 
 
+
+#if !defined(MH_ETERNAL_V6)
+using locate_body_of_getlevelmap = memscanner_t<
+	scanbytes<0x48, 0x89, 0x74, 0x24, 0x20, 0x48, 0x89, 0x74, 0x24, 0x28, 0x48, 0x8b, 0x1, 0x48, 0x89, 0x74, 0x24, 0x78, 0x48, 0x89, 0xb4, 0x24, 0x80, 0x0, 0x0, 0x0, 0x40, 0x88, 0x74, 0x24, 0x48, 0x48, 0x89, 0x74, 0x24, 0x50, 0x66, 0xc7, 0x44, 0x24, 0x58, 0x0, 0x1, 0x48, 0x89, 0x74, 0x24, 0x68, 0x40, 0x88, 0x74, 0x24, 0x70, 0xff, 0x50, 0x8, 0x84, 0xc0, 0xf, 0xb6, 0x44, 0x24, 0x33, 0x40, 0xf, 0x94, 0xc7>
+>;
+#else
+using locate_getlevelmap_offset = memscanner_t<
+	scanbytes<0x48, 0x8b, 0xcb, 0x48, 0x8b, 0x3, 0xFF, 0x90>,
+	skip_and_capture_4byte_value<&descan::g_vftbl_offset_getlevelmap>,
+	scanbytes<0x4c, 0x8b, 0xe8, 0x48, 0x85, 0xc0, 0x75>,
+	skip<1>,//jmp target
+	scanbytes<0x48, 0x8D, 0x0D>,
+	riprel32_data_equals<  0x43, 0x6F, 0x75, 0x6C, 0x64, 0x20, 0x6E, 0x6F, 0x74, 0x20,
+	0x47, 0x65, 0x74, 0x4C, 0x65, 0x76, 0x65, 0x6C, 0x4D, 0x61,
+	0x70, 0x00>
+>;
+#endif
+//0014041B2FC
+using locate_getentitystate_in_body = memscanner_t<
+
+	scanbytes<0x4c, 0x8b, 0x46, 0x78, 0x41, 0x80, 0x38, 0x0, 0x74>,
+	skip<1>,
+	scanbytes<0x48, 0x8D, 0x15>,
+	riprel32_data_equals<  0x69, 0x6E, 0x68, 0x65, 0x72, 0x69, 0x74, 0x20, 0x3D, 0x20,  //inherit = "%s";
+	0x22, 0x25, 0x73, 0x22, 0x3B, 0x0A, 0x00>>;
+using locate_sqrt = memscanner_t<scanbytes<0xf2, 0xf, 0x11, 0x44, 0x24, 0x8, 0x48, 0x83, 0xec, 0x58, 0x48, 0xb9, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xf0, 0x7f, 0xf2, 0xf, 0x11, 0x44, 0x24, 0x68, 0x48, 0x8b, 0x54, 0x24, 0x68, 0x48, 0x8b, 0xc2, 0x48, 0x23, 0xc1, 0x48, 0x3b, 0xc1>>;
+
+using locate_sqrtf = memscanner_t<scanbytes<0xf3, 0xf, 0x11, 0x44, 0x24, 0x8, 0x48, 0x83, 0xec, 0x58, 0xb9, 0x0, 0x0, 0x80, 0x7f, 0xf3, 0xf, 0x11, 0x44, 0x24, 0x68, 0x8b, 0x54, 0x24, 0x68, 0x8b, 0xc2, 0x23, 0xc1, 0x3b, 0xc1>>;
+
+#if !defined(MH_ETERNAL_V6)
+//1.0 14056AD03
+using locate_atomicstring_set = memscanner_t<scanbytes<0xf, 0xb6, 0x45, 0xb3, 0xf, 0x57, 0xc0, 0x0f, 0x28, 0x0D>,
+	riprel32_data_equals<  0x6F, 0x12, 0x43, 0x3E, 0x6F, 0x12, 0xC3, 0x3E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xC8, 0x42>,
+	scanbytes<0x4c, 0x89, 0x6c, 0x24, 0x48, 0x66, 0xf, 0x7f, 0x44, 0x24, 0x50, 0x4c, 0x89, 0x6c, 0x24, 0x60, 0xc7, 0x44, 0x24, 0x68, 0x6f, 0x12, 0xc3, 0x3e, 0xc7, 0x44, 0x24, 0x6c, 0x6f, 0x12, 0x43, 0x3e>>;
+#else
+//sprint_detached
+//should work in all versions
+using locate_atomicstring_set = memscanner_t<
+	scanbytes<0x48, 0x8D, 0x15>,
+	riprel32_data_equals<  0x73, 0x70, 0x72, 0x69, 0x6E, 0x74, 0x5F, 0x64, 0x65, 0x74,
+	0x61, 0x63, 0x68, 0x65, 0x64, 0x00>,
+	scanbytes<0x48, 0x8D, 0x0D>,
+	skip<4>,
+	scanbytes<0xE8>
+	//last four bytes = riprel to atomstrset
+>;
+#endif
 namespace scanners_phase2 {
 #if !defined(MH_ETERNAL_V6)
 	BSCANENT(entry_phase2_locate_findclassinfo, &descan::g_idtypeinfo_findclassinfo, scanbehavior_locate_func<scanner_locate_findclassinfo>);
@@ -156,10 +203,6 @@ namespace scanners_phase2 {
 
 	BSCANENT(entry_phase2_locate_resourcelist_for_classname, &descan::g_resourcelist_for_classname, scanbehavior_locate_csrel_after<scanner_locate_resourcelist_for_classname>);
 
-	//BSCANENT(entry_phase2_locate_cmd_patch_area, &descan::g_command_patch_area, scanbehavior_simple<locate_cmd_patch_area>);
-
-	BSCANENT(entry_phase2_locate_deserialize_from_json, &descan::g_deserialize_type_from_json, scanbehavior_locate_func<scanner_locate_deserialize_typetojson>);
-	//BSCANENT(setentitystate_locator, &descan::g_declentitydef_setentitystate, scanbehavior_locate_func<locate_setentitystate>);
 	BSCANENT(locate_idmapfilelocal_write_body_entry, &descan::g_idmapfile_write, scanbehavior_locate_func<locate_idmapfilelocal_write_body>);
 
 	BSCANENT(locate_findenuminfo_entry, &descan::g_idtypeinfo_findenuminfo, scanbehavior_locate_csrel_after<scanner_locate_findenuminfo>);
@@ -180,16 +223,31 @@ namespace scanners_phase2 {
 	BSCANENT(entry_find_idcolor_pack, &descan::g_idcolor_packcolor, scanbehavior_locate_func<locate_idcolor_packcolor>);
 
 	BSCANENT(locate_idstaticmodel_finish_entry, &descan::g_idRenderModelStatic_FinishStaticModel, scanbehavior_identity<&descan::g_idRenderModelStatic_FinishStaticModel,locate_idstaticmodel_finish>);
+	BSCANENT(getentitystate_needsoffset, &descan::g_declentitydef_gettextwithinheritance, scanbehavior_locate_func_with_start_search<locate_getentitystate_in_body>);
+
+	#if !defined(MH_ETERNAL_V6)
+	BSCANENT(locate_getlevelmap_entry, &descan::g_maplocal_getlevelmap, scanbehavior_locate_func<locate_body_of_getlevelmap>);
+#else
+	BSCANENT(locate_getlevelmap_entry, nullptr, scanbehavior_locate_func<locate_getlevelmap_offset>);
+
+#endif
+#if !defined(MH_ETERNAL_V6)
+	BSCANENT(atomicstringset_locator_entry, &descan::g_atomic_string_set, scanbehavior_locate_csrel_preceding<locate_atomicstring_set>);
+#else
+	BSCANENT(atomicstringset_locator_entry, &descan::g_atomic_string_set, scanbehavior_locate_csrel_after<locate_atomicstring_set>);
+#endif
+	BSCANENT(sqrtf_locator_entry, &descan::g_sqrtf, scanbehavior_locate_func<locate_sqrtf>);
+	BSCANENT(sqrt_locator_entry, &descan::g_sqrt, scanbehavior_locate_func<locate_sqrt>);
 	//9 scanners
 #define		PAR_SCANGROUP_P2_1 				entry_phase2_locate_findclassinfo, entry_phase2_locate_idfilecompressed_getfile
 #define		PAR_SCANGROUP_P2_2				entry_phase2_locate_resourcelist_for_classname,locate_subimage_upload_entry
 #define		PAR_SCANGROUP_P2_3				locate_idmapfilelocal_write_body_entry,locate_findenuminfo_entry
-#define		PAR_SCANGROUP_P2_4				locate_idlib_fatalerror_entry,locate_idlib_error_entry
+#define		PAR_SCANGROUP_P2_4				locate_idlib_fatalerror_entry,locate_idlib_error_entry, sqrtf_locator_entry
 
-#define		PAR_SCANGROUP_P2_5 				locate_resourcelist_add_entry,find_next_ent_with_class_locator_entry
+#define		PAR_SCANGROUP_P2_5 				locate_resourcelist_add_entry,find_next_ent_with_class_locator_entry, getentitystate_needsoffset
 #define		PAR_SCANGROUP_P2_6				locate_idstaticmodel_finish_entry,locate_commonlocal_frame_job_pointer
-#define		PAR_SCANGROUP_P2_7				entry_find_idcolor_pack,locate_rendermodelgui_alloctris_entry
-#define		PAR_SCANGROUP_P2_8				locate_idimagemanager_scratchimage_entry
+#define		PAR_SCANGROUP_P2_7				entry_find_idcolor_pack,locate_rendermodelgui_alloctris_entry,atomicstringset_locator_entry
+#define		PAR_SCANGROUP_P2_8				locate_idimagemanager_scratchimage_entry,locate_getlevelmap_entry, sqrt_locator_entry
 #if defined(DISABLE_PHASE2_PARALLEL_SCANGROUPS)
 
 	using secondary_scangroup_type = scangroup_t<

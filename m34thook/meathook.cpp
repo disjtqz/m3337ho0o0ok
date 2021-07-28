@@ -17,7 +17,7 @@
 #include "idmath.hpp"
 #include "memscan.hpp"
 #include "mh_memmanip_cmds.hpp"
-
+#include "snaphakalgo.hpp"
 void idlib_dump(idCmdArgs* args) {
 	idType::do_idlib_dump();
 	return;
@@ -576,6 +576,14 @@ void meathook_final_init() {
 	descan::run_gamelib_postinit_scangroups();
 }
 
+static void meathook_cpuinfo(idCmdArgs* args) {
+	char cpuinfo_buffer[4096];
+	g_shalgo.m_print_cpu_info(&g_shalgo, cpuinfo_buffer, 4096);
+
+	set_clipboard_data(cpuinfo_buffer);
+	idLib::Printf(cpuinfo_buffer);
+}
+
 void meathook_init() {
 	install_gameapi_hooks();
 
@@ -640,7 +648,7 @@ void meathook_init() {
 	idCmd::register_command("mh_reload_decl", mh_reload_decl, "mh_reload_decl <classname(ex:idDeclWeapon)> <decl path>");
 	idCmd::register_command("mh_list_resource_lists",mh_list_resource_lists, "lists all resource lists by classname/typename, copying the result to the clipboard (the clipboard might not be helpful here)");
 	idCmd::register_command("idlib_idc", idc_dump, "Generates a .idc file for ida that defines all structs and enums that have typeinfo for this build of eternal");
-
+	idCmd::register_command("mh_cpuinfo", meathook_cpuinfo, "takes no args, dumps info about your cpu for dev purposes");
 	install_memmanip_cmds();
 	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
 	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");

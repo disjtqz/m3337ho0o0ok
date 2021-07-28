@@ -353,6 +353,19 @@
     <ClCompile Include="mh_memmanip_cmds.cpp" />
     <ClCompile Include="mh_native_api.cpp" />
     <ClCompile Include="rendermodelgui.cpp" />
+    <ClCompile Include="scanners_avx2.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='ClangCLRelease|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="scanners_avx512.cpp">
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt  -mavx512f -mavx512cd -mavx512bw -mavx512dq -mavx512vl %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt  -mavx512f -mavx512cd -mavx512bw -mavx512dq -mavx512vl %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='ClangCLRelease|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt  -mavx512f -mavx512cd -mavx512bw -mavx512dq -mavx512vl %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse4.1 -msse3 -mssse3 -mlzcnt -mavx -mavx2 -mf16c -mbmi -mbmi2 -mfma -mpopcnt -mpopcnt  -mavx512f -mavx512cd -mavx512bw -mavx512dq -mavx512vl %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <ClCompile Include="scanners_generic.cpp" />
     <ClCompile Include="scanner_core.cpp">
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Full</Optimization>
       <InlineFunctionExpansion Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AnySuitable</InlineFunctionExpansion>

@@ -28,7 +28,6 @@ SCANNED_PTR_FEATURE(g_gamelocal)
 SCANNED_PTR_FEATURE(g_idgamesystemlocal)
 
 SCANNED_PTR_FEATURE(g_serialize_type_to_json)
-SCANNED_PTR_FEATURE(g_deserialize_type_from_json)
 SCANNED_PTR_FEATURE(g_atomic_string_set)
 
 SCANNED_PTR_FEATURE(g_declentitydef_setentitystate)

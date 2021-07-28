@@ -19,6 +19,9 @@
     <Filter Include="Header Files\xbyak">
       <UniqueIdentifier>{dc3f1388-cb82-46c8-9257-024445c4e178}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\scanner_inls">
+      <UniqueIdentifier>{a000585c-b95f-4fe2-a513-407870384757}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -92,6 +95,15 @@
     </ClCompile>
     <ClCompile Include="mhgui.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scanners_generic.cpp">
+      <Filter>Source Files\scanner_inls</Filter>
+    </ClCompile>
+    <ClCompile Include="scanners_avx2.cpp">
+      <Filter>Source Files\scanner_inls</Filter>
+    </ClCompile>
+    <ClCompile Include="scanners_avx512.cpp">
+      <Filter>Source Files\scanner_inls</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
