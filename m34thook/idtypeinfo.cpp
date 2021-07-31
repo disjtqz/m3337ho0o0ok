@@ -685,3 +685,51 @@ static void idtype_append_class(std::string& outbuf, classTypeInfo_t* typeinf) {
 void idType::generate_json() {
 
 }
+/*
+	todo: figure out how to use valueIndex
+*/
+MH_NOINLINE
+const char* idType::get_enum_member_name_for_value(enumTypeInfo_t* enumtype, long long value) {
+	enumValueInfo_t* values = enumtype->values;
+
+	while(values->name && values->name[0]) {
+		
+		if(values->value == value) {
+			return values->name;
+		}
+		else {
+			++values;
+		}
+
+	}
+	return nullptr;
+
+}
+
+bool idType::enum_member_is(enumTypeInfo_t* enm, long long value, const char* membername) {
+	const char* name = get_enum_member_name_for_value(enm, value);
+	MH_UNLIKELY_IF(!name)
+		return false;
+	return sh::string::streq(name, membername);
+}
+
+
+MH_NOINLINE
+long long* idType::get_enum_member_value(const char* ename, const char* mname) {
+
+	enumTypeInfo_t* etyp = FindEnumInfo(ename);
+	MH_UNLIKELY_IF(!etyp) {
+		return nullptr;
+	}
+	enumValueInfo_t* values = etyp->values;
+
+	while(values->name && values->name[0]) {
+		
+		if(sh::string::streq(values->name, mname)){
+			return &values->value;
+		}
+
+		++values;
+	}
+	return nullptr;
+}

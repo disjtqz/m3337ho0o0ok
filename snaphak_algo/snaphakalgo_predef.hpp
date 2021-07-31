@@ -26,3 +26,24 @@ static void unpair2u32(unsigned long long paired, unsigned& lo, unsigned& hi) {
 	lo = paired;
 	hi = paired>>32;
 }
+
+#if defined(__clang__)
+
+#define		MH_TRIVIAL_ABI		__attribute__((trivial_abi))		
+
+#define		MH_LEAF		__attribute__((leaf))
+
+#define		MH_DISABLE_STATIC_DCTOR		__attribute__((no_destroy))
+
+#define		MH_NOESCAPE		__attribute__((noescape))
+
+#else
+#define		MH_TRIVIAL_ABI			
+
+#define		MH_LEAF		
+
+#define		MH_DISABLE_STATIC_DCTOR		
+
+#define		MH_NOESCAPE		
+#endif
+#define		MH_NOALIAS		__declspec(noalias)

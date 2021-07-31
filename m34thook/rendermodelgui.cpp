@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "gameapi.hpp"
+#include "snaphakalgo.hpp"
 #define     GET_VERTEXCOLOR()       *mh_lea<unsigned>(this, RENDERMODELGUI_VERTEXCOLOR_OFFSET)
 void idRenderModelGui::DrawFilled(const idColor& color, float x, float y, float w, float h) {
 
@@ -48,6 +49,53 @@ void idRenderModelGui::DrawStretchPic(
 	float z) {
 	call_as<void>(descan::g_idRenderModelGui__DrawStretchPicVec4Version, this, topLeft, topRight, bottomRight, bottomLeft, material, z);
 
+}
+MH_NOINLINE
+void idRenderModelGui::DrawRectMaterial(
+	float xstart, float ystart, float width, float height, const char* material
+) {
+
+	void* mtr = get_material(material);
+
+	MH_UNLIKELY_IF(!mtr) {
+		sh::fatal("Failed to find material %s in DrawRectMaterial!", material);
+	}
+	DrawRectMaterial(xstart, ystart, width, height, mtr);
+}
+MH_NOINLINE
+void idRenderModelGui::DrawRectMaterial(
+	float xstart, float ystart, float width, float height, void* material
+) {
+
+	idVec4 topl, topr, botr, botl;
+
+	topl.x = xstart;
+	topl.y = ystart;
+	topl.z = .0f;
+	topl.w = .0f;
+	auto make_texcoords = [xstart, ystart, width, height](idVec4& v) {
+		v.z = (v.x - xstart) / width;
+		v.w = (v.y - ystart) / height;
+	};
+
+	make_texcoords(topl);
+
+	topr.x = xstart + width;
+	topr.y = ystart;
+	topr.z = .0f;
+	topr.w = .0f;
+	make_texcoords(topr);
+	botr.x = xstart + width;
+	botr.y = ystart + height;
+	botr.z = .0f;
+	botr.w = .0f;
+	make_texcoords(botr);
+	botl.x = xstart;
+	botl.y = ystart + height;
+	botl.z = .0f;
+	botl.w = .0f;
+	make_texcoords(botl);
+	DrawStretchPic(&topl, &topr, &botr, &botl, material, 1.0f);
 }
 
 void idRenderModelGui::set_current_vertexcolor(unsigned vcolor) {

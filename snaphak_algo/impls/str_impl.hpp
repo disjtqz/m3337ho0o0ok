@@ -1254,6 +1254,40 @@ char* __fastcall cs_strtok_r(char* str, const char* delim, char** saveptr)
 	}
 	return result;
 }
+
+IMPL_CODE_SEG
+static
+char*  cs_strcpy(char* destbuf, const char* srcbuf) {
+	/*
+		todo: vectorized version
+	*/
+
+	while(*srcbuf) {
+		
+		*destbuf = *srcbuf;
+		++destbuf;
+		++srcbuf;
+	}
+	*destbuf = 0;
+	return destbuf;
+}
+
+IMPL_CODE_SEG
+static unsigned cs_to_unicode(wchar_t* uniout, const char* asciiin) {
+	
+	unsigned i = 0;
+	while(true) {
+		uniout[i] = asciiin[i];
+
+		if(!uniout[i])
+			return i;
+
+		++i;
+
+	}
+	cs_assume_m(false);
+	return 0;
+}
 /*
 
 	int (*m_str_to_long)(const char* str, const char** out_endptr, unsigned base);
@@ -1295,4 +1329,6 @@ static void str_algos_init(snaphak_sroutines_t* out_str) {
 	out_str->m_strcspn = _strcspn_sse42;
 	out_str->m_strspn = _strspn_sse42;
 	out_str->m_strtok_r = cs_strtok_r;
+	out_str->m_strcpy = cs_strcpy;
+	out_str->m_to_unicode = cs_to_unicode;
 }

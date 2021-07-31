@@ -1,13 +1,23 @@
 #pragma once
 
+/*
+	good gui-looking materials we can use: 
+		loading/loading_info_textures/swf_images/loading_screen/loading_tip_box_
+		swf/hud/menus/dossier/dossier_arsenal_textures/swf_images/dossier/arsenal/weaponnav_bg_
 
 
-#pragma once
+	really good:
+		swf/hud/menus/dossier/dossier_arsenal_textures/swf_images/end_of_level/bg_window_large_
+		swf/hud/menus/dossier/dossier_map_textures/swf_images/hud/demonic_corruption/hud_slayer_demoncorruption_container_single_
+		swf/main_menu/screens/seasons_textures/swf_images/seasons/profile_nameplate_rect_bg_
+		swf/main_menu/screens/seasons_textures/swf_images/seasons/profile_icon_circle_bg_
+		swf/hud/menus/re_spec_station_textures/swf_images/common/frame/frame_backplate_
+	good icons:
+		swf/hud/menus/dossier/dossier_arsenal_textures/swf_images/icons/icon_list_item_notification_
 
-
-
-
-
+	scrollbar-y:
+	swf/hud/menus/dossier/dossier_codex_textures/swf_images/common/scrollbar/hud_scrollbar_track_center_
+*/
 
 void calculate_text_size(const char* msg, float* out_w, float* out_h, float scale, unsigned* out_longest_line, unsigned* out_nlines);
 
@@ -33,6 +43,7 @@ struct sh_ui_ele2d_t {
 	unsigned txt_color;
 	const char* txt;
 	float txt_scale;
+
 	gui_draw_context_t* m_current_ctx;
 	void draw(gui_draw_context_t& rmg);
 	void set_text(const char* newtxt);

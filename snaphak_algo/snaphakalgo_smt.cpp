@@ -1,10 +1,14 @@
 #include "snaphakalgo_predef.hpp"
 #include "snaphakalgo.hpp"
 #include <Windows.h>
-
+//due to alignment, putting these into different segs is wasteful
+#if 0
 #define		SMTPROC		CS_CODE_SEG(".smt")
 #define		NOSMTPROC	CS_CODE_SEG(".nosmt")
-
+#else
+#define		SMTPROC
+#define		NOSMTPROC
+#endif
 SMTPROC
 //__attribute__((naked))
 static bool smt_cmpxchg16b(volatile uint64_t* destination, uint64_t xhigh, uint64_t xlow, uint64_t* cmpres) {
@@ -28,33 +32,7 @@ static bool smt_cmpxchg16b(volatile uint64_t* destination, uint64_t xhigh, uint6
 	return bres;
 
 
-	/*
-	__asm {
-		mov     QWORD PTR [rsp+8], rbx
-		mov     rax, QWORD PTR [r9]
-		mov     r10, rcx
-		mov     rcx, rdx
-		mov     rbx, r8
-		mov     rdx, QWORD PTR [r9+8]
-		cmpxchg16b QWORD PTR [r10]
-		mov     rbx, QWORD PTR [rsp+8]
-		mov     QWORD PTR [r9], rax
-		sete    al
-		mov     QWORD PTR [r9+8], rdx
-		ret     0
-	}*/
 }
-NOSMTPROC
-static bool nosmt_cmpxchg16b(volatile uint64_t* destination, uint64_t xhigh, uint64_t xlow, uint64_t* cmpres) {
-	return _InterlockedCompareExchange128((volatile long long*)destination, xhigh, xlow, (long long*)cmpres);
-
-}
-
-NOSMTPROC
-static int nosmt_xadd32(volatile int* dest, int addend) {
-	return _InterlockedExchangeAdd((volatile unsigned*)dest, addend);
-}
-
 SMTPROC
 static int smt_xadd32(volatile int* dest, int addend) {
 	int saved = addend;
@@ -64,12 +42,6 @@ static int smt_xadd32(volatile int* dest, int addend) {
 		: );
 	return addend + saved;
 }
-
-NOSMTPROC
-static int64_t nosmt_xadd64(volatile int64_t* dest, int64_t addend) {
-	return _InterlockedExchangeAdd64(dest, addend);
-}
-
 SMTPROC
 static int64_t smt_xadd64(volatile int64_t* dest, int64_t addend) {
 	int64_t saved = addend;
@@ -79,30 +51,6 @@ static int64_t smt_xadd64(volatile int64_t* dest, int64_t addend) {
 		: );
 	return addend + saved;
 }
-NOSMTPROC
-static
-bool nosmt_bts64(volatile uint64_t* m_ptr, unsigned m_bitidx) {
-	return _interlockedbittestandset64((volatile long long*)m_ptr, m_bitidx);
-}
-NOSMTPROC
-static
-bool nosmt_btr64(volatile uint64_t* m_ptr, unsigned m_bitidx) {
-	return _interlockedbittestandreset64((volatile long long*)m_ptr, m_bitidx);
-}
-NOSMTPROC
-static
-bool nosmt_btc64(volatile uint64_t* m_ptr, unsigned m_bitidx) {
-	bool res;
-	__asm__ volatile(
-		"lock btcq %2, (%1)\n\t"
-		: "=@ccb" (res)
-		: "r"(m_ptr), "r"((uint64_t)m_bitidx)
-		:
-		);
-	return res;
-}
-
-
 
 SMTPROC
 static
@@ -128,6 +76,7 @@ bool smt_btr64(volatile uint64_t* m_ptr, unsigned m_bitidx) {
 		);
 	return res;
 }
+
 SMTPROC
 static
 bool smt_btc64(volatile uint64_t* m_ptr, unsigned m_bitidx) {
@@ -140,6 +89,49 @@ bool smt_btc64(volatile uint64_t* m_ptr, unsigned m_bitidx) {
 		);
 	return res;
 }
+
+NOSMTPROC
+static bool nosmt_cmpxchg16b(volatile uint64_t* destination, uint64_t xhigh, uint64_t xlow, uint64_t* cmpres) {
+	return _InterlockedCompareExchange128((volatile long long*)destination, xhigh, xlow, (long long*)cmpres);
+
+}
+
+NOSMTPROC
+static int nosmt_xadd32(volatile int* dest, int addend) {
+	return _InterlockedExchangeAdd((volatile unsigned*)dest, addend);
+}
+
+
+
+NOSMTPROC
+static int64_t nosmt_xadd64(volatile int64_t* dest, int64_t addend) {
+	return _InterlockedExchangeAdd64(dest, addend);
+}
+
+
+NOSMTPROC
+static
+bool nosmt_bts64(volatile uint64_t* m_ptr, unsigned m_bitidx) {
+	return _interlockedbittestandset64((volatile long long*)m_ptr, m_bitidx);
+}
+NOSMTPROC
+static
+bool nosmt_btr64(volatile uint64_t* m_ptr, unsigned m_bitidx) {
+	return _interlockedbittestandreset64((volatile long long*)m_ptr, m_bitidx);
+}
+NOSMTPROC
+static
+bool nosmt_btc64(volatile uint64_t* m_ptr, unsigned m_bitidx) {
+	bool res;
+	__asm__ volatile(
+		"lock btcq %2, (%1)\n\t"
+		: "=@ccb" (res)
+		: "r"(m_ptr), "r"((uint64_t)m_bitidx)
+		:
+		);
+	return res;
+}
+
 
 
 __forceinline

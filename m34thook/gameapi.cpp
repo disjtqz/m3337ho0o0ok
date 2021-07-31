@@ -15,7 +15,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "gameapi.hpp"
-
+#include "snaphakalgo.hpp"
+#include "mh_inputsys.hpp"
+#include "mh_guirender.hpp"
+#include "mh_mainloop.hpp"
 void* find_entity(const char* name) {
 	void* gamloc = *reinterpret_cast<void**>(descan::g_gamelocal);
 
@@ -46,12 +49,13 @@ void* get_level_map() {
 #endif
 }
 bool get_classfield_boolean(void* obj, const classVariableInfo_t* varinfo) {
-	if (varinfo->get) {
+	/*if (varinfo->get) {
 		return varinfo->get(obj);
 	}
-	else {
-		return *reinterpret_cast<bool*>(reinterpret_cast<char*>(obj) + varinfo->offset);
-	}
+	else {*/
+		return get_classfield_int(obj, varinfo) != 0;
+		//return *reinterpret_cast<bool*>(reinterpret_cast<char*>(obj) + varinfo->offset);
+	//}
 }
 
 void set_classfield_boolean(void* obj, const classVariableInfo_t* varinfo, bool value) {
@@ -67,19 +71,43 @@ long long get_classfield_int(void* obj, const classVariableInfo_t* varinfo) {
 		return varinfo->get(obj);
 	}
 	else {
-		char* objptr =reinterpret_cast<char*>(obj) + varinfo->offset;
+		char* objptr = reinterpret_cast<char*>(obj) + varinfo->offset;
+
+		long long result;
+		if(varinfo->size >= 4) {
+			unsigned size = varinfo->size;
+			__asm__(
+
+				"testl 8, %1\n\t"
+				//"jnz $+1\n\t"
+				".byte 0x74\n\t"
+				".byte 0x01\n\t"
+				"movq (%2), %0\n\t"
+
+				: "=r"(result)
+				: "r"(size), "r"(objptr)
+				:
+			);
+			/*__asm {
+				test dword ptr size, 8
+				jnz $+1
+				movsxd rax, [objptr]
+				mov result, rax
+			}*/
+			return result;
+		}
 
 
-		switch(varinfo->size) {
+		switch (varinfo->size) {
 		case 1:
 			return *objptr;
 		case 2:
 			return *reinterpret_cast<short*>(objptr);
 
-		case 4:
+		/*case 4:
 			return *reinterpret_cast<int*>(objptr);
 		case 8:
-			return *reinterpret_cast<long long*>(objptr);
+			return *reinterpret_cast<long long*>(objptr);*/
 		}
 		assert(false);
 		return 0;
@@ -100,7 +128,7 @@ static char* g_engine_t = nullptr;
 MH_NOINLINE
 char* get_engine() {
 
-	if(g_engine_t == nullptr) {
+	if (g_engine_t == nullptr) {
 		g_engine_t = (reinterpret_cast<char*>(descan::g_global_typeinfo_tools) - idType::FindClassField("engine_t", "typeInfoTools")->offset);
 	}
 
@@ -113,52 +141,52 @@ struct idDebugHUD {
 };
 struct idDebugHUD_vtbl
 {
-  void (__fastcall *dctor_idDebugHUD)(idDebugHUD *thiz);
-  void (__fastcall *Render)(idDebugHUD *thiz, idRenderModelGui *);
-  void (__fastcall *Frame)(idDebugHUD *thiz);
-  void (__fastcall *Clear)(idDebugHUD *thiz, bool);
-  void (*Printf3)(idDebugHUD *thiz, const char *, ...);
-  void (__fastcall *Printf1)(idDebugHUD *thiz, int, int, const char *, char *);
-  void (*Printf4)(idDebugHUD *thiz, int, int, const char *, ...);
-  void (__fastcall *Printf2)(idDebugHUD *thiz, int, int, const idColor *, const idColor *, const char *, char *);
-  void (*Printf5)(idDebugHUD *thiz, int, int, const idColor *, const idColor *, const char *, ...);
-  void (__fastcall *Printf6)(idDebugHUD *thiz, int, int, const idColor *, const char *, char *);
-  void (*Printf7)(idDebugHUD *thiz, int, int, const idColor *, const char *, ...);
-  void (*Printf8)(idDebugHUD *thiz, int, int, const idColor *, const float, const char *, ...);
-  void (__fastcall *Printf9)(idDebugHUD *thiz, int, int, const idColor *, const float, const int, const char *, char *);
-  void (*Printf10)(idDebugHUD *thiz, int, int, const idColor *, const idColor *, const float, const char *, ...);
-  void (__fastcall *Printf11)(idDebugHUD *thiz, int, int, const idColor *, const idColor *, const float, const int, const char *, char *);
-  void (__fastcall *Printf)(idDebugHUD *thiz, int, int, const idColor *, const idColor *, const float, const int, const char *, char *);
-  void *unk2;
-  void (*AddPersistentText)(idDebugHUD *thiz, int, int, const idColor *, const float, const char *, ...);
-  void (__fastcall *RemovePersistentText)(idDebugHUD *thiz, int, int);
-  void (__fastcall *SetLeftAlign)(idDebugHUD *thiz);
-  void (__fastcall *SetRightAlign)(idDebugHUD *thiz);
-  void (__fastcall *SetTextPosition)(idDebugHUD *thiz, const int, const int);
-  void (__fastcall *SetTextScale)(idDebugHUD *thiz, const float);
-  void (__fastcall *SetTextColor)(idDebugHUD *thiz, const idColor *);
+	void(__fastcall* dctor_idDebugHUD)(idDebugHUD* thiz);
+	void(__fastcall* Render)(idDebugHUD* thiz, idRenderModelGui*);
+	void(__fastcall* Frame)(idDebugHUD* thiz);
+	void(__fastcall* Clear)(idDebugHUD* thiz, bool);
+	void (*Printf3)(idDebugHUD* thiz, const char*, ...);
+	void(__fastcall* Printf1)(idDebugHUD* thiz, int, int, const char*, char*);
+	void (*Printf4)(idDebugHUD* thiz, int, int, const char*, ...);
+	void(__fastcall* Printf2)(idDebugHUD* thiz, int, int, const idColor*, const idColor*, const char*, char*);
+	void (*Printf5)(idDebugHUD* thiz, int, int, const idColor*, const idColor*, const char*, ...);
+	void(__fastcall* Printf6)(idDebugHUD* thiz, int, int, const idColor*, const char*, char*);
+	void (*Printf7)(idDebugHUD* thiz, int, int, const idColor*, const char*, ...);
+	void (*Printf8)(idDebugHUD* thiz, int, int, const idColor*, const float, const char*, ...);
+	void(__fastcall* Printf9)(idDebugHUD* thiz, int, int, const idColor*, const float, const int, const char*, char*);
+	void (*Printf10)(idDebugHUD* thiz, int, int, const idColor*, const idColor*, const float, const char*, ...);
+	void(__fastcall* Printf11)(idDebugHUD* thiz, int, int, const idColor*, const idColor*, const float, const int, const char*, char*);
+	void(__fastcall* Printf)(idDebugHUD* thiz, int, int, const idColor*, const idColor*, const float, const int, const char*, char*);
+	void* unk2;
+	void (*AddPersistentText)(idDebugHUD* thiz, int, int, const idColor*, const float, const char*, ...);
+	void(__fastcall* RemovePersistentText)(idDebugHUD* thiz, int, int);
+	void(__fastcall* SetLeftAlign)(idDebugHUD* thiz);
+	void(__fastcall* SetRightAlign)(idDebugHUD* thiz);
+	void(__fastcall* SetTextPosition)(idDebugHUD* thiz, const int, const int);
+	void(__fastcall* SetTextScale)(idDebugHUD* thiz, const float);
+	void(__fastcall* SetTextColor)(idDebugHUD* thiz, const idColor*);
 };
 
 
 static idDebugHUD* g_debughud = nullptr;
 
 static idDebugHUD* get_debug_hud() {
-	if(!g_debughud) {
+	if (!g_debughud) {
 		g_debughud = *reinterpret_cast<idDebugHUD**>(get_engine() + idType::FindClassField("engine_t", "debugHUD")->offset);
 	}
 	return g_debughud;
 }
 
-void add_persistent_text(unsigned x, unsigned y, unsigned RGBA, float scale,  const char* fmt, ...) {
+void add_persistent_text(unsigned x, unsigned y, unsigned RGBA, float scale, const char* fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	char vbuf[4096];
 	vsprintf_s(vbuf, fmt, ap);
 
 	idColor unpacked_color{};
-	unpacked_color.a = (RGBA>>24) / 255.0F;
-	unpacked_color.r = static_cast<unsigned char>(RGBA>>16) / 255.0F;
-	unpacked_color.g = static_cast<unsigned char>(RGBA>>8) / 255.0F;
+	unpacked_color.a = (RGBA >> 24) / 255.0F;
+	unpacked_color.r = static_cast<unsigned char>(RGBA >> 16) / 255.0F;
+	unpacked_color.g = static_cast<unsigned char>(RGBA >> 8) / 255.0F;
 	unpacked_color.b = static_cast<unsigned char>(RGBA) / 255.0F;
 
 	idDebugHUD* dhud = get_debug_hud();
@@ -179,7 +207,7 @@ static mh_fieldcached_t<idManagedClassPtr> g_field_player_focus{};
 
 
 void* get_player_look_target() {
-	void* player1=find_entity("player1");
+	void* player1 = find_entity("player1");
 	MH_UNLIKELY_IF(!player1)
 		return nullptr;
 	idManagedClassPtr* looktarg = g_field_player_focus(player1, "idPlayer", "focusTracker", "focusEntity");
@@ -207,11 +235,11 @@ struct __RTTIClassHierarchyDescriptor {
 	_TypeDescriptor*** bases;
 };
 typedef const struct _s__RTTICompleteObjectLocator {
-  unsigned long signature;
-  unsigned long offset;
-  unsigned long cdOffset;
-  _TypeDescriptor *pTypeDescriptor;
-  __RTTIClassHierarchyDescriptor *pClassDescriptor;
+	unsigned long signature;
+	unsigned long offset;
+	unsigned long cdOffset;
+	_TypeDescriptor* pTypeDescriptor;
+	__RTTIClassHierarchyDescriptor* pClassDescriptor;
 } __RTTICompleteObjectLocator;
 
 bool is_subclass_of_rttisig(void* obj, rttisig_ref_t rsig) {
@@ -222,14 +250,14 @@ bool is_subclass_of_rttisig(void* obj, rttisig_ref_t rsig) {
 	MH_UNLIKELY_IF(!locator) {
 		return false;
 	}
-	__RTTIClassHierarchyDescriptor *descr = locator->pClassDescriptor;
+	__RTTIClassHierarchyDescriptor* descr = locator->pClassDescriptor;
 	MH_UNLIKELY_IF(!descr)
 		return false;
 
 	unsigned numbase = (unsigned)descr->numbases;
 
-	for(unsigned i = 0; i < numbase; ++i) {
-		if(!strcmp((*(descr->bases[i]))->name, rsig)) {
+	for (unsigned i = 0; i < numbase; ++i) {
+		if (!strcmp((*(descr->bases[i]))->name, rsig)) {
 			return true;
 		}
 	}
@@ -265,7 +293,7 @@ void* get_cursor() {
 static mh_fieldcached_t<void*> g_editor_iface_offset{};
 MH_NOINLINE
 void* get_editor_interface() {
-	return *g_editor_iface_offset(get_engine(), "engine_t", "editorInterface");	
+	return *g_editor_iface_offset(get_engine(), "engine_t", "editorInterface");
 }
 
 static mh_fieldcached_t<idRenderModelGui*> g_cursor_model_offset{};
@@ -280,42 +308,100 @@ MH_NOINLINE
 void* get_console() {
 	return *g_console_offset(get_engine(), "engine_t", "console");
 }
+static mh_fieldcached_t<void*> g_globalimages_offset{};
+
+MH_NOINLINE
+void* get_globalImages() {
+	return *g_console_offset(get_engine(), "engine_t", "globalImages");
+
+}
+
 static mh_fieldcached_t<idVec3> g_player_focus_trace{};
 void get_player_trace_pos(idVec3* outvec) {
 	void* player = find_entity("player1");
-	if(!player)
+	if (!player)
 		return;
 	*outvec = *g_player_focus_trace(player, "idPlayer", "focusTracker", "focusTrace", "close");
 }
 
 static mh_fieldcached_t<void*> g_resourcelist_t_from_resourcelist{};
 static mh_fieldcached_t<const char*> g_idresource_get_name{};
-void* locate_resourcelist_member(const char* reslist_classname /* example:"idDeclEntityDef" */, const char* member_name) {
-	void** entitydef_reslist = call_as<void**>(descan::g_resourcelist_for_classname, reslist_classname);
-	if(!entitydef_reslist) {
+
+void* resourcelist_for_classname(const char* clsname) {
+	return call_as<void*>(descan::g_resourcelist_for_classname, clsname);
+}
+
+void* idResourceList_to_resourceList_t(void* resourcelist) {
+	return *g_resourcelist_t_from_resourcelist(resourcelist, "idResourceList", "resourceList");
+}
+
+unsigned resourceList_t_get_length(void* reslist){
+	MH_UNLIKELY_IF(!reslist) {
+		sh::fatal("Null reslist passed to resourceList_t_get_length!");
+	}
+	return *mh_lea<unsigned>(reslist, descan::g_offset_resourcelist_length);
+}
+
+void* resourceList_t_lookup_index(void* reslist, unsigned idx) {
+	MH_UNLIKELY_IF(!reslist) {
+		sh::fatal("Null reslist in lookup_index!");
+	}
+	return call_as<void*>(descan::g_resourcelist_index, reslist, idx);
+}
+const char* get_resource_name(void* resource) {
+	return *g_idresource_get_name(resource, "idResource", "name", "str");
+}
+void* locate_resourcelist_member(const char* reslist_classname /* example:"idDeclEntityDef" */, const char* member_name, bool end_at_dollar) {
+	void* entitydef_reslist = resourcelist_for_classname(reslist_classname);
+	if (!entitydef_reslist) {
 		idLib::Printf("Failed to locate resourcelist %s\n", reslist_classname);
 		return nullptr;
 
 	}
-	void* resourcelist = *g_resourcelist_t_from_resourcelist(entitydef_reslist, "idResourceList", "resourceList");
+	void* resourcelist = idResourceList_to_resourceList_t(entitydef_reslist);
 
-	if(!resourcelist) {
+	if (!resourcelist) {
 		idLib::Printf("resourcelist %s doesnt have an underlying resourceList_t???\n", reslist_classname);
 		return nullptr;
 	}
-	int reslist_length = *reinterpret_cast<int*>(reinterpret_cast<char*>(resourcelist) + descan::g_offset_resourcelist_length);
+	int reslist_length = resourceList_t_get_length(resourcelist);
 
 	void* our_resource = nullptr;
-	for(int i = 0; i < reslist_length; ++i) {
-		void* current_resource = call_as<void*>(descan::g_resourcelist_index, resourcelist, i);
-		
+	for (int i = 0; i < reslist_length; ++i) {
+		void* current_resource = resourceList_t_lookup_index(resourcelist, i);
+
 		MH_UNLIKELY_IF(!current_resource) {
 			//should never happen
 			continue;
 		}
-		if(!strcmp(*g_idresource_get_name(current_resource, "idResource", "name", "str"), member_name)) {
-			our_resource = current_resource;
-			break;
+		const char* currname = get_resource_name(current_resource);
+
+		if(end_at_dollar) {
+			unsigned i2 = 0;
+			while(true) {
+				unsigned passedin = member_name[i2];
+				unsigned fromres = currname[i2];
+				++i2;
+				if(fromres == '$')
+					fromres = 0;
+
+				if(fromres != passedin) {
+					break;
+				}
+
+				if(fromres==0){
+					our_resource = current_resource;
+
+					break;
+				}
+
+			}
+		}
+		else {
+			if (sh::string::streq(currname, member_name)) {
+				our_resource = current_resource;
+				break;
+			}
 		}
 
 	}
@@ -345,7 +431,7 @@ void* spawn_entity_from_entitydef(void* entdef) {
 void set_entity_position(void* entity, idVec3* pos) {
 	const char* ename = get_entity_name(entity);
 
-	if(!ename) {
+	if (!ename) {
 		idLib::Printf("Entity name was null?!?!?!?\n");
 		return;
 	}
@@ -354,22 +440,22 @@ void set_entity_position(void* entity, idVec3* pos) {
 	sprintf_s(outbuff, "ai_ScriptCmdEnt %s teleport %f %f %f .0 .0 .0\n", ename, pos->x, pos->y, pos->z);
 
 	idCmd::execute_command_text(outbuff);
-		//the below does work, but is not portable
-	//2208
-	//entity vftbl function at offset 3624 just returns physicsObj pointer on idEntity
-	//offset 64 on physics might be set position
-	//yup looks right to me
-	//void* ent_phys = get_entity_physics_obj(resulting_entity);
+	//the below does work, but is not portable
+//2208
+//entity vftbl function at offset 3624 just returns physicsObj pointer on idEntity
+//offset 64 on physics might be set position
+//yup looks right to me
+//void* ent_phys = get_entity_physics_obj(resulting_entity);
 
-	//call_as<void>(reinterpret_cast<void***>(ent_phys)[0][64/8], ent_phys, &playertrace);
+//call_as<void>(reinterpret_cast<void***>(ent_phys)[0][64/8], ent_phys, &playertrace);
 }
 
 
 void** get_class_vtbl(std::string_view clsname) {
-	
+
 	auto iter = g_str_to_rrti_type_descr.find(clsname);
 
-	if(iter == g_str_to_rrti_type_descr.end())
+	if (iter == g_str_to_rrti_type_descr.end())
 		return nullptr;
 
 
@@ -397,7 +483,7 @@ static int init_decl_read_prod_file() {
 
 
 }
-bool reload_decl(void* decl_ptr ){
+bool reload_decl(void* decl_ptr) {
 	if (located_decl_read_prod_file < 0) {
 		located_decl_read_prod_file = init_decl_read_prod_file();
 		if (located_decl_read_prod_file < 0) {
@@ -409,7 +495,7 @@ bool reload_decl(void* decl_ptr ){
 
 	auto callfn = reinterpret_cast<bool (*)(void*, idStr*)>(reinterpret_cast<void***>(decl_ptr)[0][located_decl_read_prod_file]);
 	if (callfn(decl_ptr, &tmpstr)) {
-		idLib::Printf("Failed to reload decl : error was %s\n",  tmpstr.data);
+		idLib::Printf("Failed to reload decl : error was %s\n", tmpstr.data);
 		return false;
 	}
 	return true;
@@ -417,108 +503,61 @@ bool reload_decl(void* decl_ptr ){
 static mh_fieldcached_t<void*> g_cvarsystem_field{};
 MH_NOINLINE
 void* get_cvarsystem() {
-	
+
 	void* engine = get_engine();
 
 
 	return *g_cvarsystem_field(engine, "engine_t", "cvarSystemForTransfer");
-	
-}
-static bool g_isfirstframe = true;
-
-static __int64 meathook_game_frame(__int64 framearg) {
-	if(g_isfirstframe) {
-		g_isfirstframe = false;
-		//run the late stage scanners, load all plugins
-		meathook_final_init();
-
-		
-	}
-
-	return call_as<__int64>(descan::g_idCommonLocal_Frame, framearg);
 
 }
-static idCVar* com_debugHUD = nullptr;
-
-static void* g_original_rendergui = nullptr;
-
-static void mh_rendergui_callback(idDebugHUD* dbghud, idRenderModelGui* rgui) {
-	//always show debughud
-	//com_debugHUD->data->valueInteger=1;
-	if(!com_debugHUD) {
-		com_debugHUD = idCVar::Find("com_debugHUD");
-	}
-	com_debugHUD->data->valueInteger=1;
-
-	call_as<void>(g_original_rendergui, dbghud, rgui);
-	/*rgui->DrawFilled(colorBrown, 0, 0, 200, 200);
-	rgui->DrawString(500, 500, "yo yo yo, we got some text baybee", &colorCyan, true, 3);*/
-}
-#define idDebugHUDLocal_Render_VtblIdx	1
-static void* g_original_queueevent = nullptr;
-static __int64  idInputEventQueue_QueueEvent(
-        __int64 a1,
-        int evtype,
-        int evval,
-        int evvalue2,
-        int evptrlength,
-        void *evptr,
-        unsigned int inpdevice) {
-	
-
-	return call_as<__int64>(g_original_queueevent, a1, evtype, evval, evvalue2, evptrlength, evptr, inpdevice);
-}
 
 
-static void meathook_hook_input() {
-	//same in v1 and v6
-	void* queue_event_func = get_class_vtbl(".?AVidInputLocalWin32@@")[0x60 / 8];
 
-	if(reinterpret_cast<unsigned char*>(queue_event_func)[1] == 0x8D) {//check if lea eventqueue jmp queuevent, which is done for v1 
-		//jit it so we can call both possible versions seamlessly
-		void* orig =  mh_disassembler_t::first_jump_target(queue_event_func);
-
-		void* event_queue_ptr = mh_lea<char>(queue_event_func, 7) + *mh_lea<int>(queue_event_func, 3);
-		
-		Xbyak::CodeGenerator e{};
-
-		e.mov(e.rcx, (uintptr_t)event_queue_ptr);
-		e.mov(e.rax, (uintptr_t)orig);
-		e.jmp(e.rax);
-
-		void* thunkmem = alloc_execmem(e.getSize());
-
-		memcpy(thunkmem, e.getCode(), e.getSize());
-
-
-		g_original_queueevent = thunkmem;
-		redirect_to_func(idInputEventQueue_QueueEvent, (uintptr_t)queue_event_func, true);
-	}
-	else {
-		g_original_queueevent = detour_with_thunk_for_original(queue_event_func, (void*)idInputEventQueue_QueueEvent);
-
-	}
-
-}
 static bool g_gameapihooks_installed = false;
 
 void install_gameapi_hooks() {
-	if(g_gameapihooks_installed)
+	if (g_gameapihooks_installed)
 		return;
 
 	g_gameapihooks_installed = true;
-	*reinterpret_cast<void**>(descan::g_idCommonLocal_Frame_CallbackPtr) = (void*)meathook_game_frame;
-#if 1
 
-	void** debughudvtbl = get_class_vtbl(".?AVidDebugHUDLocal@@");
-
-
-	g_original_rendergui = (void*)mh_rendergui_callback;
-	swap_out_ptrs(&debughudvtbl[idDebugHUDLocal_Render_VtblIdx], &g_original_rendergui,1,  false);
-#endif
-	meathook_hook_input();
+	//mh_gui::install_gui_hooks();
+	mh_mainloop::install_mainloop_hooks();
+	mh_input::install_input_hooks();
 }
 
 void* get_material(const char* name) {
 	return locate_resourcelist_member("idMaterial2", name);
+}
+struct __declspec(align(8)) idImageOpts
+{
+	int textureType;
+	int format;
+	int dword8;
+	int width;
+	int height;
+	int dword14;
+	int dword18;
+	int numLevels;
+	int dword20;
+	int dword24;
+	int dword28;
+	short word2C;
+	char byte2E;
+	char byte2F;
+	int dword30;
+	int dword34;
+	int somevkflags;
+	const char* imagename_i_think;
+};
+
+void upload_2d_imagedata(const char* imagename, const void* picdata, unsigned width, unsigned height) {
+	
+	void* image = locate_resourcelist_member("idImage", imagename, true);
+	if(!image)
+		return;
+
+
+	call_as<void>(descan::g_idImage_SubImageUpload, image, 0, 0, 0, 0, 0, width, height, 1, picdata, 0);
+
 }

@@ -29,7 +29,7 @@
 
 
 #include "types.h"
-#define     UD_EXPORT       extern "C"
+#define     UD_EXPORT       extern
 
 
 /* ============================= PUBLIC API ================================= */

@@ -5,7 +5,7 @@
 //#define		DISABLE_PHASE2_PARALLEL_SCANGROUPS
 
 
-#define		PRINT_SCAN_TIME_TAKEN
+//#define		PRINT_SCAN_TIME_TAKEN
 //only 8k in my db but lets overestimate to be safe
 #define		ASSUMED_MAX_VTBLS		16000
 

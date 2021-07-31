@@ -261,7 +261,7 @@ static void disasm_at(idCmdArgs* args) {
 	ud_init(&insnctx);
 	ud_set_pc(&insnctx, (uint64_t)shouldbptr);
 	ud_set_input_buffer(&insnctx, (uint8_t*)shouldbptr, 64);
-	 ud_set_syntax(&insnctx, UD_SYN_INTEL);
+	ud_set_syntax(&insnctx, UD_SYN_INTEL);
 	char asbuf[1024];
 	ud_set_asm_buffer(&insnctx, asbuf, sizeof(asbuf));
 

@@ -204,7 +204,7 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <AdditionalOptions>-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2 -mcx16 %(AdditionalOptions)</AdditionalOptions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -253,7 +253,9 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Release|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2 -mcx16 %(AdditionalOptions)</AdditionalOptions>
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">-Wno-register -fms-compatibility -fms-extensions -fno-sized-deallocation -fstrict-aliasing -flto=full /vms  -fpermissive -fgcse-after-reload -fgcse-sm -fgcse-las -fipa-cp -fwrapv -msse -msse2 -msse3 -mssse3 -msse4 -msse4.1 -msse4.2 -mcx16 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
-    <ClCompile Include="init_snapalgo.cpp" />
+    <ClCompile Include="init_snapalgo.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">MinSpace</Optimization>
+    </ClCompile>
     <ClCompile Include="snaphakalgo_coro.cpp" />
     <ClCompile Include="snaphakalgo_heap.cpp" />
     <ClCompile Include="snaphakalgo_networking.cpp" />
@@ -262,7 +264,9 @@
       <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">-mlong-double-80 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <ClCompile Include="snaphakalgo_smt.cpp" />
-    <ClCompile Include="snaphakalgo_vmem.cpp" />
+    <ClCompile Include="snaphakalgo_vmem.cpp">
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">MinSpace</Optimization>
+    </ClCompile>
     <ClCompile Include="syscall_interface.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -276,6 +280,7 @@
     <ClInclude Include="impls\rb_impl.hpp" />
     <ClInclude Include="impls\sortnsearch_impl.hpp" />
     <ClInclude Include="impls\str_impl.hpp" />
+    <ClInclude Include="memclasses.hpp" />
     <ClInclude Include="sh_heap_shared.hpp" />
     <ClInclude Include="snaphakalgo.hpp" />
     <ClInclude Include="snaphakalgo_predef.hpp" />

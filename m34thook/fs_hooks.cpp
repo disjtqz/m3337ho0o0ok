@@ -16,12 +16,14 @@
 #include "idStr.hpp"
 #include "id_resources_lowlevel.hpp"
 #include "cmdsystem.hpp"
-
+#include "snaphakalgo.hpp"
+#include "mhutil/mh_filesystem.hpp"
 /*
 	the directory containing the doom exe
 	we need this for gamepass versions
 */
 static std::string g_basepath = "";
+static std::string g_overrides_dir = "";
 //idFileSystemLocal::ReadFile(char const*,void **,idFileProps *,fsPathSearch_t)	.text	0000007101D87CB0	00000178	00000040	FFFFFFFFFFFFFFF8	R	.	.	.	B	T	.
 struct idFile;
 enum fsLock_t {
@@ -382,7 +384,7 @@ static void dispose_log() {
 }
 
 static void readfile_log_path(const char* path) {
-#if 0
+#if 1
 	if (!g_readfile_log) {
 		fopen_s(&g_readfile_log, "resources_seen.txt", "w");
 		atexit(dispose_log);
@@ -393,29 +395,49 @@ static void readfile_log_path(const char* path) {
 
 #endif
 }
+
+class pathlogger_t {
+	FILE* m_outfile;
+public:
+	pathlogger_t(const char* name) {
+		fopen_s(&m_outfile, name, "w");
+
+	}
+
+	~pathlogger_t() {
+		fclose(m_outfile);
+	}
+
+	inline pathlogger_t& operator <<(const char* s) {
+		fprintf_s(m_outfile, "%s\n", s);
+		return *this;
+	}
+};
+static pathlogger_t g_print_resulting_path{"override_paths.log"};
 FILE* get_override_for_resource(const char* name, size_t* size_out) {
 	FILE* resfile = nullptr;
 
 	char pathbuf[4096];
-	memset(pathbuf, 0, sizeof(pathbuf));
+
+	//memsetting the buf is not necessary 
+	//memset(pathbuf, 0, sizeof(pathbuf));
 
 
+	unsigned pathbuf_fixup_search_start = 0;
 
-	if ((gOverrideFileName != nullptr) && (strstr(name, ".entities") != 0) && (gOverrideName.size() && !strcmp(gOverrideName.c_str(), name))) {
+	if ((gOverrideFileName != nullptr) && (sh::string::strstr(name, ".entities") != 0) && (gOverrideName.size() && sh::string::streq(gOverrideName.c_str(), name))) {
 		strcpy_s(pathbuf, gOverrideFileName);
 		gOverrideFileName = nullptr;
 
 	}
 	else {
-		if (strstr(name, "base\\") == name) {
-			name += sizeof("base\\") - 1;
-		}
-
-
-		sprintf_s(pathbuf, "%s\\overrides\\%s",g_basepath.c_str(), name);
+		sh::memops::smol_memcpy(pathbuf, g_overrides_dir.c_str(), g_overrides_dir.length());
+		pathbuf_fixup_search_start = g_overrides_dir.length();
+		sh::string::strcpy(&pathbuf[g_overrides_dir.length()], name);
+		//sprintf_s(pathbuf, "%s\\overrides\\%s",g_basepath.c_str(), name);
 	}
 
-	if (strstr(name, ".entities") != 0) {
+	if (sh::string::strstr(name, ".entities") != 0) {
 		gLastLoadedEntities = name;
 	}
 	readfile_log_path(name);
@@ -426,7 +448,7 @@ FILE* get_override_for_resource(const char* name, size_t* size_out) {
 	}
 	fprintf(g_readfile_log, "%s\n", name);
 #endif
-	for (unsigned i = 0; pathbuf[i]; ++i) {
+	for (unsigned i = pathbuf_fixup_search_start; pathbuf[i]; ++i) {
 		if (pathbuf[i] == '/')
 			pathbuf[i] = '\\';
 
@@ -435,8 +457,14 @@ FILE* get_override_for_resource(const char* name, size_t* size_out) {
 			break;
 		}
 	}
+	/*if(sh::string::strstr(name, ".decl")) {
+		g_print_resulting_path << pathbuf;
 
-
+	}*/
+	//fast pre-test
+	if(!filesys::file_exists(pathbuf)) {
+	return nullptr;
+	}
 
 	fopen_s(&resfile, pathbuf, "rb");
 	if (!resfile)
@@ -543,7 +571,8 @@ static idFile* idResourceStorageDiskStreamer_GetFile_replacement(idResourceStora
 	FILE* override = nullptr;
 	size_t ressize = 0;
 	const char* fgname = get_name_of_res_at_index(container, resindex);
-	if (strstr(fgname, ".entities") || strstr(fgname, ".decl")) {
+	
+	if (sh::string::strstr(fgname, ".entities") || sh::string::strstr(fgname, ".decl")) {
 
 	}
 	else {
@@ -580,6 +609,7 @@ static idFile* idResourceStorageDiskStreamer_GetFile_replacement(idResourceStora
 
 
 static bool g_installed_fs_hooks = false;
+
 void hook_idfilesystem() {
 	if(g_installed_fs_hooks)
 		return;
@@ -601,6 +631,7 @@ void hook_idfilesystem() {
 	tmpbuffer_filename[backpos] = 0;
 	g_basepath = tmpbuffer_filename;
 	delete[] tmpbuffer_filename;
+	g_overrides_dir = g_basepath + "\\overrides\\";
 
 #if 1
 	Xbyak::CodeGenerator redirector{};

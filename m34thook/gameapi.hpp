@@ -20,6 +20,16 @@ long long get_classfield_int(void* obj, const char* clazs, const char* field);
 const char* get_entity_name(void* obj);
 
 void* get_material(const char* name);
+
+//warning: returns idResourceList, not resourceList_t!
+void* resourcelist_for_classname(const char* clsname);
+
+void* idResourceList_to_resourceList_t(void* resourcelist);
+
+unsigned resourceList_t_get_length(void* reslist);
+
+void* resourceList_t_lookup_index(void* reslist, unsigned idx);
+const char* get_resource_name(void* resource);
 #if 0
 #define		RENDERMODELGUI_VERTEXCOLOR_OFFSET		1200
 #else
@@ -45,6 +55,12 @@ struct idRenderModelGui {
 		const idVec4* bottomLeft,
 		const void* material,
 		float z);
+	//extension
+
+	MH_NOINLINE
+	void DrawRectMaterial(float xstart, float ystart, float width, float height, void* material);
+	MH_NOINLINE
+	void DrawRectMaterial(float xstart, float ystart, float width, float height, const char* material);
 
 	/*
 		use non-temporal writes to write out the verts
@@ -73,7 +89,7 @@ struct idRenderModelGui {
 	float GetVirtualHeight();
 
 };
-
+struct idDebugHUD;
 
 //get the pointer to the global engine_t instance
 /*
@@ -188,6 +204,9 @@ void* get_editor_interface();
 MH_NOINLINE
 void* get_console();
 
+MH_NOINLINE
+void* get_globalImages();
+
 
 /*
 	get rendermodelgui for idConsole
@@ -234,7 +253,7 @@ bool is_subclass_of_rttisig(void* obj, rttisig_ref_t rsig);
 
 void get_player_trace_pos(idVec3* outvec);
 
-void* locate_resourcelist_member(const char* reslist_classname /* example:"idDeclEntityDef" */, const char* member_name);
+void* locate_resourcelist_member(const char* reslist_classname /* example:"idDeclEntityDef" */, const char* member_name, bool end_at_dollar = false);
 
 void* spawn_entity_from_entitydef(void* entdef);
 
@@ -245,3 +264,6 @@ void** get_class_vtbl(std::string_view clsname);
 bool reload_decl(void* decl_ptr);
 
 void install_gameapi_hooks();
+
+
+void upload_2d_imagedata(const char* imagename, const void* picdata, unsigned width, unsigned height);

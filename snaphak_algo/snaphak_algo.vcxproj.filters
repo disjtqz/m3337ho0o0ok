@@ -146,6 +146,9 @@
     <ClInclude Include="syscall_list.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="memclasses.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <MASM Include="snaphak_coros.asm">

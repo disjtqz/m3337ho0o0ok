@@ -78,6 +78,9 @@ namespace idType {
 	classTypeInfo_t* FindClassInfo(const char* cname);
 	MH_NOINLINE
 	enumTypeInfo_t* FindEnumInfo(const char* enumname);
+
+	MH_NOINLINE
+	long long* get_enum_member_value(const char* ename, const char* mname);
 	MH_NOINLINE
 	classVariableInfo_t* FindClassField(const char* cname, const char* fieldname);
 
@@ -126,6 +129,14 @@ namespace idType {
 	*/
 	MH_NOINLINE
 	int fieldspec_calculate_offset(classTypeInfo_t* onclass, char* rwbuff);
+
+
+	MH_NOINLINE
+	const char* get_enum_member_name_for_value(enumTypeInfo_t* enumtype, long long value);
+
+	bool enum_member_is(enumTypeInfo_t* enm, long long value, const char* membername);
+
+
 }
 
 template<typename TRet>

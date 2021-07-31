@@ -26,6 +26,31 @@ enum class snaphak_cpu_lvl_t {
 	AVX512Cpu
 };
 /*
+	assign "profiles" based on thresholds of memory. in the future these will be taken into account with overrides, keeping the contents of the resources in memory instead of reading back from the disc
+
+	4gb = constrained, eternal usually uses like 2.5gb. according to the steam hardware survey about 5% of users fall into this category, likely there are a very very small number of eternal users with this little
+
+	8gb = light. less sacrifices need to be made. about 25% of users
+
+	16gb = average. no sacrifices needed
+
+	32gb = workstation. can use extra memory for caching shit 
+
+	128gb = chrispy. i have 256 gb lol, at this profile theres no reason not to cache everything
+
+*/
+
+#define		DECLARE_MEMCLASS(name, value)		name = value
+#define		MEMSEP		,
+enum class mh_memclass_e : std::uint32_t {
+#include "memclasses.hpp"
+};
+
+#undef DECLARE_MEMCLASS
+#undef MEMSEP
+
+
+/*
 	top level structure with all function pointers for implementations
 */
 struct snaphak_algo_t {
@@ -49,6 +74,9 @@ struct snaphak_algo_t {
 	uint32_t m_nprocgroups;
 	uint32_t m_nthreads;
 	uint32_t m_smt_width;
+	mh_memclass_e m_memclass;
+	//how many bytes of memory the system has installed
+	uint64_t m_total_device_memory; 
 	snaphak_heaproutines_t m_heaproutines;
 	snaphak_rbroutines_t m_rbroutines;
 	snaphak_bmproutines_t m_bmproutines;
@@ -390,33 +418,50 @@ namespace sh::coros {
 }
 
 namespace sh::string {
-	static inline bool streq(const char* s1, const char* s2) { return g_shalgo.m_sroutines.m_streq(s1, s2); }
-	static inline bool strieq(const char* s1, const char* s2) { return g_shalgo.m_sroutines.m_strieq(s1, s2); }
-	static inline unsigned strlength(const char* s1) { return g_shalgo.m_sroutines.m_strlen(s1); }
-
+	MH_LEAF
+	static inline bool streq(MH_NOESCAPE const char* s1,MH_NOESCAPE const char* s2) { return g_shalgo.m_sroutines.m_streq(s1, s2); }
+	MH_LEAF
+	static inline bool strieq(MH_NOESCAPE const char* s1, MH_NOESCAPE const char* s2) { return g_shalgo.m_sroutines.m_strieq(s1, s2); }
+	MH_LEAF
+	static inline unsigned strlength(MH_NOESCAPE const char* s1) { return g_shalgo.m_sroutines.m_strlen(s1); }
+	MH_LEAF
 	static inline int str_to_long(const char* str, const char** out_endptr, unsigned base) { return g_shalgo.m_sroutines.m_str_to_long(str, out_endptr, base); }
-
-	static inline int atoi_fast(const char* str) { return g_shalgo.m_sroutines.m_atoi_fast(str); }
-	static inline unsigned int2str_base10(unsigned int val, char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_int2str_base10(val, dstbuf, size); }
-	static inline unsigned int2str_base16(unsigned int val, char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_int2str_base16(val, dstbuf, size); }
-	static inline unsigned uint2str_base10(unsigned int val, char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_uint2str_base10(val, dstbuf, size); }
+	MH_LEAF
+	static inline int atoi_fast(MH_NOESCAPE const char* str) { return g_shalgo.m_sroutines.m_atoi_fast(str); }
+	MH_LEAF
+	static inline unsigned int2str_base10(unsigned int val, MH_NOESCAPE char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_int2str_base10(val, dstbuf, size); }
+	MH_LEAF
+	static inline unsigned int2str_base16(unsigned int val, MH_NOESCAPE char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_int2str_base16(val, dstbuf, size); }
+	MH_LEAF
+	static inline unsigned uint2str_base10(unsigned int val, MH_NOESCAPE char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_uint2str_base10(val, dstbuf, size); }
 
 	//precision default=4
-	static inline unsigned float2str_fast(float fvalue, char* dstbuf, unsigned precision = 4) { return g_shalgo.m_sroutines.m_float2str_fast(fvalue, dstbuf, precision); }
+	MH_LEAF
+	static inline unsigned float2str_fast(float fvalue, MH_NOESCAPE char* dstbuf, unsigned precision = 4) { return g_shalgo.m_sroutines.m_float2str_fast(fvalue, dstbuf, precision); }
 	//out_endpos default = nullptr
+	MH_LEAF
 	static inline double fast_atof(const char* p, const char** out_endpos = nullptr) { return g_shalgo.m_sroutines.m_fast_atof(p, out_endpos); }
-
-	static inline int strcmp(const char* s1, const char* s2) {
+	MH_LEAF
+	static inline int strcmp(MH_NOESCAPE const char* s1, MH_NOESCAPE const char* s2) {
 		return g_shalgo.m_sroutines.m_strcmp(s1, s2);
 	}
-
-	static inline const char* strstr(const char* s1, const char* needle) {
+	MH_LEAF
+	static inline const char* strstr(const char* s1, MH_NOESCAPE const char* needle) {
 		return g_shalgo.m_sroutines.m_strstr(s1, needle);
 	}
+	MH_LEAF
 	static inline const char* strchr(const char* s1, char c) {
 		return g_shalgo.m_sroutines.m_strchr(s1, c);
 	}
+	MH_LEAF
+	static inline char* strcpy(MH_NOESCAPE char* destbuf, MH_NOESCAPE const char* srcb) {
+		return g_shalgo.m_sroutines.m_strcpy(destbuf, srcb);
+	}
 
+	MH_LEAF
+	static inline unsigned to_unicode(MH_NOESCAPE wchar_t* destbuf, MH_NOESCAPE const char* srcb) {
+		return g_shalgo.m_sroutines.m_to_unicode(destbuf, srcb);
+	}
 }
 
 namespace sh::smt {

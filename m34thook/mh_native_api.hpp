@@ -14,6 +14,7 @@ MH_OPAQUE(mh_enumval_t);
 */
 MH_OPAQUE(mh_game_entity_t);
 
+typedef void (*mh_mainloop_cb_t)(void*);
 /*
 	struct with pointers instead of virtual to ensure mingw compat
 */
@@ -68,4 +69,7 @@ struct mh_interface_t {
 	void (*m_remove_persistent_text)(unsigned x, unsigned y);
 	mh_game_entity_t (*m_get_player1)();
 	mh_game_entity_t (*m_get_player_looktarget)();
+
+	void (*m_register_premainloop_cb)(mh_mainloop_cb_t cb, void* ud);
+	void (*m_register_postmainloop_cb)(mh_mainloop_cb_t cb, void* ud);
 };

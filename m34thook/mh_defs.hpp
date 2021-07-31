@@ -63,3 +63,5 @@ MH_NOINLINE
 void mh_error_message(const char* fmt, ...);
 
 #define		mh_tmpl_strarg_m(...)		decltype([](){return __VA_ARGS__;})
+
+#include "snaphakalgo_predef.hpp"

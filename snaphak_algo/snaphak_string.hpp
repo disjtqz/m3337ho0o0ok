@@ -29,4 +29,9 @@ struct snaphak_sroutines_t {
 	size_t (*m_strspn)(const char* s, const char* s2);
 
 	char* (*m_strtok_r)(char* str, const char* delim, char** saveptr);
+
+	//returns destbuf end position
+	char*  (*m_strcpy)(char* destbuf, const char* srcbuf);
+
+	unsigned (*m_to_unicode)(wchar_t* dstbuf, const char* inbuf);
 };

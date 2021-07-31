@@ -1,15 +1,9 @@
 #include "snaphakalgo_predef.hpp"
 #include "snaphakalgo.hpp"
 
-#define		REALX		*(reinterpret_cast<_Float64x *>(&x))
-#define		REALY		*(reinterpret_cast<_Float64x *>(&y))
-
-static inline sh_real_t makeres(long double   input) {
-	return *reinterpret_cast<sh_real_t*>(&input);
-}
-
-#define		REALSEG		CS_CODE_SEG(".realnum")
-
+//putting these in a seperate seg is wasteful
+//#define		REALSEG		CS_CODE_SEG(".realnum")
+#define		REALSEG
 
 REALSEG
 static sh_real_t cs_realadd(sh_real_t x, sh_real_t y) {

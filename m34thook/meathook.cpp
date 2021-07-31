@@ -18,6 +18,7 @@
 #include "memscan.hpp"
 #include "mh_memmanip_cmds.hpp"
 #include "snaphakalgo.hpp"
+#include <string.h>
 void idlib_dump(idCmdArgs* args) {
 	idType::do_idlib_dump();
 	return;
@@ -410,6 +411,10 @@ void cmd_optimize(idCmdArgs* args) {
 	char sqrt_override[] = { (char)0xF2, 0x0F, 0x51, (char)0xC0, (char)0xC3 };
 
 	patch_memory_with_undo(descan::g_sqrt, sizeof(sqrtf_override), sqrt_override);
+	if(args->argc > 1) {
+		make_ret(descan::g_idlib_vprintf);
+	}
+	//redirect_to_func(g_shalgo.m_sroutines. descan::g__ZN5idStr4IcmpEPKcS1_)
 }
 
 /*
@@ -452,13 +457,81 @@ void test_physics_op(idCmdArgs* args) {
 
 }
 
+static idVec3 g_last_mh_spawn_pos{};
+static  char* g_last_mh_spawn_entity = nullptr;
 
+
+
+MH_NOINLINE
+static bool mh_spawn_impl(const char* declname, idVec3* position) {
+
+	void* our_decl = locate_resourcelist_member("idDeclEntityDef", declname);
+
+	if (!our_decl) {
+		idLib::Printf("Failed to find entitydef %s\n", declname);
+		return false;
+	}
+
+	void* resulting_entity = spawn_entity_from_entitydef(our_decl);
+
+
+	if (!resulting_entity) {
+		idLib::Printf("Somehow spawning %s failed, game returned NULL\n", declname);
+		return false;
+
+	}
+	const char* ename = get_entity_name(resulting_entity);
+
+	if (!ename) {
+		idLib::Printf("Entity name was null?!?!?!?\n");
+		return false;
+	}
+
+
+	idLib::Printf("Placing entity %s at %f,%f,%f\n", ename, position->x, position->y, position->z);
+
+	set_entity_position(resulting_entity, position);
+	return true;
+}
+void mh_spawn_prev(idCmdArgs* args) {
+	if(!g_last_mh_spawn_entity) {
+		idLib::Printf("Have not spawned any entities yet, spawn an entity before trying prev\n");
+		return;
+	}
+
+
+	mh_spawn_impl(g_last_mh_spawn_entity, &g_last_mh_spawn_pos);
+
+	
+	
+}
 void mh_spawn(idCmdArgs* args) {
 
 	if (args->argc < 2) {
 		idLib::Printf("You need to supply an entitydef to spawn, foole.\n");
 		return;
 	}
+#if 1
+	idVec3 playertrace{};
+	//allow user to supply the position
+	if (args->argc >= 5) {
+
+		playertrace.x = atof(args->argv[2]);
+		playertrace.y = atof(args->argv[3]);
+		playertrace.z = atof(args->argv[4]);
+	}
+	else {
+		get_player_trace_pos(&playertrace);
+	}
+	if (mh_spawn_impl(args->argv[1], &playertrace)) {
+		if (g_last_mh_spawn_entity) {
+			free(g_last_mh_spawn_entity);
+		}
+		g_last_mh_spawn_entity = strdup(args->argv[1]);
+		g_last_mh_spawn_pos = playertrace;
+	}
+
+#else
 	void* our_decl = locate_resourcelist_member("idDeclEntityDef", args->argv[1]);
 
 	if (!our_decl) {
@@ -492,10 +565,17 @@ void mh_spawn(idCmdArgs* args) {
 	else {
 		get_player_trace_pos(&playertrace);
 	}
+	if (g_last_mh_spawn_entity) {
+		free(g_last_mh_spawn_entity);
+	}
+	g_last_mh_spawn_entity = strdup(args->argv[1]);
+
+
+	g_last_mh_spawn_pos = playertrace;
 	idLib::Printf("Placing entity %s at %f,%f,%f\n", ename, playertrace.x, playertrace.y, playertrace.z);
 
 	set_entity_position(resulting_entity, &playertrace);
-
+#endif
 }
 static void do_nothing() {
 
@@ -512,7 +592,7 @@ static void mh_reload_decl(idCmdArgs* args) {
 	}
 
 
-	
+
 
 
 	void* memb = locate_resourcelist_member(args->argv[1], args->argv[2]);
@@ -522,7 +602,7 @@ static void mh_reload_decl(idCmdArgs* args) {
 		return;
 	}
 	idLib::Printf("calling decl_read_production_file\n");
-	if(!reload_decl(memb)) {
+	if (!reload_decl(memb)) {
 		return;
 	}
 
@@ -536,7 +616,7 @@ static mh_fieldcached_t<char*> g_field_resourcelist_class{};
 static mh_fieldcached_t<void*> g_field_resourcelist_next{};
 
 static void mh_list_resource_lists(idCmdArgs* args) {
-	
+
 	void* listofresourcelists = *((void**)descan::g_listOfResourceLists);
 
 
@@ -549,15 +629,15 @@ static void mh_list_resource_lists(idCmdArgs* args) {
 
 
 
-	while(listofresourcelists) {
+	while (listofresourcelists) {
 		const char* type = *g_field_resourcelist_type(listofresourcelists, "idResourceList", "typeName");
 		const char* classname = *g_field_resourcelist_class(listofresourcelists, "idResourceList", "className");
 
 		workbuf += "\t";
 		workbuf += classname;
-		workbuf+=RESLIST_TABULATION;
+		workbuf += RESLIST_TABULATION;
 		workbuf += type;
-		workbuf+="\n";
+		workbuf += "\n";
 
 		listofresourcelists = *g_field_resourcelist_next(listofresourcelists, "idResourceList", "next");
 	}
@@ -566,9 +646,55 @@ static void mh_list_resource_lists(idCmdArgs* args) {
 
 	idLib::Printf(workbuf.c_str());
 }
-static void* g_original_renderthread_run = nullptr;
-static __int64 testdebugtools(void* x){
+
+static void mh_list_resourcelist_contents(idCmdArgs* args) {
 	
+	if(args->argc < 2) {
+		idLib::Printf("Expected a resource classname for the first arg\n");
+		return;
+	}
+
+	void* reslist = resourcelist_for_classname(args->argv[1]);
+
+	if(!reslist) {
+		idLib::Printf("Couldn't get resourcelist for %s!\n", args->argv[1]);
+		return;
+	}
+
+	void* reslistt = idResourceList_to_resourceList_t(reslist);
+	if(!reslistt){
+		idLib::Printf("No resourceList_t for idResourceList?? how??\n");
+		return;
+	}
+
+	unsigned reslen = resourceList_t_get_length(reslistt);
+
+	std::string buildbuf{};
+
+
+	for(unsigned i = 0; i < reslen; ++i) {
+		
+		void* res = resourceList_t_lookup_index(reslistt, i);
+		if(!res)
+			continue;
+		const char* resname = get_resource_name(res);
+		if(!resname)
+			continue;
+
+		buildbuf+= resname;
+
+		buildbuf += "\n";
+
+	}
+
+	set_clipboard_data(buildbuf.c_str());
+
+	idLib::Printf(buildbuf.c_str());
+
+}
+static void* g_original_renderthread_run = nullptr;
+static __int64 testdebugtools(void* x) {
+
 	//call_as<void>(descan::g_renderDebugTools, get_rendersystem());
 	return call_as<__int64>(g_original_renderthread_run, x);
 }
@@ -584,6 +710,30 @@ static void meathook_cpuinfo(idCmdArgs* args) {
 	idLib::Printf(cpuinfo_buffer);
 }
 
+static void image_fill(idCmdArgs* args) {
+	if (args->argc < 5) {
+		idLib::Printf("nope\n");
+		return;
+	}
+	const char* imagename = args->argv[1];
+	unsigned width = atoi(args->argv[2]);
+	unsigned height = atoi(args->argv[3]);
+
+	unsigned fillvalue = atoi(args->argv[4]);
+
+
+	char* tmparray = new char[width * height * 4];
+
+	memset(tmparray, fillvalue, width * height * 4);
+
+
+	upload_2d_imagedata(imagename, tmparray, width, height);
+
+	delete[] tmparray;
+
+
+}
+
 void meathook_init() {
 	install_gameapi_hooks();
 
@@ -593,9 +743,9 @@ void meathook_init() {
 
 	swap_out_ptrs(&vtbl_render[1], &g_original_renderthread_run, 1, false);
 
-	
 
-	
+
+
 
 	//redirect_to_func(descan::g_renderDebugTools, (uintptr_t)descan::g_idRender_PrintStats, true);
 	redirect_to_func((void*)idFileResourceCompressed__GetFile, (uintptr_t)/* doomsym<void>(doomoffs::idFileResourceCompressed__GetFile)*/ descan::g_idfilecompressed_getfile, true);
@@ -643,12 +793,15 @@ void meathook_init() {
 	idCmd::register_command("mh_ang2mat", cmd_mh_ang2mat, "mh_ang2mat pitch yaw roll : converts the pitch, yawand roll values for idAngles to a decl - formatted matrix, copying the result to your clipboard");
 	idCmd::register_command("mh_dumpeventdefs", event_dump, "mh_dumpeventdefs <as enum = 0/1>");
 	idCmd::register_command("chrispy", mh_spawn, "chrispy <entitydef> <optional xyz position, uses your look direction as default> - spawns an entity at the position");
+	idCmd::register_command("rechrispy", mh_spawn_prev, "rechrispy spawns the previous entitydef used with chrispy at the previous position");
 	idCmd::register_command("idlib_dump", idlib_dump, "idlib_dump");
 
 	idCmd::register_command("mh_reload_decl", mh_reload_decl, "mh_reload_decl <classname(ex:idDeclWeapon)> <decl path>");
-	idCmd::register_command("mh_list_resource_lists",mh_list_resource_lists, "lists all resource lists by classname/typename, copying the result to the clipboard (the clipboard might not be helpful here)");
+	idCmd::register_command("mh_list_resource_lists", mh_list_resource_lists, "lists all resource lists by classname/typename, copying the result to the clipboard (the clipboard might not be helpful here)");
+	idCmd::register_command("mh_list_resources_of_class", mh_list_resourcelist_contents, "<resourcelist classname> lists all resources in a given list, copying result to clipboard");
 	idCmd::register_command("idlib_idc", idc_dump, "Generates a .idc file for ida that defines all structs and enums that have typeinfo for this build of eternal");
 	idCmd::register_command("mh_cpuinfo", meathook_cpuinfo, "takes no args, dumps info about your cpu for dev purposes");
+	idCmd::register_command("image_fill", image_fill, "test");
 	install_memmanip_cmds();
 	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
 	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");

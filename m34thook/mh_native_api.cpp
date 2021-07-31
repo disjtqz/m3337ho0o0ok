@@ -14,6 +14,9 @@
 #include "clipboard_helpers.hpp"
 #include "gameapi.hpp"
 #include "generalized_number.hpp"
+#include "mh_inputsys.hpp"
+#include "mh_mainloop.hpp"
+#include "mh_guirender.hpp"
 
 static mh_classtype_t find_classtype(const char* name) {
 	return reinterpret_cast<mh_classtype_t>(idType::FindClassInfo(name));
@@ -90,6 +93,7 @@ static const char* _get_entity_name(mh_game_entity_t ent) {
 static mh_game_entity_t get_player() {
 	return reinterpret_cast<mh_game_entity_t>(find_entity("player1"));
 }
+
 static mh_interface_t g_interface{
 	.m_execute_cmd_text = idCmd::execute_command_text,
 	.m_console_printf = idLib::Printf,
@@ -122,6 +126,8 @@ static mh_interface_t g_interface{
 	.m_remove_persistent_text = remove_persistent_text,
 	.m_get_player1 = get_player,
 	.m_get_player_looktarget = reinterpret_cast<mh_game_entity_t (*)()>(get_player_look_target),
+	.m_register_premainloop_cb = mh_mainloop::add_preframe_callback,
+	.m_register_postmainloop_cb = mh_mainloop::add_postframe_callback
 
 
 };

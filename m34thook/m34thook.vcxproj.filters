@@ -22,6 +22,15 @@
     <Filter Include="Source Files\scanner_inls">
       <UniqueIdentifier>{a000585c-b95f-4fe2-a513-407870384757}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\mhutil">
+      <UniqueIdentifier>{366a52cf-634b-498d-bfd0-e6e46cc00e04}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\mhutil">
+      <UniqueIdentifier>{1306382e-248a-46fb-84a8-3b5abab979a5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\win32">
+      <UniqueIdentifier>{89c418ce-1607-4322-b6d4-3a696c351f12}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -87,23 +96,32 @@
     <ClCompile Include="id_resources_lowlevel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="disasmscan.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="rendermodelgui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mhgui.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="scanners_generic.cpp">
+    <ClCompile Include="mh_inputsys.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mh_guirender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mh_mainloop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="scanners\scanners_avx2.cpp">
       <Filter>Source Files\scanner_inls</Filter>
     </ClCompile>
-    <ClCompile Include="scanners_avx2.cpp">
+    <ClCompile Include="scanners\scanners_avx512.cpp">
       <Filter>Source Files\scanner_inls</Filter>
     </ClCompile>
-    <ClCompile Include="scanners_avx512.cpp">
+    <ClCompile Include="scanners\scanners_generic.cpp">
       <Filter>Source Files\scanner_inls</Filter>
+    </ClCompile>
+    <ClCompile Include="mhutil\mh_filesystem.cpp">
+      <Filter>Source Files\mhutil</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -151,9 +169,6 @@
     </ClInclude>
     <ClInclude Include="scanners\scanners_typeinfo.hpp">
       <Filter>Header Files\scanners</Filter>
-    </ClInclude>
-    <ClInclude Include="meathook_plugin_api.hpp">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="clipboard_helpers.hpp">
       <Filter>Header Files</Filter>
@@ -206,9 +221,6 @@
     <ClInclude Include="id_resources_lowlevel.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="disasmscan.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="scanners\initial_scangroup.hpp">
       <Filter>Header Files\scanners</Filter>
     </ClInclude>
@@ -223,6 +235,21 @@
     </ClInclude>
     <ClInclude Include="scanners\scanner_core_incl.hpp">
       <Filter>Header Files\scanners</Filter>
+    </ClInclude>
+    <ClInclude Include="mh_inputsys.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mh_guirender.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mh_mainloop.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mhutil\mh_filesystem.hpp">
+      <Filter>Header Files\mhutil</Filter>
+    </ClInclude>
+    <ClInclude Include="win32\ntdll.h">
+      <Filter>Header Files\win32</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
