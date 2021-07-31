@@ -296,6 +296,16 @@ void* get_editor_interface() {
 	return *g_editor_iface_offset(get_engine(), "engine_t", "editorInterface");
 }
 
+MH_NOINLINE
+void* alloc_entity_interface(void* entity) {
+	void* iface = get_editor_interface();
+	return call_virtual<void*>(iface, 13, entity);
+
+}
+void destroy_entity_interface(void* inter) {
+	//vector destructor
+	call_virtual<void>(inter, 0);
+}
 static mh_fieldcached_t<idRenderModelGui*> g_cursor_model_offset{};
 MH_NOINLINE
 idRenderModelGui* get_cursor_rendermodel() {

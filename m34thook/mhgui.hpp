@@ -22,13 +22,18 @@
 void calculate_text_size(const char* msg, float* out_w, float* out_h, float scale, unsigned* out_longest_line, unsigned* out_nlines);
 
 struct gui_draw_context_t {
-	idRenderModelGui* m_guimod;
+	struct idRenderModelGui* m_guimod;
 	float m_virtwidth;
 	float m_virtheight;
 
 };
-struct sh_ui_ele2d_t {
+
+class mh_dom_t;
+
+struct mh_ui_ele_t {
 	rb_node m_tree_id_iter;
+	mh_dom_t* m_owning_dom;
+
 	const char* id;
 	float x, y;
 	float width, height;
@@ -55,8 +60,8 @@ struct sh_ui_ele2d_t {
 	static void* operator new(size_t sz);
 
 	static void operator delete(void* vp);
-	sh_ui_ele2d_t();
-	~sh_ui_ele2d_t();
+	mh_ui_ele_t();
+	~mh_ui_ele_t();
 
 	void scroll_text_up();
 	void scroll_text_down();
@@ -86,15 +91,18 @@ struct sh_ui_ele2d_t {
 
 
 
+class mh_dom_t {
+public:
+	virtual ~mh_dom_t() {
+	}
+	virtual mh_ui_ele_t* alloc_e2d(const char* id, float x, float y, float w, float h) = 0;
+
+	virtual mh_ui_ele_t* find_ele_by_id(const char* id) = 0;
+	virtual void snapgui_render(struct idRenderModelGui* guimod) = 0;
 
 
+};
+void init_sh_ingame_ui();
+mh_dom_t* new_dom();
 
 
-sh_ui_ele2d_t* alloc_e2d(const char* id, float x, float y, float w, float h);
-
-sh_ui_ele2d_t* find_ele_by_id(const char* id);
-void snapgui_render(idRenderModelGui* guimod);
-
-static inline sh_ui_ele2d_t* operator "" _ele2d(const char* name) {
-	return find_ele_by_id(name);
-}

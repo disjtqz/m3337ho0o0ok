@@ -201,6 +201,14 @@ void* get_cursor();
 MH_NOINLINE
 void* get_editor_interface();
 
+/*
+	allocates an entity interface object from the editor interface for this entities type
+*/
+MH_NOINLINE
+void* alloc_entity_interface(void* entity);
+
+void destroy_entity_interface(void* inter);
+
 MH_NOINLINE
 void* get_console();
 

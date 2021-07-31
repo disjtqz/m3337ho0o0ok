@@ -19,6 +19,7 @@
 #include "mh_memmanip_cmds.hpp"
 #include "snaphakalgo.hpp"
 #include <string.h>
+#include "mh_guirender.hpp"
 void idlib_dump(idCmdArgs* args) {
 	idType::do_idlib_dump();
 	return;
@@ -527,7 +528,7 @@ void mh_spawn(idCmdArgs* args) {
 		if (g_last_mh_spawn_entity) {
 			free(g_last_mh_spawn_entity);
 		}
-		g_last_mh_spawn_entity = strdup(args->argv[1]);
+		g_last_mh_spawn_entity = _strdup(args->argv[1]);
 		g_last_mh_spawn_pos = playertrace;
 	}
 
@@ -733,6 +734,7 @@ static void image_fill(idCmdArgs* args) {
 
 
 }
+
 
 void meathook_init() {
 	install_gameapi_hooks();

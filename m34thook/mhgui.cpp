@@ -52,24 +52,24 @@ void calculate_text_size(const char* msg, float* out_w, float* out_h, float scal
 	}
 
 	*out_w = (idRenderModelGui::get_SMALLCHAR_WIDTH() * (float)maxchars) * scale;
-	*out_h = nlines * (scale*idRenderModelGui::get_SMALLCHAR_HEIGHT());
+	*out_h = nlines * (scale * idRenderModelGui::get_SMALLCHAR_HEIGHT());
 	*out_longest_line = maxchars;
 	*out_nlines = nlines;
 
 }
 
-void* sh_ui_ele2d_t:: operator new(size_t sz) {
+void* mh_ui_ele_t:: operator new(size_t sz) {
 	return sh::heap::alloc_from_heap(g_ui_frontend_heap, sz, 0);
 }
 
-void sh_ui_ele2d_t::operator delete(void* vp) {
+void mh_ui_ele_t::operator delete(void* vp) {
 	sh::heap::free_from_heap(g_ui_frontend_heap, vp, 0);
 }
-sh_ui_ele2d_t::sh_ui_ele2d_t() {
+mh_ui_ele_t::mh_ui_ele_t() {
 	rb_init_node(&m_tree_id_iter);
 	id = nullptr;
 	x = 0;
-	m_hidden=false;
+	m_hidden = false;
 	y = 0;
 	width = 0;
 	height = 0;
@@ -81,13 +81,13 @@ sh_ui_ele2d_t::sh_ui_ele2d_t() {
 	txt_scale = 0;
 }
 
-sh_ui_ele2d_t::~sh_ui_ele2d_t() {
+mh_ui_ele_t::~mh_ui_ele_t() {
 	if (txt) {
 		sh::heap::free_from_heap(g_ui_frontend_heap, txt, 0);
 		txt = nullptr;
 	}
 }
-void sh_ui_ele2d_t::set_text(const char* newtxt) {
+void mh_ui_ele_t::set_text(const char* newtxt) {
 	if (txt) {
 		sh::heap::free_from_heap(g_ui_frontend_heap, txt, 0);
 		txt = nullptr;
@@ -103,7 +103,7 @@ void sh_ui_ele2d_t::set_text(const char* newtxt) {
 		txt = newtext;
 	}
 }
-void sh_ui_ele2d_t::init_text(const char* message, float scale, idColor color) {
+void mh_ui_ele_t::init_text(const char* message, float scale, idColor color) {
 	unsigned len = sh::string::strlength(message);
 	char* newtext = (char*)sh::heap::alloc_from_heap(g_ui_frontend_heap, len + 1, 0);
 
@@ -117,12 +117,12 @@ void sh_ui_ele2d_t::init_text(const char* message, float scale, idColor color) {
 
 
 }
-void sh_ui_ele2d_t::init_rect(const char* _material, idColor color) {
+void mh_ui_ele_t::init_rect(const char* _material, idColor color) {
 	material = get_material(_material);
 	mat_color = color.PackColor();
 
 }
-void sh_ui_ele2d_t::init_common(const char* _id, float _x, float _y, float w, float h) {
+void mh_ui_ele_t::init_common(const char* _id, float _x, float _y, float w, float h) {
 	id = _id;
 	x = _x;
 	y = _y;
@@ -130,20 +130,20 @@ void sh_ui_ele2d_t::init_common(const char* _id, float _x, float _y, float w, fl
 	height = h;
 }
 
-void sh_ui_ele2d_t::scroll_text_up() {
-	if(scrollYPos == 0)
+void mh_ui_ele_t::scroll_text_up() {
+	if (scrollYPos == 0)
 		return;
 	--scrollYPos;
 }
-void sh_ui_ele2d_t::scroll_text_down() {
+void mh_ui_ele_t::scroll_text_down() {
 	++scrollYPos;
 }
 
 
 
-void sh_ui_ele2d_t::draw(gui_draw_context_t& g) {
+void mh_ui_ele_t::draw(gui_draw_context_t& g) {
 
-	if(m_hidden) {
+	if (m_hidden) {
 		return;
 	}
 	auto mk2d = [](float x, float y) {
@@ -157,16 +157,16 @@ void sh_ui_ele2d_t::draw(gui_draw_context_t& g) {
 
 
 	if (material) {
-		idVec4 vrts[4] = { mk2d(rx, ry), mk2d(rw + rx, ry), mk2d(rw + rx, rh + ry), mk2d(rx, rh + ry) };
+		/*idVec4 vrts[4] = { mk2d(rx, ry), mk2d(rw + rx, ry), mk2d(rw + rx, rh + ry), mk2d(rx, rh + ry) };
 
 		for (auto&& v : vrts) {
 			v.z = (v.x - x) / rw;
 			v.w = (v.y - y) / rh;
 
-		}
+		}*/
 		g.m_guimod->set_current_vertexcolor(mat_color);
-
-		g.m_guimod->DrawStretchPic(&vrts[0], &vrts[1], &vrts[2], &vrts[3], material, 1.0);
+		g.m_guimod->DrawRectMaterial(rx, ry, rw, rh, material);
+		//g.m_guimod->DrawStretchPic(&vrts[0], &vrts[1], &vrts[2], &vrts[3], material, 1.0);
 
 	}
 
@@ -177,12 +177,12 @@ void sh_ui_ele2d_t::draw(gui_draw_context_t& g) {
 		unsigned maxline;
 		calculate_text_size(txt, &fx, &fy, txt_scale, &longline, &maxline);
 
-		if (fx > rw) {
+		/*if (fx > rw) {
 			txt_scale *= rw / fx;
 			calculate_text_size(txt, &fx, &fy, txt_scale, &longline, &maxline);
-		}
+		}*/
 
-		float just =0;// (width - fx) / 2;
+		float just = 0;// (width - fx) / 2;
 
 		float currentx = 0;
 		float currenty = 0;
@@ -196,16 +196,16 @@ void sh_ui_ele2d_t::draw(gui_draw_context_t& g) {
 		unsigned current_line = 0;
 		unsigned i = 0;
 
-		if(scrollYPos > maxline) {
+		if (scrollYPos > maxline) {
 			scrollYPos = maxline;
 			return;
 		}
-		if(scrollYPos) {
+		if (scrollYPos) {
 			//seek to current line
 			for (; txt[i]; ++i) {
-				if(txt[i] == '\n') {
+				if (txt[i] == '\n') {
 					++current_line;
-					if(current_line == scrollYPos)
+					if (current_line == scrollYPos)
 						break;
 				}
 			}
@@ -215,8 +215,8 @@ void sh_ui_ele2d_t::draw(gui_draw_context_t& g) {
 
 
 				currenty += text_increment_y;
-				
-				if(currenty + text_increment_y > rh) { //text would be chopped off
+
+				if (currenty + text_increment_y > rh) { //text would be chopped off
 					break;
 				}
 
@@ -234,22 +234,47 @@ void sh_ui_ele2d_t::draw(gui_draw_context_t& g) {
 	}
 
 }
-static rb_root g_2d_eles_tree{};
 
-static sh_ui_ele2d_t* try_find_2dele(const char* id, sh::rb::insert_hint_t& hint) {
-	return sh::rb::rbnode_find<sh_ui_ele2d_t, cs_offsetof_m(sh_ui_ele2d_t, m_tree_id_iter), const char*>(&g_2d_eles_tree,
-		id, [](sh_ui_ele2d_t* l, const char* r) {
-			return sh::string::strcmp(l->id, r);
-		}, &hint);
-}
+class mh_dom_local_t : public mh_dom_t {
+	rb_root g_2d_eles_tree{};
+public:
+	 mh_ui_ele_t* try_find_2dele(const char* id, sh::rb::insert_hint_t& hint) {
+		return sh::rb::rbnode_find<mh_ui_ele_t, cs_offsetof_m(mh_ui_ele_t, m_tree_id_iter), const char*>(&g_2d_eles_tree,
+			id, [](mh_ui_ele_t* l, const char* r) {
+				return sh::string::strcmp(l->id, r);
+			}, &hint);
+	}
+	virtual mh_ui_ele_t* alloc_e2d(const char* id, float x, float y, float w, float h) override;
 
-sh_ui_ele2d_t* alloc_e2d(const char* id, float x, float y, float w, float h) {
+	virtual mh_ui_ele_t* find_ele_by_id(const char* id) override;
+	virtual void snapgui_render(idRenderModelGui* guimod) override;
+
+	mh_dom_local_t()  {
+		g_2d_eles_tree = RB_ROOT;
+	}
+
+	void destroy_ele(mh_ui_ele_t* ele) {
+		sh::rb::rb_erase(&ele->m_tree_id_iter, &g_2d_eles_tree);
+		delete ele;
+	}
+
+	virtual ~mh_dom_local_t() override {
+		//todo clear all nodes
+
+	}
+};
+
+
+
+
+mh_ui_ele_t* mh_dom_local_t::alloc_e2d(const char* id, float x, float y, float w, float h) {
 	sh::rb::insert_hint_t ihint;
-	sh_ui_ele2d_t* result = try_find_2dele(id, ihint);
+	mh_ui_ele_t* result = try_find_2dele(id, ihint);
 	if (!result) {
-		result = new sh_ui_ele2d_t();//(sh_ui_ele2d_t*)sh::heap::alloc_from_heap(g_ui_frontend_heap, sizeof(sh_ui_ele2d_t),0);
-		
+		result = new mh_ui_ele_t();
+
 		result->id = id;
+		result->m_owning_dom = this;
 		ihint.insert(&result->m_tree_id_iter, &g_2d_eles_tree);
 	}
 
@@ -259,16 +284,22 @@ sh_ui_ele2d_t* alloc_e2d(const char* id, float x, float y, float w, float h) {
 
 }
 
-sh_ui_ele2d_t* find_ele_by_id(const char* id) {
+mh_ui_ele_t* mh_dom_local_t::find_ele_by_id(const char* id) {
 	sh::rb::insert_hint_t skiphint;
 	return try_find_2dele(id, skiphint);
 }
 
-void snapgui_render(idRenderModelGui* guimod) {
 
-	for(auto element : sh::rb::rb_iterate<sh_ui_ele2d_t, cs_offsetof_m(sh_ui_ele2d_t, m_tree_id_iter)>(g_2d_eles_tree)) {
 
-		gui_draw_context_t g{.m_guimod = guimod, .m_virtwidth = guimod->GetVirtualWidth(), .m_virtheight = guimod->GetVirtualHeight()};
+void mh_dom_local_t::snapgui_render(idRenderModelGui* guimod) {
+
+	for (auto element : sh::rb::rb_iterate<mh_ui_ele_t, cs_offsetof_m(mh_ui_ele_t, m_tree_id_iter)>(g_2d_eles_tree)) {
+
+		gui_draw_context_t g{ .m_guimod = guimod, .m_virtwidth = guimod->GetVirtualWidth(), .m_virtheight = guimod->GetVirtualHeight() };
 		element->draw(g);
 	}
+}
+
+mh_dom_t* new_dom() {
+	return new mh_dom_local_t();
 }

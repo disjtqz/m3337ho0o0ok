@@ -15,6 +15,9 @@
 #include <stdio.h>
 #include "gameapi.hpp"
 #include "snaphakalgo.hpp"
+
+#define		SMALLCHAR_WIDTH_SCALEFACTOR		1.0f
+#define		SMALLCHAR_HEIGHT_SCALEFACTOR	1.0f
 #define     GET_VERTEXCOLOR()       *mh_lea<unsigned>(this, RENDERMODELGUI_VERTEXCOLOR_OFFSET)
 void idRenderModelGui::DrawFilled(const idColor& color, float x, float y, float w, float h) {
 
@@ -132,7 +135,7 @@ float idRenderModelGui::get_SMALLCHAR_WIDTH() {
 		return DEFAULT_SMALLCHAR_WIDTH;
 	}
 	else {
-		return *reinterpret_cast<float*>(descan::g_SMALLCHAR_WIDTH);
+		return *reinterpret_cast<float*>(descan::g_SMALLCHAR_WIDTH) * SMALLCHAR_WIDTH_SCALEFACTOR;
 	}
 }
 
@@ -141,7 +144,7 @@ float idRenderModelGui::get_SMALLCHAR_HEIGHT(){
 		return DEFAULT_SMALLCHAR_HEIGHT;
 	}
 	else {
-		return *reinterpret_cast<float*>(descan::g_SMALLCHAR_HEIGHT);
+		return *reinterpret_cast<float*>(descan::g_SMALLCHAR_HEIGHT) * SMALLCHAR_HEIGHT_SCALEFACTOR;
 	}
 }
 

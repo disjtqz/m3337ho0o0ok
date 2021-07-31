@@ -109,6 +109,13 @@ static inline TRet call_as(void* addr, Ts... args) {
 	return reinterpret_cast<TRet(*)(Ts...)>(addr)(args...);
 }
 
+template<typename TRet, typename... Ts>
+static inline TRet call_virtual(void* obj, unsigned vtblidx, Ts... args) {
+	void* method = reinterpret_cast<void***>(obj)[0][vtblidx];
+
+	return call_as<TRet>(method, obj, args...);
+}
+
 struct rtti_obj_locator_t {
 	int unused[3];
 	int typedescr_rva;
