@@ -364,6 +364,7 @@
     <ClCompile Include="mh_mainloop.cpp" />
     <ClCompile Include="mh_memmanip_cmds.cpp" />
     <ClCompile Include="mh_native_api.cpp" />
+    <ClCompile Include="optimizations\mhoptimize.cpp" />
     <ClCompile Include="rendermodelgui.cpp" />
     <ClCompile Include="scanners\scanners_avx2.cpp" />
     <ClCompile Include="scanners\scanners_avx512.cpp" />

@@ -23,6 +23,8 @@ void* get_material(const char* name);
 
 //warning: returns idResourceList, not resourceList_t!
 void* resourcelist_for_classname(const char* clsname);
+//warning:returns resourceList_t, not idResourceList
+void* resourcelist_for_resource(void* resource);
 
 void* idResourceList_to_resourceList_t(void* resourcelist);
 

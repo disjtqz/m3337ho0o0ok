@@ -75,7 +75,52 @@ CS_FORCEINLINE static bool cs_strcmpeq_impl(const char* s1, const char* s2) {
 
 #endif
 }
+#if defined(__AVX2__)
+__attribute__((naked))
+static bool cs_strcmpeq_avx2_asm(const char* s1, const char* s2) {
+	__asm {
+		vmovdqu xmm1, xmmword ptr[rcx]
+		vpxor   xmm0, xmm0, xmm0
+		vpcmpeqb xmm2, xmm1, xmm0
+		vpmovmskb r9d, xmm2
+		vpcmpeqb xmm1, xmm1, xmmword ptr[rdx]
+		vpmovmskb r8d, xmm1
+		test    r9w, r9w
+		jnz     short loc_1800A8B77
+		mov     eax, 10h
 
+		ALIGN 16
+loc_1800A8B50:
+		cmp     r8w, 0FFFFh
+		jnz     short loc_1800A8B99
+		vmovdqu xmm1, xmmword ptr[rcx + rax]
+		vpcmpeqb xmm2, xmm1, xmm0
+		vpcmpeqb xmm1, xmm1, xmmword ptr[rdx + rax]
+		vpmovmskb r9d, xmm2
+		vpmovmskb r8d, xmm1
+		add     rax, 10h
+		test    r9w, r9w
+		jz      short loc_1800A8B50
+
+loc_1800A8B77:
+		movzx   eax, r9w
+		tzcnt   eax, eax
+		mov     ecx, 0FFFFFFFEh
+		shlx    eax, ecx, eax
+		not eax
+		andn    eax, r8d, eax
+		test    eax, 0FFFFh
+		setz    al
+		test al, al
+		retn
+
+loc_1800A8B99 :
+		xor eax, eax
+		retn
+	}
+}
+
+#endif
 IMPL_CODE_SEG
 static
 bool cs_stricmpeq(const char* s1, const char* s2) {
@@ -149,15 +194,15 @@ static unsigned hashfnv32(const char* s1, unsigned length) {
 
 	unsigned hcode = 0x811C9DC5;
 
-   
-	for(unsigned i = 0; i < length; ++i)
-    {
-        unsigned currchar = recs1[i];
 
-        hcode = 0x1000193 * (hcode ^ currchar);
-    }
+	for (unsigned i = 0; i < length; ++i)
+	{
+		unsigned currchar = recs1[i];
+
+		hcode = 0x1000193 * (hcode ^ currchar);
+	}
 	return hcode;
-   
+
 }
 IMPL_CODE_SEG
 
@@ -168,10 +213,10 @@ static unsigned fast_strlen_func_impl(const char* s) {
 #endif
 		if (!(u_p & 15)) {
 			return fast_sse_strlen(s);
-		}
+	}
 		return strlen(s);
 #if defined(__AVX2__)
-	}
+}
 	else {
 		return fast_avx2_strlen(s);
 	}
@@ -609,6 +654,7 @@ int __cdecl cs_strcmp(const char* Str1, const char* Str2)
 }
 #undef BYTE1
 IMPL_CODE_SEG
+CS_NOINLINE
 static
 const char* __cdecl cs_strstr(const char* Str, const char* SubStr)
 {
@@ -648,6 +694,7 @@ const char* __cdecl cs_strstr(const char* Str, const char* SubStr)
 	return v3;
 }
 IMPL_CODE_SEG
+CS_NOINLINE
 static
 const char* __fastcall _strchr_sse2(const char* a1, char a2)
 {
@@ -1257,13 +1304,13 @@ char* __fastcall cs_strtok_r(char* str, const char* delim, char** saveptr)
 
 IMPL_CODE_SEG
 static
-char*  cs_strcpy(char* destbuf, const char* srcbuf) {
+char* cs_strcpy(char* destbuf, const char* srcbuf) {
 	/*
 		todo: vectorized version
 	*/
 
-	while(*srcbuf) {
-		
+	while (*srcbuf) {
+
 		*destbuf = *srcbuf;
 		++destbuf;
 		++srcbuf;
@@ -1274,12 +1321,12 @@ char*  cs_strcpy(char* destbuf, const char* srcbuf) {
 
 IMPL_CODE_SEG
 static unsigned cs_to_unicode(wchar_t* uniout, const char* asciiin) {
-	
+
 	unsigned i = 0;
-	while(true) {
+	while (true) {
 		uniout[i] = asciiin[i];
 
-		if(!uniout[i])
+		if (!uniout[i])
 			return i;
 
 		++i;
@@ -1287,6 +1334,23 @@ static unsigned cs_to_unicode(wchar_t* uniout, const char* asciiin) {
 	}
 	cs_assume_m(false);
 	return 0;
+}
+
+IMPL_CODE_SEG
+static
+unsigned cs_from_unicode(char* dstbuf, const wchar_t* inbuf) {
+	unsigned i = 0;
+	while (true) {
+		dstbuf[i] = inbuf[i];
+
+		if (!dstbuf[i])
+			return i;
+
+		++i;
+
+	}
+	cs_assume_m(false);
+	return 0;	
 }
 /*
 
@@ -1312,6 +1376,7 @@ static void str_algos_init(snaphak_sroutines_t* out_str) {
 		currpow10 *= 10.0;
 		g_tentothe[i] = currpow10;
 	}
+
 	out_str->m_streq = cs_strcmpeq;
 	out_str->m_strieq = cs_stricmpeq;
 	out_str->m_strlen = fast_strlen_func_impl;
@@ -1331,4 +1396,5 @@ static void str_algos_init(snaphak_sroutines_t* out_str) {
 	out_str->m_strtok_r = cs_strtok_r;
 	out_str->m_strcpy = cs_strcpy;
 	out_str->m_to_unicode = cs_to_unicode;
+	out_str->m_from_unicode = cs_from_unicode;
 }

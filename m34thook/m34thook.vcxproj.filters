@@ -31,6 +31,9 @@
     <Filter Include="Header Files\win32">
       <UniqueIdentifier>{89c418ce-1607-4322-b6d4-3a696c351f12}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\optimizations">
+      <UniqueIdentifier>{f64397e4-406c-4882-8a14-9bd89cd626cb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -122,6 +125,9 @@
     </ClCompile>
     <ClCompile Include="mhutil\mh_filesystem.cpp">
       <Filter>Source Files\mhutil</Filter>
+    </ClCompile>
+    <ClCompile Include="optimizations\mhoptimize.cpp">
+      <Filter>Source Files\optimizations</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

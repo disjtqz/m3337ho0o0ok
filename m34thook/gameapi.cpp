@@ -341,6 +341,13 @@ void* resourcelist_for_classname(const char* clsname) {
 	return call_as<void*>(descan::g_resourcelist_for_classname, clsname);
 }
 
+static mh_fieldcached_t<void*> g_resourcelist_for_idResource{};
+
+void* resourcelist_for_resource(void* resource) {
+	return *g_resourcelist_for_idResource(resource, "idResource", "resourceListPtr");
+}
+
+
 void* idResourceList_to_resourceList_t(void* resourcelist) {
 	return *g_resourcelist_t_from_resourcelist(resourcelist, "idResourceList", "resourceList");
 }
@@ -358,9 +365,11 @@ void* resourceList_t_lookup_index(void* reslist, unsigned idx) {
 	}
 	return call_as<void*>(descan::g_resourcelist_index, reslist, idx);
 }
+
 const char* get_resource_name(void* resource) {
 	return *g_idresource_get_name(resource, "idResource", "name", "str");
 }
+
 void* locate_resourcelist_member(const char* reslist_classname /* example:"idDeclEntityDef" */, const char* member_name, bool end_at_dollar) {
 	void* entitydef_reslist = resourcelist_for_classname(reslist_classname);
 	if (!entitydef_reslist) {
@@ -475,8 +484,8 @@ void** get_class_vtbl(std::string_view clsname) {
 static int located_decl_read_prod_file = -1;
 
 
-
-
+//clang unrolls the loop lol
+#pragma clang optimize off
 static int init_decl_read_prod_file() {
 
 	//the first mismatch on the vftbl is the decl reload function
@@ -490,10 +499,37 @@ static int init_decl_read_prod_file() {
 		}
 	}
 	return -1;
+}
+#pragma clang optimize on
+static void* g_idmaterial2_idResourceList = nullptr;
+static void* g_idmaterial2_resourceList_t = nullptr;
 
+CS_NOINLINE
+CS_COLD_CODE
+MH_REGFREE_CALL
+static void init_idmaterial2_resourcelist_info() {
+	g_idmaterial2_idResourceList = resourcelist_for_classname("idMaterial2");
+	g_idmaterial2_resourceList_t = idResourceList_to_resourceList_t(g_idmaterial2_idResourceList);
 
 }
+static void* g_idimage_idResourceList = nullptr;
+static void* g_idimage_resourceList_t = nullptr;
+CS_NOINLINE
+CS_COLD_CODE
+MH_REGFREE_CALL
+static void init_idimage_resourcelist_info() {
+	g_idimage_idResourceList = resourcelist_for_classname("idImage");
+	g_idimage_resourceList_t = idResourceList_to_resourceList_t(g_idimage_idResourceList);
+
+}
+
+static mh_fieldcached_t<unsigned> g_idMaterial2_CompositeMaterialStreamingPacket{};
+static mh_fieldcached_t<unsigned> g_idMaterial2_ImageStreamingPacket{};
+static mh_fieldcached_t<unsigned> g_idMaterial2_SingleMaterialStreamingPacket{};
+
+
 bool reload_decl(void* decl_ptr) {
+
 	if (located_decl_read_prod_file < 0) {
 		located_decl_read_prod_file = init_decl_read_prod_file();
 		if (located_decl_read_prod_file < 0) {
@@ -501,6 +537,23 @@ bool reload_decl(void* decl_ptr) {
 			return false;
 		}
 	}
+	
+	MH_UNLIKELY_IF(!g_idmaterial2_idResourceList) {
+		init_idmaterial2_resourcelist_info();
+		init_idimage_resourcelist_info();
+	}
+
+	void* resourcelist_for = resourcelist_for_resource(decl_ptr);
+
+	if(resourcelist_for == g_idmaterial2_resourceList_t) {
+		*g_idMaterial2_CompositeMaterialStreamingPacket(decl_ptr,"idMaterial2", "CompositeMaterialStreamingPacket") = 0;
+		*g_idMaterial2_ImageStreamingPacket(decl_ptr,"idMaterial2", "ImageStreamingPacket") = 0;
+		*g_idMaterial2_SingleMaterialStreamingPacket(decl_ptr,"idMaterial2", "SingleMaterialStreamingPacket") = 0;
+	}
+	else if(resourcelist_for == g_idimage_resourceList_t) {
+		*mh_lea<unsigned>(decl_ptr, 0xA0) = 0;
+	}
+	
 	idStr tmpstr;
 
 	auto callfn = reinterpret_cast<bool (*)(void*, idStr*)>(reinterpret_cast<void***>(decl_ptr)[0][located_decl_read_prod_file]);

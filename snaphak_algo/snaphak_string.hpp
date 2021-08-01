@@ -34,4 +34,5 @@ struct snaphak_sroutines_t {
 	char*  (*m_strcpy)(char* destbuf, const char* srcbuf);
 
 	unsigned (*m_to_unicode)(wchar_t* dstbuf, const char* inbuf);
+	unsigned (*m_from_unicode)(char* dstbuf, const wchar_t* inbuf);
 };

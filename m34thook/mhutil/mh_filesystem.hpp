@@ -14,7 +14,16 @@ enum class seekmode_e {
 	end = 2
 };
 
+#define		MH_FILESYS_PATHBUFFER_LENGTH 512
 
+static constexpr unsigned WIN32_INTERNAL_SIZEOF_UNICODE_STRING = 16;
+
+//RtlDosPathNameToRelativeNtPathName_U
+//temporary objects/buffers used by win32 path conversion
+struct win32_path_conversion_context_extern_t {
+	char m_unicode_str_storage[WIN32_INTERNAL_SIZEOF_UNICODE_STRING];
+	wchar_t m_unicode_path_result[MH_FILESYS_PATHBUFFER_LENGTH];
+};
 
 namespace filesys {
 	cs_fd_t open_file(const char* name, filemode_e mode);
@@ -35,4 +44,6 @@ namespace filesys {
 		require creating a handle to check
 	*/
 	bool file_exists(const char* filename);
+
+	bool get_ntpath_for(const char* path, win32_path_conversion_context_extern_t* conversion_temp, wchar_t* output);
 }

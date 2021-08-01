@@ -3,7 +3,6 @@
 #include <array>
 #include <Windows.h>
 
-
 constexpr unsigned hash_string(const char* s) {
 	
 	unsigned r = 0;

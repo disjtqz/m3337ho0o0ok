@@ -8,7 +8,7 @@
 idEventDefInterfaceLocal* idEventDefInterfaceLocal::Singleton() {
 	return reinterpret_cast<idEventDefInterfaceLocal*>(get_eventdef_interface());
 }
-
+#pragma clang optimize off
 static std::string event_to_string(idEventDefInterfaceLocal* iface, unsigned evnum, bool as_enum) {
 
 	const char* name = iface->GetEventNameForNum(evnum);
@@ -86,3 +86,5 @@ void DumpEventDefs(bool as_enum) {
 
 
 }
+
+#pragma clang optimize on

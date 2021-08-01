@@ -384,7 +384,7 @@ static void dispose_log() {
 }
 
 static void readfile_log_path(const char* path) {
-#if 1
+#if 0
 	if (!g_readfile_log) {
 		fopen_s(&g_readfile_log, "resources_seen.txt", "w");
 		atexit(dispose_log);
@@ -417,7 +417,7 @@ static pathlogger_t g_print_resulting_path{"override_paths.log"};
 FILE* get_override_for_resource(const char* name, size_t* size_out) {
 	FILE* resfile = nullptr;
 
-	char pathbuf[4096];
+	char pathbuf[MH_FILESYS_PATHBUFFER_LENGTH];
 
 	//memsetting the buf is not necessary 
 	//memset(pathbuf, 0, sizeof(pathbuf));
@@ -457,10 +457,23 @@ FILE* get_override_for_resource(const char* name, size_t* size_out) {
 			break;
 		}
 	}
-	/*if(sh::string::strstr(name, ".decl")) {
-		g_print_resulting_path << pathbuf;
 
-	}*/
+
+#if 0
+	if(sh::string::strstr(name, ".decl")) {
+		win32_path_conversion_context_extern_t convctx{};
+		wchar_t tmp_output[MH_FILESYS_PATHBUFFER_LENGTH];
+		filesys::get_ntpath_for(pathbuf, &convctx, tmp_output);
+
+		char tmpout2[MH_FILESYS_PATHBUFFER_LENGTH];
+
+		sh::string::from_unicode(tmpout2, tmp_output);
+		g_print_resulting_path << tmpout2;
+
+	}
+
+#endif
+
 	//fast pre-test
 	if(!filesys::file_exists(pathbuf)) {
 	return nullptr;

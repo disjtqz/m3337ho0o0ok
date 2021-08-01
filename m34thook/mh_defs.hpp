@@ -65,3 +65,11 @@ void mh_error_message(const char* fmt, ...);
 #define		mh_tmpl_strarg_m(...)		decltype([](){return __VA_ARGS__;})
 
 #include "snaphakalgo_predef.hpp"
+
+
+template<typename TRet, typename... Ts>
+MH_PURE
+static TRet mh_pure_call(TRet (*fn)(Ts...), Ts... args) {
+	return fn(args...);
+}
+

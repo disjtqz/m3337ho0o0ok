@@ -172,6 +172,7 @@ void mh_ui_ele_t::draw(gui_draw_context_t& g) {
 
 
 	if (txt) {
+#if 0
 		float fx, fy;
 		unsigned longline;
 		unsigned maxline;
@@ -229,7 +230,10 @@ void mh_ui_ele_t::draw(gui_draw_context_t& g) {
 				currentx += txt_scale * idRenderModelGui::get_SMALLCHAR_WIDTH();
 			}
 		}
-
+#else
+		g.m_guimod->set_current_vertexcolor(txt_color);
+		g.m_guimod->DrawString(rx, ry, txt, &colorWhite, false, 1.0);
+#endif
 
 	}
 

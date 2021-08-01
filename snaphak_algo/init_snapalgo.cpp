@@ -6,6 +6,8 @@
 #include <Windows.h>
 #include "syscall_list.hpp"
 //#define		FORCE_GENERIC
+
+#pragma clang optimize off
 CS_NOINLINE
 CS_COLD_CODE
 void init_impls_generic(snaphak_algo_t* algo);
@@ -89,7 +91,7 @@ void print_cpu_info(snaphak_algo_t* alg, char* buffer, size_t maxsize) {
 		alg->m_is_under_wine,
 		alg->m_total_device_memory,
 		get_memclass_name(alg->m_memclass)
-		);
+	);
 }
 #define DECLARE_MEMCLASS(name, value)		value
 #define		MEMSEP		,
@@ -210,4 +212,6 @@ void sh_algo_init(snaphak_algo_t* out_algo) {
 #endif
 
 
-	}
+}
+
+#pragma clang optimize on

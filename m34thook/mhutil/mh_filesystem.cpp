@@ -1,8 +1,11 @@
+#include "mh_defs.hpp"
 #include "mhutil/mh_filesystem.hpp"
 
 #include <Windows.h>
 #include "win32/ntdll.h"
 #include "snaphakalgo.hpp"
+
+static_assert(sizeof(_UNICODE_STRING) == WIN32_INTERNAL_SIZEOF_UNICODE_STRING);
 CS_COLD_CODE
 void* vmem_map_file(cs_fd_t handle, void** extra, size_t size, size_t offset) {
 
@@ -89,16 +92,20 @@ void filesys::seek_file(cs_fd_t fd, std::int64_t position) {
 	IO_STATUS_BLOCK iblock;
 
 	NtSetInformationFile(fd, &iblock, &position, sizeof(std::int64_t), FilePositionInformation);
-
+	
 }
+
+//
 
 /*
 	this no worky worky
+
+	jk, fixed it (unicode string length/maxlength stores the length in BYTES, so i just had to do * 2)
 */
 static 
 bool filesys::file_exists(const char* filename) {
 
-#if 0
+#if 1
 	wchar_t tmppath[2048];
 
 	tmppath[0] = '\\';
@@ -112,8 +119,8 @@ bool filesys::file_exists(const char* filename) {
 	namelen +=4;
 	UNICODE_STRING tmpstr;
 	tmpstr.Buffer = tmppath;
-	tmpstr.Length = namelen;
-	tmpstr.MaximumLength=namelen;
+	tmpstr.Length = namelen*2;
+	tmpstr.MaximumLength=namelen*2;
 
 
 
@@ -135,4 +142,44 @@ bool filesys::file_exists(const char* filename) {
 		NtClose(result);
 	return result!=nullptr;
 #endif
+}
+
+static BOOLEAN  (*g_fnptr_RtlDosPathNameToRelativeNtPathName_U)(
+  _In_       PCWSTR DosFileName,
+  _Out_      PUNICODE_STRING NtFileName,
+  _Out_opt_  PWSTR* FilePath,
+  _Out_opt_  void* RelativeName
+) = nullptr;
+
+
+MH_REGFREE_CALL
+MH_NOINLINE
+static void init_RtlDosPathNameToRelativeNtPathName_U() {
+	g_fnptr_RtlDosPathNameToRelativeNtPathName_U = (decltype(g_fnptr_RtlDosPathNameToRelativeNtPathName_U)) GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlDosPathNameToRelativeNtPathName_U");
+}
+
+bool filesys::get_ntpath_for(const char* path, win32_path_conversion_context_extern_t* conversion_temp, wchar_t* output) {
+	MH_UNLIKELY_IF(!g_fnptr_RtlDosPathNameToRelativeNtPathName_U){
+		init_RtlDosPathNameToRelativeNtPathName_U();
+	}
+
+	sh::memops::smol_memzero(conversion_temp, sizeof(*conversion_temp));
+	sh::memops::smol_memzero(output, MH_FILESYS_PATHBUFFER_LENGTH);
+	unsigned unilength = sh::string::to_unicode(conversion_temp->m_unicode_path_result, path);
+	_UNICODE_STRING* puni = reinterpret_cast<_UNICODE_STRING*>(&conversion_temp->m_unicode_str_storage[0]);
+
+
+
+
+	bool res = g_fnptr_RtlDosPathNameToRelativeNtPathName_U(conversion_temp->m_unicode_path_result, puni, nullptr, nullptr);
+	if(!res)
+		return false;
+	if(puni->Buffer) {
+		sh::memops::smol_memcpy(output, puni->Buffer, puni->Length);
+
+		output[puni->Length / 2] = 0;
+
+		HeapFree(GetProcessHeap(), 0, puni->Buffer);
+	}
+	return res;
 }

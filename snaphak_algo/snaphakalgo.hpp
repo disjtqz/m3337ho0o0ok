@@ -462,6 +462,10 @@ namespace sh::string {
 	static inline unsigned to_unicode(MH_NOESCAPE wchar_t* destbuf, MH_NOESCAPE const char* srcb) {
 		return g_shalgo.m_sroutines.m_to_unicode(destbuf, srcb);
 	}
+	MH_LEAF
+	static inline unsigned from_unicode(MH_NOESCAPE char* destbuf, MH_NOESCAPE const wchar_t* srcb) {
+		return g_shalgo.m_sroutines.m_from_unicode(destbuf, srcb);
+	}
 }
 
 namespace sh::smt {

@@ -1,5 +1,5 @@
 #include "snaphakalgo.hpp"
-
+#if 0
 #include<winsock2.h>
 #include <cstdlib>
 #pragma comment(lib,"ws2_32.lib") //Winsock Library
@@ -9,6 +9,7 @@ struct snaphak_socket_internal_t {
 	uint16_t m_port;
 	int m_socket;
 };
+
 static 
 snaphak_socket_t  cs_connect_tcp(const char* ipaddr, uint16_t portnum) {
 	int sockres= socket(AF_INET , SOCK_STREAM , 0 );
@@ -53,10 +54,16 @@ size_t cs_try_recv(snaphak_socket_t sock, void* buffer, size_t buffersize) {
 }
 
 static 	WSADATA g_wsa;
-
+#endif
 void netroutines_init(snaphak_netroutines_t* net) {
+#if 0
 	net->m_connect_tcp = cs_connect_tcp;
 	net->m_try_recv = cs_try_recv;
 	net->m_try_send=cs_try_send;
 	WSAStartup(MAKEWORD(2,2),&g_wsa);
+#else
+	net->m_connect_tcp = nullptr;
+	net->m_try_recv = nullptr;
+	net->m_try_send=nullptr;
+#endif
 }
