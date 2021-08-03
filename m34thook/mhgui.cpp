@@ -231,8 +231,31 @@ void mh_ui_ele_t::draw(gui_draw_context_t& g) {
 			}
 		}
 #else
+		float txt_w = .0f;
+		float txt_h = .0f;
+		unsigned longest_line = 0;
+		unsigned nlines = 0;
+		calculate_text_size(txt, &txt_w, &txt_h, txt_scale, &longest_line, &nlines);
+
+		float txtoriginx = .0f;
+		float txtoriginy = .0f;
+
+
+		switch(get_text_positioning_style()) {
+		case _text_style_origin:
+			txtoriginx = rx;
+			txtoriginy=ry;
+			break;
+
+		case _text_style_centered:
+			txtoriginx = centerx() - (txt_w / 2.0f);
+			txtoriginy = centery() - (txt_h / 2.0f);
+			break;
+
+		}
+
 		g.m_guimod->set_current_vertexcolor(txt_color);
-		g.m_guimod->DrawString(rx, ry, txt, &colorWhite, false, 1.0);
+		g.m_guimod->DrawString(txtoriginx, txtoriginy, txt, &colorWhite, false, 1.0);
 #endif
 
 	}

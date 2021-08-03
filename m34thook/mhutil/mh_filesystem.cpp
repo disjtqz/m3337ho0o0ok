@@ -92,7 +92,7 @@ void filesys::seek_file(cs_fd_t fd, std::int64_t position) {
 	IO_STATUS_BLOCK iblock;
 
 	NtSetInformationFile(fd, &iblock, &position, sizeof(std::int64_t), FilePositionInformation);
-	
+
 }
 
 //
@@ -102,11 +102,11 @@ void filesys::seek_file(cs_fd_t fd, std::int64_t position) {
 
 	jk, fixed it (unicode string length/maxlength stores the length in BYTES, so i just had to do * 2)
 */
-static 
+static
 bool filesys::file_exists(const char* filename) {
 
 #if 1
-	wchar_t tmppath[2048];
+	wchar_t tmppath[MH_FILESYS_PATHBUFFER_LENGTH];
 
 	tmppath[0] = '\\';
 	tmppath[1] = '?';
@@ -116,11 +116,11 @@ bool filesys::file_exists(const char* filename) {
 	// \??\C:\
 
 	unsigned namelen = sh::string::to_unicode(&tmppath[4], filename);
-	namelen +=4;
+	namelen += 4;
 	UNICODE_STRING tmpstr;
 	tmpstr.Buffer = tmppath;
-	tmpstr.Length = namelen*2;
-	tmpstr.MaximumLength=namelen*2;
+	tmpstr.Length = namelen * 2;
+	tmpstr.MaximumLength = namelen * 2;
 
 
 
@@ -133,33 +133,38 @@ bool filesys::file_exists(const char* filename) {
 
 	objattr.Length = sizeof(OBJECT_ATTRIBUTES);
 	objattr.Attributes = 64;
-	//RtlDosPathNameToNtPathName_U()
-	return NtQueryAttributesFile(&objattr, &info) >= 0 && info.FileAttributes != -1;
+
+	MH_UNLIKELY_IF(!sh::syscall_interface_available()) {
+		return NtQueryAttributesFile(&objattr, &info) >= 0 && info.FileAttributes != -1;
+	}
+	else {
+		return sh::perform_syscall<_ZwQueryAttributesFile, NTSTATUS>(&objattr, &info) >= 0 && info.FileAttributes != -1;
+	}
 #else
 	cs_fd_t result = open_file(filename, filemode_e::READ);
 
-	if(result)
+	if (result)
 		NtClose(result);
-	return result!=nullptr;
+	return result != nullptr;
 #endif
 }
 
-static BOOLEAN  (*g_fnptr_RtlDosPathNameToRelativeNtPathName_U)(
-  _In_       PCWSTR DosFileName,
-  _Out_      PUNICODE_STRING NtFileName,
-  _Out_opt_  PWSTR* FilePath,
-  _Out_opt_  void* RelativeName
-) = nullptr;
+static BOOLEAN(*g_fnptr_RtlDosPathNameToRelativeNtPathName_U)(
+	_In_       PCWSTR DosFileName,
+	_Out_      PUNICODE_STRING NtFileName,
+	_Out_opt_  PWSTR* FilePath,
+	_Out_opt_  void* RelativeName
+	) = nullptr;
 
 
 MH_REGFREE_CALL
 MH_NOINLINE
 static void init_RtlDosPathNameToRelativeNtPathName_U() {
-	g_fnptr_RtlDosPathNameToRelativeNtPathName_U = (decltype(g_fnptr_RtlDosPathNameToRelativeNtPathName_U)) GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlDosPathNameToRelativeNtPathName_U");
+	g_fnptr_RtlDosPathNameToRelativeNtPathName_U = (decltype(g_fnptr_RtlDosPathNameToRelativeNtPathName_U))GetProcAddress(GetModuleHandleA("ntdll.dll"), "RtlDosPathNameToRelativeNtPathName_U");
 }
 
 bool filesys::get_ntpath_for(const char* path, win32_path_conversion_context_extern_t* conversion_temp, wchar_t* output) {
-	MH_UNLIKELY_IF(!g_fnptr_RtlDosPathNameToRelativeNtPathName_U){
+	MH_UNLIKELY_IF(!g_fnptr_RtlDosPathNameToRelativeNtPathName_U) {
 		init_RtlDosPathNameToRelativeNtPathName_U();
 	}
 
@@ -172,9 +177,9 @@ bool filesys::get_ntpath_for(const char* path, win32_path_conversion_context_ext
 
 
 	bool res = g_fnptr_RtlDosPathNameToRelativeNtPathName_U(conversion_temp->m_unicode_path_result, puni, nullptr, nullptr);
-	if(!res)
+	if (!res)
 		return false;
-	if(puni->Buffer) {
+	if (puni->Buffer) {
 		sh::memops::smol_memcpy(output, puni->Buffer, puni->Length);
 
 		output[puni->Length / 2] = 0;

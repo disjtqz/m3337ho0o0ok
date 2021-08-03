@@ -146,7 +146,7 @@ void mh_gui::show_test_gui() {
 	mh_dom_t* mydom = new_named_dom("testgui1");
 
 	auto testele = mydom->alloc_e2d("testele", 0.25, 0.25, 0.5, 0.5);
-
+	testele->m_text_positioning_style = _text_style_centered;
 	testele->init_rect("swf/hud/menus/re_spec_station_textures/swf_images/common/frame/frame_backplate_", colorWhite);
 	testele->init_text("Heres some text for our testgui", 1.0, colorCyan);
 }

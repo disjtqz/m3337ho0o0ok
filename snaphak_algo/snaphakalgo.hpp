@@ -492,7 +492,7 @@ namespace sh::smt {
 
 namespace sh::sns {
 	static inline void sort4ptr(void** ptrs) { return g_shalgo.m_snsroutines.m_sort4ptr(ptrs); }
-	static inline void sort16ptr_with_scratch(void** ptrs, void** scratchbuf) { return g_shalgo.m_snsroutines.m_sort16ptr_with_scratch(ptrs, scratchbuf); }
+	//static inline void sort16ptr_with_scratch(void** ptrs, void** scratchbuf) { return g_shalgo.m_snsroutines.m_sort16ptr_with_scratch(ptrs, scratchbuf); }
 	static inline void sort16ptr_unrolled(void** ptrs) { return g_shalgo.m_snsroutines.m_sort16ptr_unrolled(ptrs); }
 	static inline void sort16ptr(void* ptrs[8]) { return g_shalgo.m_snsroutines.m_sort16ptr(ptrs); }
 }

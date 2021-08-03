@@ -81,15 +81,15 @@ static std::atomic_bool g_did_gamelib_init_already = false;
 static int gamelib_init_forwarder(void* x, void* y) {
 
 	if(g_did_gamelib_init_already.exchange(true) == false) {
-	descan::run_late_scangroups();
+		descan::run_late_scangroups();
 
-	int result = reinterpret_cast<int (*)(void*, void*)>(original_gamelib_init)(x, y);///doomcall<int>(doomoffs::gamelib_initialize, x, y);
+		int result = reinterpret_cast<int (*)(void*, void*)>(original_gamelib_init)(x, y);///doomcall<int>(doomoffs::gamelib_initialize, x, y);
 
-	//descan::run_gamelib_postinit_scangroups();
-	meathook_init();
+		//descan::run_gamelib_postinit_scangroups();
+		meathook_init();
 
-	hook_idfilesystem();
-	return result;
+		hook_idfilesystem();
+		return result;
 	}
 	else {
 		return 0;

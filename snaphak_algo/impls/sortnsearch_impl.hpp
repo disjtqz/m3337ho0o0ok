@@ -144,6 +144,7 @@ static void sort16ptr_unrolled(void** ptrs)
 }
 
 
+#if 0
 using _QWORD = uint64_t;
 using _DWORD = unsigned int;
 IMPL_CODE_SEG
@@ -385,6 +386,8 @@ void __fastcall sort16ptr_monster(void** a1, void** a2)
 	}
 	return ;//result;
 }
+#endif
+
 IMPL_CODE_SEG
 static
 void  cs_sort4ptr(void** ptrs)
@@ -454,6 +457,6 @@ void  cs_sort4ptr(void** ptrs)
 static void snsalgos_init(snaphak_snsroutines_t* sns) {
 	sns->m_sort16ptr = sort16ptr;
 	sns->m_sort16ptr_unrolled = sort16ptr_unrolled;
-	sns->m_sort16ptr_with_scratch = sort16ptr_monster;
+	//sns->m_sort16ptr_with_scratch = sort16ptr_monster;
 	sns->m_sort4ptr = cs_sort4ptr;
 }

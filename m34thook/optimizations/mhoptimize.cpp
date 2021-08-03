@@ -32,5 +32,11 @@ void cmd_optimize(idCmdArgs* args) {
 	if(args->argc > 1) {
 		make_ret(descan::g_idlib_vprintf);
 	}
+
+#if 1
+	redirect_to_func(g_shalgo.m_sroutines.m_strcmp, 0x1403B2A20ULL, true);//test idStr::cmp redirect
+	redirect_to_func(g_shalgo.m_sroutines.m_strlen, 0x1403B5460ULL, true);//test strlen redirect
+#endif
+
 	//redirect_to_func(g_shalgo.m_sroutines. descan::g__ZN5idStr4IcmpEPKcS1_)
 }

@@ -30,6 +30,11 @@ struct gui_draw_context_t {
 
 class mh_dom_t;
 
+enum text_positioning_style_t {
+	_text_style_centered = 0,
+	_text_style_origin = 1,
+};
+
 struct mh_ui_ele_t {
 	rb_node m_tree_id_iter;
 	mh_dom_t* m_owning_dom;
@@ -40,6 +45,8 @@ struct mh_ui_ele_t {
 
 	struct {
 		unsigned m_hidden : 1;
+		unsigned m_text_positioning_style : 4;
+
 	};
 	unsigned scrollYPos;
 
@@ -48,6 +55,14 @@ struct mh_ui_ele_t {
 	unsigned txt_color;
 	const char* txt;
 	float txt_scale;
+
+	void set_text_positioning_style(text_positioning_style_t styl) {
+		m_text_positioning_style = styl;
+	}
+
+	text_positioning_style_t get_text_positioning_style() {
+		return (text_positioning_style_t)m_text_positioning_style;
+	}
 
 	gui_draw_context_t* m_current_ctx;
 	void draw(gui_draw_context_t& rmg);
@@ -80,6 +95,12 @@ struct mh_ui_ele_t {
 		return y * m_current_ctx->m_virtheight;
 	}
 
+	float centerx() const {
+		return (x + (width / 2.0f)) * m_current_ctx->m_virtwidth;
+	}
+	float centery() const {
+		return (y + (height / 2.0f)) * m_current_ctx->m_virtheight;
+	}
 	void hide() {
 		m_hidden = true;
 	}

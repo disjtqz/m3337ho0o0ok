@@ -90,33 +90,33 @@ static bool cs_strcmpeq_avx2_asm(const char* s1, const char* s2) {
 		mov     eax, 10h
 
 		ALIGN 16
-loc_1800A8B50:
+		loc_1800A8B50:
 		cmp     r8w, 0FFFFh
-		jnz     short loc_1800A8B99
-		vmovdqu xmm1, xmmword ptr[rcx + rax]
-		vpcmpeqb xmm2, xmm1, xmm0
-		vpcmpeqb xmm1, xmm1, xmmword ptr[rdx + rax]
-		vpmovmskb r9d, xmm2
-		vpmovmskb r8d, xmm1
-		add     rax, 10h
-		test    r9w, r9w
-		jz      short loc_1800A8B50
+			jnz     short loc_1800A8B99
+			vmovdqu xmm1, xmmword ptr[rcx + rax]
+			vpcmpeqb xmm2, xmm1, xmm0
+			vpcmpeqb xmm1, xmm1, xmmword ptr[rdx + rax]
+			vpmovmskb r9d, xmm2
+			vpmovmskb r8d, xmm1
+			add     rax, 10h
+			test    r9w, r9w
+			jz      short loc_1800A8B50
 
-loc_1800A8B77:
+			loc_1800A8B77 :
 		movzx   eax, r9w
-		tzcnt   eax, eax
-		mov     ecx, 0FFFFFFFEh
-		shlx    eax, ecx, eax
-		not eax
-		andn    eax, r8d, eax
-		test    eax, 0FFFFh
-		setz    al
-		test al, al
-		retn
+			tzcnt   eax, eax
+			mov     ecx, 0FFFFFFFEh
+			shlx    eax, ecx, eax
+			not eax
+			andn    eax, r8d, eax
+			test    eax, 0FFFFh
+			setz    al
+			test al, al
+			retn
 
-loc_1800A8B99 :
+			loc_1800A8B99 :
 		xor eax, eax
-		retn
+			retn
 	}
 }
 
@@ -213,10 +213,10 @@ static unsigned fast_strlen_func_impl(const char* s) {
 #endif
 		if (!(u_p & 15)) {
 			return fast_sse_strlen(s);
-	}
+		}
 		return strlen(s);
 #if defined(__AVX2__)
-}
+	}
 	else {
 		return fast_avx2_strlen(s);
 	}
@@ -530,9 +530,11 @@ else if (*p == '+') {
 	if (expon > 308) expon = 308;
 
 	// Calculate scaling factor.
-
+#pragma clang loop unroll(disable)
 	while (expon >= 50) { scale *= 1E50; expon -= 50; }
+#pragma clang loop unroll(disable)
 	while (expon >= 8) { scale *= 1E8;  expon -= 8; }
+#pragma clang loop unroll(disable)
 	while (expon > 0) { scale *= 10.0; expon -= 1; }
 	}
 		if (out_endpos)
@@ -599,6 +601,7 @@ int __cdecl cs_strcmp(const char* Str1, const char* Str2)
 	v2 = Str2 - Str1;
 	if (((unsigned __int8)Str1 & 7) != 0)
 	{
+#pragma clang loop unroll(disable)
 		while (1)
 		{
 		LABEL_2:
@@ -612,6 +615,7 @@ int __cdecl cs_strcmp(const char* Str1, const char* Str2)
 			if (((unsigned __int8)Str1 & 7) == 0)
 				goto LABEL_5;
 		}
+
 		result = 0;
 	}
 	else
@@ -1146,7 +1150,7 @@ const char* __fastcall _strspn_sse2(const char* a1, const char* a2)
 	}
 }
 IMPL_CODE_SEG
-__forceinline
+CS_NOINLINE
 static
 size_t __fastcall _strspn_sse42(const char* a1, const char* a2)
 {
@@ -1207,7 +1211,7 @@ LABEL_4:
 	return result;
 }
 IMPL_CODE_SEG
-__forceinline
+CS_NOINLINE
 static
 unsigned __fastcall _strcspn_sse42(const char* a1, const char* a2)
 {
@@ -1340,17 +1344,16 @@ IMPL_CODE_SEG
 static
 unsigned cs_from_unicode(char* dstbuf, const wchar_t* inbuf) {
 	unsigned i = 0;
+#pragma clang loop vectorize(enable) vectorize_width(4) unroll_count(8)
 	while (true) {
 		dstbuf[i] = inbuf[i];
-
 		if (!dstbuf[i])
 			return i;
-
 		++i;
 
 	}
 	cs_assume_m(false);
-	return 0;	
+	return 0;
 }
 /*
 

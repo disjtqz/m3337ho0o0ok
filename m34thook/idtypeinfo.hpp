@@ -96,8 +96,12 @@ namespace idType {
 	classVariableInfo_t* try_locate_var_by_name(classVariableInfo_t* from, const char* field);
 	MH_NOINLINE
 	classVariableInfo_t* try_locate_var_by_name_inher(classTypeInfo_t* clstype, const char* field);
+
+	//cant use noclone on this, bug in clang. the params get dropped :/
 	template<typename... TRest>
-	static unsigned _impl_get_nested_field_offset_by_name(unsigned offset, classTypeInfo_t* clstype, const char* fld, TRest... restfields) {
+	MH_NOINLINE
+	static 
+	unsigned _impl_get_nested_field_offset_by_name(unsigned offset, classTypeInfo_t* clstype, const char* fld, TRest... restfields) {
 		classVariableInfo_t* located_var = nullptr;
 		for (classTypeInfo_t* clptr = clstype; clptr && !located_var; clptr = FindClassInfo(clptr->superType)) {
 
@@ -146,6 +150,7 @@ class mh_fieldcached_t {
 	MH_NOINLINE
 	MH_CODE_SEG(".field_init")
 	MH_REGFREE_CALL
+	MH_NOALIAS
 	void init_field(const char* clsname, TRest... restfields) {
 		m_offset = idType::_impl_get_nested_field_offset_by_name(0, idType::FindClassInfo(clsname), restfields...);
 	}
@@ -157,10 +162,12 @@ public:
 
 	template< typename TObj, typename... TRest>
 	inline TRet* operator ()(TObj obj, const char* cls, TRest... subfields) {
-		MH_UNLIKELY_IF (!~m_offset)  {
-			init_field(cls, subfields...);
+		unsigned tmpoffs = m_offset;
+		MH_UNLIKELY_IF (!~tmpoffs)  {
+			 init_field(cls, subfields...);
+			tmpoffs = *(volatile unsigned*)&m_offset;
 		}
-		return reinterpret_cast<TRet*>(((char*)obj) + m_offset);
+		return reinterpret_cast<TRet*>(((char*)obj) + tmpoffs);
 	}
 };
 

@@ -2,6 +2,8 @@
 #include "snaphakalgo.hpp"
 #include <Windows.h>
 //due to alignment, putting these into different segs is wasteful
+
+
 #if 0
 #define		SMTPROC		CS_CODE_SEG(".smt")
 #define		NOSMTPROC	CS_CODE_SEG(".nosmt")
@@ -331,7 +333,8 @@ static uintptr_t cs_create_thread(sh_thrdproc_t function, void* parms, unsigned 
 
 	PROCESSOR_NUMBER kernel_given{};
 	GetThreadIdealProcessorEx(handle, &kernel_given);
-
+	//ewww
+	//this is the only way ive been able to reliably pin a thread to a specific hw thread across processor groups though :/
 	while (kernel_given.Group != groupnum || kernel_given.Number != thrdnum) {
 		SwitchToThread();
 		PROCESSOR_NUMBER procnumstruct{};

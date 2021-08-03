@@ -3,7 +3,8 @@ static
 void cs_zeromem_nt(void* _to, size_t size) {
 	
 	char* to = (char*)_to;
-
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while((reinterpret_cast<uintptr_t>(to)&31) && size != 0) {
 		*to = 0;
 		--size;
@@ -16,7 +17,8 @@ void cs_zeromem_nt(void* _to, size_t size) {
 		to+=32;
 	}
 
-
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while(size) {
 		*to = 0;
 		++to;
@@ -29,6 +31,8 @@ void cs_movemem_nt(void* _to, const void* _from, size_t size) {
 	
 	char* to = (char*)_to;
 	const char* from = (const char*)_from;
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while((reinterpret_cast<uintptr_t>(to)&31) && size != 0) {
 		*to = *from;
 		--size;
@@ -43,7 +47,8 @@ void cs_movemem_nt(void* _to, const void* _from, size_t size) {
 		to+=32;
 	}
 
-
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while(size) {
 		*to = *from;
 		++to;
@@ -57,6 +62,8 @@ void cs_movemem_flush_opt_nt(void* _to, const void* _from, size_t size) {
 	
 	char* to = (char*)_to;
 	const char* from = (const char*)_from;
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while((reinterpret_cast<uintptr_t>(to)&31) && size != 0) {
 		*to = *from;
 		--size;
@@ -80,7 +87,8 @@ void cs_movemem_flush_opt_nt(void* _to, const void* _from, size_t size) {
 		to+=64;
 	}
 
-
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while(size) {
 		*to = *from;
 		++to;
@@ -94,6 +102,8 @@ void cs_movemem_clean_nt(void* _to, const void* _from, size_t size) {
 	
 	char* to = (char*)_to;
 	const char* from = (const char*)_from;
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while((reinterpret_cast<uintptr_t>(to)&31) && size != 0) {
 		*to = *from;
 		--size;
@@ -115,7 +125,8 @@ void cs_movemem_clean_nt(void* _to, const void* _from, size_t size) {
 		from += 64;
 		to+=64;
 	}
-
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while(size) {
 		*to = *from;
 		++to;
@@ -129,6 +140,8 @@ void cs_movemem_flush_noopt_nt(void* _to, const void* _from, size_t size) {
 	
 	char* to = (char*)_to;
 	const char* from = (const char*)_from;
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while((reinterpret_cast<uintptr_t>(to)&31) && size != 0) {
 		*to = *from;
 		--size;
@@ -148,7 +161,8 @@ void cs_movemem_flush_noopt_nt(void* _to, const void* _from, size_t size) {
 		to+=64;
 	}
 
-
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while(size) {
 		*to = *from;
 		++to;

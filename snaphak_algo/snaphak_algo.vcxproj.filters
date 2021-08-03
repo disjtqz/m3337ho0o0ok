@@ -157,5 +157,8 @@
     <MASM Include="win_syscall_list.asm">
       <Filter>Source Files</Filter>
     </MASM>
+    <MASM Include="asmbits.asm">
+      <Filter>Source Files</Filter>
+    </MASM>
   </ItemGroup>
 </Project>

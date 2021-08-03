@@ -1,9 +1,17 @@
+/*
+	adding loop unroll disable pragmas/vectorize disable pragmas here because while clang loop unrolling is really good and i'd like to keep it enabled,
+	it is too aggressive and often unrolls code that doesnt execute very frequently, like our misaligned pointer paths here. these loop pragmas shave off about 6kb
+*/
+
 IMPL_CODE_SEG
 static 
 void cs_zeromem_nt(void* _to, size_t size) {
 	
 	char* to = (char*)_to;
-
+	//unfortunately clang will always replace the misaligned paths with calls to memset
+	
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while((reinterpret_cast<uintptr_t>(to)&15) && size != 0) {
 		*to = 0;
 		--size;
@@ -15,8 +23,8 @@ void cs_zeromem_nt(void* _to, size_t size) {
 		size-=16;
 		to+=16;
 	}
-
-
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while(size) {
 		*to = 0;
 		++to;
@@ -29,6 +37,8 @@ void cs_movemem_nt(void* _to, const void* _from, size_t size) {
 	
 	char* to = (char*)_to;
 	const char* from = (const char*)_from;
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while((reinterpret_cast<uintptr_t>(to)&15) && size != 0) {
 		*to = *from;
 		--size;
@@ -42,8 +52,8 @@ void cs_movemem_nt(void* _to, const void* _from, size_t size) {
 		from += 16;
 		to+=16;
 	}
-
-
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while(size) {
 		*to = *from;
 		++to;
@@ -57,6 +67,8 @@ void cs_movemem_flush_opt_nt(void* _to, const void* _from, size_t size) {
 	
 	char* to = (char*)_to;
 	const char* from = (const char*)_from;
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while((reinterpret_cast<uintptr_t>(to)&15) && size != 0) {
 		*to = *from;
 		--size;
@@ -81,8 +93,8 @@ void cs_movemem_flush_opt_nt(void* _to, const void* _from, size_t size) {
 		from += 64;
 		to+=64;
 	}
-
-
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while(size) {
 		*to = *from;
 		++to;
@@ -96,6 +108,8 @@ void cs_movemem_clean_nt(void* _to, const void* _from, size_t size) {
 	
 	char* to = (char*)_to;
 	const char* from = (const char*)_from;
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while((reinterpret_cast<uintptr_t>(to)&15) && size != 0) {
 		*to = *from;
 		--size;
@@ -121,7 +135,8 @@ void cs_movemem_clean_nt(void* _to, const void* _from, size_t size) {
 		to+=64;
 	}
 
-
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while(size) {
 		*to = *from;
 		++to;
@@ -135,6 +150,8 @@ void cs_movemem_flush_noopt_nt(void* _to, const void* _from, size_t size) {
 	
 	char* to = (char*)_to;
 	const char* from = (const char*)_from;
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while((reinterpret_cast<uintptr_t>(to)&15) && size != 0) {
 		*to = *from;
 		--size;
@@ -155,8 +172,8 @@ void cs_movemem_flush_noopt_nt(void* _to, const void* _from, size_t size) {
 		from += 64;
 		to+=64;
 	}
-
-
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
 	while(size) {
 		*to = *from;
 		++to;

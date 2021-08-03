@@ -32,7 +32,7 @@ DECL_SYSCALL(_ZwAccessCheck,"ZwAccessCheck"),DECL_SYSCALL(_NtWorkerFactoryWorker
 
 static const syscall_translator_t* find_syscall(const char* rvaname) {
 	unsigned hcode = hash_string(rvaname);
-
+#pragma clang loop unroll(disable)
 	for(auto&& xlat : g_syscalls_translation) {
 		if(xlat.hashcode == hcode) {
 			return &xlat;
@@ -56,6 +56,7 @@ static bool is_seq_at(unsigned char* addr) {
 static int extract_syscall(unsigned* start) {
 	if(*start == 0xB8D18B4C) {
 		unsigned char* pptr = (unsigned char*)(start+2);
+#pragma clang loop unroll(disable)
 		while(!is_seq_at<0xcd, 0x2e, 0xc3>(pptr)) {
 		++pptr;
 		if(pptr-(unsigned char*)start > 0x20)

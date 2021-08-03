@@ -1,6 +1,7 @@
 #pragma once
 #ifndef XBYAK_XBYAK_H_
 #define XBYAK_XBYAK_H_
+
 /*!
 	@file xbyak.h
 	@brief Xbyak ; JIT assembler for x86(IA32)/x64 by C++
@@ -2860,5 +2861,4 @@ namespace Xbyak {
 #endif
 
 } // end of namespace
-
 #endif // XBYAK_XBYAK_H_
