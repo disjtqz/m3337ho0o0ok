@@ -1,4 +1,4 @@
-
+#ifndef SHALGO_DISABLE_BITMAP
 /*++
 
 Copyright (c) Microsoft Corporation. All rights reserved.
@@ -2800,3 +2800,4 @@ static void bmp_algos_init(snaphak_bmproutines_t* out_bmp) {
 	out_bmp->m_bitmap_find_n_set_from_and_clear = cs_bitmap_find_n_set_from_and_clear;
 	out_bmp->m_bitmap_set_bits = cs_bitmap_set_bits;
 }
+#endif

@@ -78,7 +78,7 @@ struct idFile {
 	idFileVftbl* vftbl;
 };
 #endif
-#define	USE_FILE_LOCKING
+//#define	USE_FILE_LOCKING
 
 #ifdef USE_FILE_LOCKING
 #define		STDIOFN_LOCK(name, ...)		_##name##_nolock (__VA_ARGS__)

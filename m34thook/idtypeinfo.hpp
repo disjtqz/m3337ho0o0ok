@@ -171,3 +171,29 @@ public:
 	}
 };
 
+template<typename yuckyname>
+struct mh_typesizecached_t {
+	unsigned m_size;
+	static constexpr const char* parm = yuckystring_str_from_type_m(yuckyname);
+
+	constexpr mh_typesizecached_t() : m_size(0u) {}
+
+	MH_NOINLINE
+	MH_CODE_SEG(".field_init")
+	MH_REGFREE_CALL
+	MH_NOALIAS
+	void init_size() {
+		m_size = idType::FindClassInfo(parm)->size;
+	}
+
+	inline unsigned operator ()() {
+		unsigned tmpsz = m_size;
+		MH_UNLIKELY_IF(!tmpsz) {
+
+			init_size();
+			tmpsz = m_size;
+		}
+		return tmpsz;
+
+	}
+};

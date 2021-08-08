@@ -1,4 +1,5 @@
 #pragma once
+#ifndef SHALGO_DISABLE_INTBULK
 constexpr unsigned g_niter_per_element = IMPL_VECTOR_WIDTH / 4;
 using ivec_local_t = unsigned __attribute__((ext_vector_type(g_niter_per_element)));
 using bytevec_local_t = unsigned char __attribute__((ext_vector_type(IMPL_VECTOR_WIDTH)));
@@ -45,6 +46,7 @@ static unsigned find_first_equal32(unsigned* values, unsigned nvalues, unsigned 
 		}
 
 	}
+#pragma clang loop unroll(disable) vectorize(disable)
 
 	for (; i < nvalues; ++i) {
 		if (values[i] == tofind) {
@@ -72,6 +74,7 @@ static unsigned find_first_notequal32(unsigned* values, unsigned nvalues, unsign
 		}
 
 	}
+#pragma clang loop unroll(disable) vectorize(disable)
 
 	for (; i < nvalues; ++i) {
 		if (values[i] == tofind) {
@@ -89,6 +92,8 @@ void addscalar_32(unsigned * values, unsigned nvalues, unsigned addend) {
 	for (; (i + g_niter_per_element) < nvalues; i += g_niter_per_element) {
 		*reinterpret_cast<ivec_local_t*>(&values[i]) += addend;
 	}
+#pragma clang loop unroll(disable) vectorize(disable)
+
 	for (; i < nvalues; ++i) {
 		/*if (values[i] == tofind) {
 			return i;
@@ -106,6 +111,7 @@ void subscalar_32(unsigned * values, unsigned nvalues, unsigned addend) {
 	for (; (i + g_niter_per_element) < nvalues; i += g_niter_per_element) {
 		*reinterpret_cast<ivec_local_t*>(&values[i]) -= addend;
 	}
+#pragma clang loop unroll(disable) vectorize(disable)
 	for (; i < nvalues; ++i) {
 		/*if (values[i] == tofind) {
 			return i;
@@ -123,6 +129,7 @@ void mulscalar_32(unsigned * values, unsigned nvalues, unsigned addend) {
 	for (; (i + g_niter_per_element) < nvalues; i += g_niter_per_element) {
 		*reinterpret_cast<ivec_local_t*>(&values[i]) *= addend;
 	}
+#pragma clang loop unroll(disable) vectorize(disable)
 	for (; i < nvalues; ++i) {
 		/*if (values[i] == tofind) {
 			return i;
@@ -137,3 +144,4 @@ static void ibulkalgos_init(snaphak_ibulkroutines_t* ibulk) {
 	ibulk->m_subscalar_32 = subscalar_32;
 	ibulk->m_mulscalar_32 = mulscalar_32;
 }
+#endif

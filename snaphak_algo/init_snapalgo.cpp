@@ -7,7 +7,6 @@
 #include "syscall_list.hpp"
 //#define		FORCE_GENERIC
 
-#pragma clang optimize off
 CS_NOINLINE
 CS_COLD_CODE
 void init_impls_generic(snaphak_algo_t* algo);
@@ -105,6 +104,25 @@ static constexpr std::underlying_type_t<mh_memclass_e> g_memclass_srchtable[] = 
 
 SNAPHAKALGO_EXPORT
 void sh_algo_init(snaphak_algo_t* out_algo) {
+
+	int vendorname[4];
+
+	__cpuid(vendorname, 0);
+
+	char vendbuffer[13] = { 0 };
+	std::swap(vendorname[2], vendorname[3]);
+	memcpy(vendbuffer, &vendorname[1], 12);
+
+	if (!strcmp(vendbuffer, "AuthenticAMD")) {
+		out_algo->m_vendor = snaphak_cpu_vendor_t::AMD;
+	}
+	else if (!strcmp(vendbuffer, "GenuineIntel")) {
+		out_algo->m_vendor = snaphak_cpu_vendor_t::INTEL;
+	}
+	else {
+		out_algo->m_vendor = snaphak_cpu_vendor_t::UNKNOWN;
+	}
+
 	int extendedfeat[4] = { 0 };
 	__cpuidex(extendedfeat, 7, 0);
 
@@ -164,7 +182,19 @@ void sh_algo_init(snaphak_algo_t* out_algo) {
 	out_algo->m_has_clflushopt = (flagtest.extendedflags & (1U << 23)) != 0;
 	out_algo->m_has_clwb = (flagtest.extendedflags & (1U << 23)) != 0;
 	out_algo->m_smt_width = (cpuflags[1] >> 15) & 0x3f;
+	out_algo->m_has_fast_loop_ops = out_algo->m_vendor == snaphak_cpu_vendor_t::AMD;
 
+	if (out_algo->m_vendor == snaphak_cpu_vendor_t::INTEL) {
+		out_algo->m_singlecycle_pdep_pext = true;
+	}
+	else if (out_algo->m_vendor == snaphak_cpu_vendor_t::AMD) {
+		//todo: check if >= zen3
+		out_algo->m_singlecycle_pdep_pext = false;
+	}
+	else {
+			
+		out_algo->m_singlecycle_pdep_pext = false;
+	}
 	ULONGLONG tmpkb = 0;
 
 	if (!GetPhysicallyInstalledSystemMemory(&tmpkb)) {
@@ -180,7 +210,7 @@ void sh_algo_init(snaphak_algo_t* out_algo) {
 	unsigned memclass_idx = 0;
 	mh_memclass_e resclass = mh_memclass_e::CHRISPY;
 
-
+	MH_SMALLLOOP
 	for (; memclass_idx < sizeof(g_memclass_srchtable) / sizeof(g_memclass_srchtable[0]); ++memclass_idx) {
 		if (ngbs < g_memclass_srchtable[memclass_idx]) {
 			if (memclass_idx == 0) {
@@ -214,4 +244,3 @@ void sh_algo_init(snaphak_algo_t* out_algo) {
 
 }
 
-#pragma clang optimize on

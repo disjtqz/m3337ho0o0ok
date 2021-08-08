@@ -722,7 +722,27 @@ static void image_fill(idCmdArgs* args) {
 
 }
 
+static void* nothinfunc = (void*)do_nothing;
+static void do_cvar_toggle() {
 
+	/*
+		replace offset 16 on vftbl of idcmdsystem with a no-op function.
+		the function sets a variable on a pointer in tls, and it is called twice to disable first dev commands, then executing bound dev commands
+		swapping it out eliminates this issue, also renders g_command_patch_area useless
+	*/
+	void* cmdsystem = *(void**)descan::g_idcmdsystem;
+
+	void* cmdsystem_vftbl = *(void**)cmdsystem;
+
+
+	swap_out_ptrs(reinterpret_cast<char*>(cmdsystem_vftbl) + 16, &nothinfunc, 1, false);
+
+
+}
+static void test_cvar_disable(idCmdArgs* args) {
+	do_cvar_toggle();
+
+}
 void meathook_init() {
 	install_gameapi_hooks();
 
@@ -743,21 +763,9 @@ void meathook_init() {
 	install_error_handling_hooks();
 	//no longer needed, see below
 	//unsigned patchval_enable_commands = 0;
-
+	do_cvar_toggle();
 
 	//patch_memory(descan::g_command_patch_area, 4, (char*)&patchval_enable_commands);
-
-	/*
-		replace offset 16 on vftbl of idcmdsystem with a no-op function.
-		the function sets a variable on a pointer in tls, and it is called twice to disable first dev commands, then executing bound dev commands
-		swapping it out eliminates this issue, also renders g_command_patch_area useless
-	*/
-	void* cmdsystem = *(void**)descan::g_idcmdsystem;
-
-	void* cmdsystem_vftbl = *(void**)cmdsystem;
-	void* nothinfunc = (void*)do_nothing;
-
-	swap_out_ptrs(reinterpret_cast<char*>(cmdsystem_vftbl) + 16, &nothinfunc, 1, true);
 
 #ifdef MH_DEV_BUILD
 	//for array patch for expanding ai
@@ -791,6 +799,7 @@ void meathook_init() {
 	idCmd::register_command("idlib_idc", idc_dump, "Generates a .idc file for ida that defines all structs and enums that have typeinfo for this build of eternal");
 	idCmd::register_command("mh_cpuinfo", meathook_cpuinfo, "takes no args, dumps info about your cpu for dev purposes");
 	idCmd::register_command("image_fill", image_fill, "test");
+	idCmd::register_command("test_cvar_disable", test_cvar_disable, "fff");
 	install_memmanip_cmds();
 	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
 	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");

@@ -16,6 +16,15 @@ static constexpr const char* g_all_types[] =
 #include "alltypes.h"
 ;
 //#include "types_with_vtables.hpp"
+struct typeInfoGenerated_t {
+	enumTypeInfo_t* enums;
+	int numEnums;
+	classTypeInfo_t* classes;
+	int numClasses;
+	typedefInfo_t* typedefs;
+	int numTypedefs;
+};
+
 
 struct enum_or_class_t {
 	uintptr_t p;
@@ -89,7 +98,8 @@ classTypeInfo_t* idType::FindClassInfo(const char* cname) {
 	return reinterpret_cast<classTypeInfo_t * (*)(void*, const char*)>(descan::g_idtypeinfo_findclassinfo)(typeinfo_tools, cname);
 
 }
-static void* get_typeinfo_generated(unsigned which = 0) {
+
+static typeInfoGenerated_t* get_typeinfo_generated(unsigned which = 0) {
 
 	void* typeinfo_tools = *(void**)descan::g_global_typeinfo_tools;
 
@@ -97,10 +107,10 @@ static void* get_typeinfo_generated(unsigned which = 0) {
 		/*
 			shit, these dont exist in v6
 		*/
-		int offs_to_generated = idType::FindClassField("idTypeInfoTools", "generatedTypeInfo")->offset;
+		int offs_to_generated = 0;//idType::FindClassField("idTypeInfoTools", "generatedTypeInfo")->offset;
 
 
-		int sizeof_gentype = idType::FindClassInfo("idTypeInfoTools::registeredTypeInfo_t")->size;
+		int sizeof_gentype = 56;// idType::FindClassInfo("idTypeInfoTools::registeredTypeInfo_t")->size;
 
 
 		char* generated_ptr = (char*)typeinfo_tools;
@@ -113,7 +123,7 @@ static void* get_typeinfo_generated(unsigned which = 0) {
 
 	void* typeinfogenerated = *reinterpret_cast<void**>(reinterpret_cast<char*>(typeinfo_tools) + (!which ? g_offset_typeinfo : g_offset_typeinfo2));
 
-	return typeinfogenerated;
+	return (typeInfoGenerated_t*)typeinfogenerated;
 
 }
 MH_NOINLINE
@@ -486,42 +496,44 @@ static int g_offset_nenums = -1;
 static int g_offset_typedefs = -1;
 static int g_offset_ntypedefs = -1;
 classTypeInfo_t* idType::ClassTypes(unsigned& out_n, unsigned whichsource) {
-	if (g_offset_classtypes == -1) {
+	/*if (g_offset_classtypes == -1) {
 		g_offset_classtypes = FindClassField("typeInfoGenerated_t", "classes")->offset;
 		g_offset_nclasstypes = FindClassField("typeInfoGenerated_t", "numClasses")->offset;
-	}
-	char* typegen = (char*)get_typeinfo_generated(whichsource);
+	}*/
+	typeInfoGenerated_t* typegen = get_typeinfo_generated(whichsource);
 
 
-	classTypeInfo_t* classes = *reinterpret_cast<classTypeInfo_t**>(typegen + g_offset_classtypes);
+	classTypeInfo_t* classes = typegen->classes;
 
-	out_n = *reinterpret_cast<unsigned*>(typegen + g_offset_nclasstypes);
+	out_n = typegen->numClasses;
 	return classes;
 }
 enumTypeInfo_t* idType::EnumTypes(unsigned& out_n, unsigned whichsource) {
-	if (g_offset_enums == -1) {
+	/*if (g_offset_enums == -1) {
 		g_offset_enums = FindClassField("typeInfoGenerated_t", "enums")->offset;
 		g_offset_nenums = FindClassField("typeInfoGenerated_t", "numEnums")->offset;
-	}
-	char* typegen = (char*)get_typeinfo_generated(whichsource);
+	}*/
+	typeInfoGenerated_t* typegen = get_typeinfo_generated(whichsource);
+
+	out_n = typegen->numEnums;
 
 
-	enumTypeInfo_t* enums = *reinterpret_cast<enumTypeInfo_t**>(typegen + g_offset_enums);
+	//enumTypeInfo_t* enums = *reinterpret_cast<enumTypeInfo_t**>(typegen + g_offset_enums);
 
-	out_n = *reinterpret_cast<unsigned*>(typegen + g_offset_nenums);
-	return enums;
+	//out_n = *reinterpret_cast<unsigned*>(typegen + g_offset_nenums);
+	return typegen->enums;
 }
 typedefInfo_t* idType::TypedefTypes(unsigned& out_n, unsigned whichsource) {
-	if (g_offset_typedefs == -1) {
+	/*if (g_offset_typedefs == -1) {
 		g_offset_typedefs = FindClassField("typeInfoGenerated_t", "typedefs")->offset;
 		g_offset_ntypedefs = FindClassField("typeInfoGenerated_t", "numTypedefs")->offset;
-	}
-	char* typegen = (char*)get_typeinfo_generated(whichsource);
+	}*/
+	typeInfoGenerated_t* typegen = get_typeinfo_generated(whichsource);
 
 
-	typedefInfo_t* typs = *reinterpret_cast<typedefInfo_t**>(typegen + g_offset_typedefs);
+	typedefInfo_t* typs = typegen->typedefs;//*reinterpret_cast<typedefInfo_t**>(typegen + g_offset_typedefs);
 
-	out_n = *reinterpret_cast<unsigned*>(typegen + g_offset_ntypedefs);
+	out_n = typegen->numTypedefs;//*reinterpret_cast<unsigned*>(typegen + g_offset_ntypedefs);
 	return typs;
 }
 

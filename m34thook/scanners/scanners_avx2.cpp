@@ -9,7 +9,7 @@
 #include <cstdio>
 #include "idtypeinfo.hpp"
 #include "gameapi.hpp"
-
+#include "cmdsystem.hpp"
 
 #include "scanners/scanner_core_incl.hpp"
 

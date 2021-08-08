@@ -255,6 +255,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)/snaphak_algo;$(SolutionDir)/RPCInterface;$(SolutionDir)/udis86test;$(SolutionDir)/m34thook</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -286,7 +287,9 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <AdditionalOptions>-flto=full -msse4.1 -msse4.2 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-flto=full -msse4.1 -msse4.2 -Wl,-plugin-opt=-save-temps %(AdditionalOptions)</AdditionalOptions>
+      <AssemblerOutput>All</AssemblerOutput>
+      <AssemblerListingLocation>Q:\DOOMEternal_dev_version\asmout.asm</AssemblerListingLocation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -364,6 +367,7 @@
     <ClCompile Include="mh_mainloop.cpp" />
     <ClCompile Include="mh_memmanip_cmds.cpp" />
     <ClCompile Include="mh_native_api.cpp" />
+    <ClCompile Include="mh_staticmodel.cpp" />
     <ClCompile Include="optimizations\mhoptimize.cpp" />
     <ClCompile Include="rendermodelgui.cpp" />
     <ClCompile Include="scanners\scanners_avx2.cpp" />
@@ -410,6 +414,7 @@
     <ClInclude Include="mh_inputsys.hpp" />
     <ClInclude Include="mh_memmanip_cmds.hpp" />
     <ClInclude Include="mh_native_api.hpp" />
+    <ClInclude Include="mh_staticmodel.hpp" />
     <ClInclude Include="resource.hpp" />
     <ClInclude Include="scanners\initial_scangroup.hpp" />
     <ClInclude Include="scanners\scanners_typeinfo.hpp" />

@@ -1344,7 +1344,7 @@ IMPL_CODE_SEG
 static
 unsigned cs_from_unicode(char* dstbuf, const wchar_t* inbuf) {
 	unsigned i = 0;
-#pragma clang loop vectorize(enable) vectorize_width(4) unroll_count(8)
+
 	while (true) {
 		dstbuf[i] = inbuf[i];
 		if (!dstbuf[i])
@@ -1369,12 +1369,16 @@ unsigned cs_from_unicode(char* dstbuf, const wchar_t* inbuf) {
 	//out_endpos default = nullptr
 	double (*m_fast_atof)(const char* p, const char** out_endpos);
 */
+
+
+extern "C" unsigned fast_strlen_func_impl_avx2_asm(const char* s);
 CS_COLD_CODE
 CS_NOINLINE
 static void str_algos_init(snaphak_sroutines_t* out_str) {
 
 	g_tentothe[0] = 1.0;
 	double currpow10 = 1.0;
+#pragma clang loop unroll(disable) vectorize(disable)
 	for (unsigned i = 1; i < 32; ++i) {
 		currpow10 *= 10.0;
 		g_tentothe[i] = currpow10;
@@ -1383,6 +1387,7 @@ static void str_algos_init(snaphak_sroutines_t* out_str) {
 	out_str->m_streq = cs_strcmpeq;
 	out_str->m_strieq = cs_stricmpeq;
 	out_str->m_strlen = fast_strlen_func_impl;
+	out_str->m_asm_strlen = fast_strlen_func_impl_avx2_asm;
 	out_str->m_hashfnv32 = hashfnv32;
 	out_str->m_str_to_long = strconvt_str_to_long;
 	out_str->m_atoi_fast = strconvt_atoi_fast;

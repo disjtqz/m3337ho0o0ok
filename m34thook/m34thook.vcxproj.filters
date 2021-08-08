@@ -129,6 +129,9 @@
     <ClCompile Include="optimizations\mhoptimize.cpp">
       <Filter>Source Files\optimizations</Filter>
     </ClCompile>
+    <ClCompile Include="mh_staticmodel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_exe_interface.hpp">
@@ -258,6 +261,9 @@
       <Filter>Header Files\win32</Filter>
     </ClInclude>
     <ClInclude Include="xmacro_mh_config.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mh_staticmodel.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

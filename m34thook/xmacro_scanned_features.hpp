@@ -105,3 +105,10 @@ SCANNED_PTR_FEATURE(g_idTriangles_AddCubeFace)
 
 SCANNED_PTR_FEATURE(g_idStaticModel_UpdateBuffers)
 SCANNED_PTR_FEATURE(g_idStaticModel_FreeCPUData)
+
+SCANNED_PTR_FEATURE(g_idStaticModel_WriteStaticBModel)
+
+// idStr::AppendPath(char const*)
+SCANNED_PTR_FEATURE(g_idStr_AppendPath)
+//idStr::SetFileExtension(char const*)
+SCANNED_PTR_FEATURE(g_idStr_SetFileExtension)

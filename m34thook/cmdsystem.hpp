@@ -17,6 +17,10 @@ namespace idCmd {
 
 	void add_command(const char* txt);
 	void execute_command_buffer();
+	/*
+		added this so we can scan command implementations
+	*/
+	void* find_command_by_name(const char* name);
 }
 
 struct __declspec(align(8)) idCVar

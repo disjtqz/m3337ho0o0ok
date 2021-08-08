@@ -439,6 +439,38 @@ static void descan_run_late_scangroups() {
 
 
 }
+
+//v1 = 00000001403F3DA7
+
+using locate_writestaticbmodel = memscanner_t<
+	scanbytes<0xe8>, skip_and_capture_rva<&descan::g_idStr_AppendPath>,
+	scanbytes<0x48, 0x8D, 0x15>,
+	riprel32_data_equals< 0x62, 0x6D, 0x6F, 0x64, 0x65, 0x6C, 0x00>, //bmodel
+	scanbytes<0x48, 0x8D, 0x4D>,
+	skip<1>, //0x70 sp offset in all v
+	scanbytes<0xe8>,
+	skip_and_capture_rva<&descan::g_idStr_SetFileExtension>,
+	scanbytes<0x48, 0x8b, 0x55>,
+	skip<1>,
+	scanbytes<0x48, 0x8d, 0x8d>,
+	skip<2>,
+	scanbytes<0x0, 0x0, 0x45, 0x33, 0xc9, 0x45, 0x33, 0xc0, 0xe8>>;
+
+
+MH_NOINLINE
+static void run_scanners_over_ExportDuplicatCollisionGeometryModel() {
+		
+	void* exportimpl = idCmd::find_command_by_name("exportDuplicateCollisionGeometryModel");
+	if (!exportimpl) {
+		mh_error_message("Failed to find command exportDuplicateCollisionGeometryModel! id may have removed it!");
+		return;
+
+	}
+	void* retpos = mh_disassembler_t::after_first_return(exportimpl);
+
+	descan::g_idStaticModel_WriteStaticBModel = run_range_scanner<scanbehavior_locate_csrel_after< locate_writestaticbmodel>>(exportimpl, retpos);
+
+}
 /*
 	at this point we have access to things like typeinfotools
 */
@@ -449,6 +481,7 @@ static void descan_run_gamelib_postinit_scangroups() {
 
 	run_scanners_over_staticmodelmanager_init();
 	run_scanners_over_idconsolelocal_draw();
+	run_scanners_over_ExportDuplicatCollisionGeometryModel();
 	scanners_phase3::tertiary_scangroup_pass.execute_on_image();
 
 	postinit_timer.end("Postinit scan");

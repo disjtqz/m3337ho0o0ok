@@ -140,8 +140,7 @@ void cs_movemem_flush_noopt_nt(void* _to, const void* _from, size_t size) {
 	
 	char* to = (char*)_to;
 	const char* from = (const char*)_from;
-#pragma clang loop vectorize(disable)
-#pragma clang loop unroll(disable)
+#pragma clang loop unroll(disable) vectorize(disable)
 	while((reinterpret_cast<uintptr_t>(to)&63) && size != 0) {
 		*to = *from;
 		--size;

@@ -6,24 +6,37 @@
 #include <memory>
 #include "snaphak_heap.hpp"
 #include "snaphak_rbtree.hpp"
+#ifndef SHALGO_DISABLE_BITMAP
 #include "snaphak_bitmap.hpp"
+#endif
 #include "snaphak_string.hpp"
 #include "snaphak_memops.hpp"
 #include "snaphak_vmemops.hpp"
 #include "snaphak_coro.hpp"
 #include "snaphak_smt.hpp"
 #include "snaphak_sortnsearch.hpp"
+#ifndef SHALGO_DISABLE_INTBULK
 #include "snaphak_intbulk.hpp"
+#endif
 #include "snaphak_fmath.hpp"
 #include "snaphak_networking.hpp"
 #include "snaphak_allocator.hpp"
 #include "syscall_list.hpp"
+
+
 #define		SNAPHAK_SHARED_SEG		CS_CODE_SEG(".common")
 #define		SNAPHAKALGO_EXPORT		extern "C"
 enum class snaphak_cpu_lvl_t {
 	GenericCpu,
 	AVX2Cpu,
 	AVX512Cpu
+};
+
+enum class snaphak_cpu_vendor_t {
+	AMD,
+	INTEL,
+	UNKNOWN
+
 };
 /*
 	assign "profiles" based on thresholds of memory. in the future these will be taken into account with overrides, keeping the contents of the resources in memory instead of reading back from the disc
@@ -34,7 +47,7 @@ enum class snaphak_cpu_lvl_t {
 
 	16gb = average. no sacrifices needed
 
-	32gb = workstation. can use extra memory for caching shit 
+	32gb = workstation. can use extra memory for caching shit
 
 	128gb = chrispy. i have 256 gb lol, at this profile theres no reason not to cache everything
 
@@ -68,6 +81,17 @@ struct snaphak_algo_t {
 		uint32_t m_has_fast_longrep : 1;
 		uint32_t m_has_fast_shortrep : 1;
 		uint32_t m_is_under_wine : 1;
+		/*
+			on amd processors LOOP/LOOPE/LOOPNE are really fast single uop instructions
+			on intel processors they're implemented in microcode and really slow
+			jcxz/rcxz/ecxz are also single uop on amd, but on intel theyre only slightly slower at 2 uops
+		*/
+		uint32_t m_has_fast_loop_ops : 1;
+		/*
+			intel cpus have this, and amd cpus after zen 3
+			zen1 - zen2 all emulate pdep and pext, so they're slow af
+		*/
+		uint32_t m_singlecycle_pdep_pext : 1;
 	};
 	void (*m_fatal_raise)(const char* fmt, ...);
 	uint32_t m_ncores;
@@ -75,18 +99,23 @@ struct snaphak_algo_t {
 	uint32_t m_nthreads;
 	uint32_t m_smt_width;
 	mh_memclass_e m_memclass;
+	snaphak_cpu_vendor_t m_vendor;
 	//how many bytes of memory the system has installed
-	uint64_t m_total_device_memory; 
+	uint64_t m_total_device_memory;
 	snaphak_heaproutines_t m_heaproutines;
 	snaphak_rbroutines_t m_rbroutines;
+#ifndef SHALGO_DISABLE_BITMAP
 	snaphak_bmproutines_t m_bmproutines;
+#endif
 	snaphak_memroutines_t m_memroutines;
 	snaphak_virtmemroutines_t m_vmemroutines;
 	snaphak_cororoutines_t m_cororoutines;
 	snaphak_sroutines_t m_sroutines;
 	snaphak_smtroutines_t m_smtroutines;
 	snaphak_snsroutines_t m_snsroutines;
+#ifndef SHALGO_DISABLE_INTBULK
 	snaphak_ibulkroutines_t m_ibulkroutines;
+#endif
 	snaphak_realroutines_t m_realroutines;
 	snaphak_netroutines_t m_netroutines;
 
@@ -98,11 +127,11 @@ extern snaphak_algo_t g_shalgo;
 
 
 SNAPHAKALGO_EXPORT
-void sh_algo_init(snaphak_algo_t * out_algo);
+void sh_algo_init(snaphak_algo_t* out_algo);
 
-namespace sh{
+namespace sh {
 	static inline bool avx2_available() {
-	return g_shalgo.m_cpulevel == snaphak_cpu_lvl_t::AVX2Cpu || g_shalgo.m_cpulevel == snaphak_cpu_lvl_t::AVX512Cpu;
+		return g_shalgo.m_cpulevel == snaphak_cpu_lvl_t::AVX2Cpu || g_shalgo.m_cpulevel == snaphak_cpu_lvl_t::AVX512Cpu;
 	}
 	template<typename... Ts>
 	[[noreturn]]
@@ -207,11 +236,43 @@ namespace sh::rb {
 	static inline rb_node* rb_last(const struct rb_root* r) {
 		return g_shalgo.m_rbroutines.m_rb_last(r);
 	}
-	static inline void rb_insert_color(struct rb_node* n, struct rb_root* r) {
-		return g_shalgo.m_rbroutines.m_rb_insert_color(n, r);
+
+
+	static inline void asm_rb_insert_color(struct rb_node* n, struct rb_root* r, low_gpregs_t* saverestore_area) {
+
+		register rb_root* rpass asm("r14") = r;
+		register low_gpregs_t* rsave asm("r10") = saverestore_area;
+
+		__asm__ volatile(
+			"call cs_rbnode_insert_and_color\n\t"
+			:
+		: "r"(rpass), "r"(rsave), "c" (n)
+			: "r8", "r9"
+			);
 	}
+
+	static inline void asm_rb_erase(struct rb_node* n, struct rb_root* r, low_gpregs_t* saverestore_area) {
+
+		register rb_root* rpass asm("r14") = r;
+		register low_gpregs_t* rsave asm("r10") = saverestore_area;
+
+		__asm__ volatile(
+			"call cs_rbnode_insert_and_color\n\t"
+			:
+			: "r"(rpass), "r"(rsave), "d" (n)
+			: "r8", "r9"
+			);
+	}
+	static inline void rb_insert_color(struct rb_node* n, struct rb_root* r) {
+		low_gpregs_t saver;
+
+		asm_rb_insert_color(n, r, &saver);
+		//return g_shalgo.m_rbroutines.m_rb_insert_color(n, r);
+	}
+
 	static inline void rb_erase(struct rb_node* n, struct rb_root* r) {
-		return g_shalgo.m_rbroutines.m_rb_erase(n, r);
+		low_gpregs_t saver;
+		asm_rb_erase(n, r, &saver);
 	}
 	struct insert_hint_t {
 		rb_node** iterpos_hint;
@@ -294,6 +355,7 @@ namespace sh::rb {
 
 
 }
+#ifndef SHALGO_DISABLE_BITMAP
 namespace sh::bitmap {
 	static inline bool bits_are_set(unsigned* bits, unsigned nbits_allocated_for, unsigned startidx, unsigned length) {
 		return g_shalgo.m_bmproutines.m_bitmap_bits_are_set(bits, nbits_allocated_for, startidx, length);
@@ -325,7 +387,7 @@ namespace sh::bitmap {
 
 	}
 }
-
+#endif
 namespace sh::memops {
 	static inline void nt_move_mem(void* to, const void* from, size_t size) {
 		return g_shalgo.m_memroutines.m_ntmovemem(to, from, size);
@@ -419,52 +481,71 @@ namespace sh::coros {
 
 namespace sh::string {
 	MH_LEAF
-	static inline bool streq(MH_NOESCAPE const char* s1,MH_NOESCAPE const char* s2) { return g_shalgo.m_sroutines.m_streq(s1, s2); }
+		static inline bool streq(MH_NOESCAPE const char* s1, MH_NOESCAPE const char* s2) { return g_shalgo.m_sroutines.m_streq(s1, s2); }
 	MH_LEAF
-	static inline bool strieq(MH_NOESCAPE const char* s1, MH_NOESCAPE const char* s2) { return g_shalgo.m_sroutines.m_strieq(s1, s2); }
+		static inline bool strieq(MH_NOESCAPE const char* s1, MH_NOESCAPE const char* s2) { return g_shalgo.m_sroutines.m_strieq(s1, s2); }
 	MH_LEAF
-	static inline unsigned strlength(MH_NOESCAPE const char* s1) { return g_shalgo.m_sroutines.m_strlen(s1); }
+		static inline unsigned strlength(MH_NOESCAPE const char* s1) { return g_shalgo.m_sroutines.m_strlen(s1); }
 	MH_LEAF
-	static inline int str_to_long(const char* str, const char** out_endptr, unsigned base) { return g_shalgo.m_sroutines.m_str_to_long(str, out_endptr, base); }
+		static inline int str_to_long(const char* str, const char** out_endptr, unsigned base) { return g_shalgo.m_sroutines.m_str_to_long(str, out_endptr, base); }
 	MH_LEAF
-	static inline int atoi_fast(MH_NOESCAPE const char* str) { return g_shalgo.m_sroutines.m_atoi_fast(str); }
+		static inline int atoi_fast(MH_NOESCAPE const char* str) { return g_shalgo.m_sroutines.m_atoi_fast(str); }
 	MH_LEAF
-	static inline unsigned int2str_base10(unsigned int val, MH_NOESCAPE char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_int2str_base10(val, dstbuf, size); }
+		static inline unsigned int2str_base10(unsigned int val, MH_NOESCAPE char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_int2str_base10(val, dstbuf, size); }
 	MH_LEAF
-	static inline unsigned int2str_base16(unsigned int val, MH_NOESCAPE char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_int2str_base16(val, dstbuf, size); }
+		static inline unsigned int2str_base16(unsigned int val, MH_NOESCAPE char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_int2str_base16(val, dstbuf, size); }
 	MH_LEAF
-	static inline unsigned uint2str_base10(unsigned int val, MH_NOESCAPE char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_uint2str_base10(val, dstbuf, size); }
+		static inline unsigned uint2str_base10(unsigned int val, MH_NOESCAPE char* dstbuf, unsigned size) { return g_shalgo.m_sroutines.m_uint2str_base10(val, dstbuf, size); }
 
 	//precision default=4
 	MH_LEAF
-	static inline unsigned float2str_fast(float fvalue, MH_NOESCAPE char* dstbuf, unsigned precision = 4) { return g_shalgo.m_sroutines.m_float2str_fast(fvalue, dstbuf, precision); }
+		static inline unsigned float2str_fast(float fvalue, MH_NOESCAPE char* dstbuf, unsigned precision = 4) { return g_shalgo.m_sroutines.m_float2str_fast(fvalue, dstbuf, precision); }
 	//out_endpos default = nullptr
 	MH_LEAF
-	static inline double fast_atof(const char* p, const char** out_endpos = nullptr) { return g_shalgo.m_sroutines.m_fast_atof(p, out_endpos); }
+		static inline double fast_atof(const char* p, const char** out_endpos = nullptr) { return g_shalgo.m_sroutines.m_fast_atof(p, out_endpos); }
 	MH_LEAF
-	static inline int strcmp(MH_NOESCAPE const char* s1, MH_NOESCAPE const char* s2) {
+		static inline int strcmp(MH_NOESCAPE const char* s1, MH_NOESCAPE const char* s2) {
 		return g_shalgo.m_sroutines.m_strcmp(s1, s2);
 	}
 	MH_LEAF
-	static inline const char* strstr(const char* s1, MH_NOESCAPE const char* needle) {
+		static inline const char* strstr(const char* s1, MH_NOESCAPE const char* needle) {
 		return g_shalgo.m_sroutines.m_strstr(s1, needle);
 	}
 	MH_LEAF
-	static inline const char* strchr(const char* s1, char c) {
+		static inline const char* strchr(const char* s1, char c) {
 		return g_shalgo.m_sroutines.m_strchr(s1, c);
 	}
 	MH_LEAF
-	static inline char* strcpy(MH_NOESCAPE char* destbuf, MH_NOESCAPE const char* srcb) {
+		static inline char* strcpy(MH_NOESCAPE char* destbuf, MH_NOESCAPE const char* srcb) {
 		return g_shalgo.m_sroutines.m_strcpy(destbuf, srcb);
 	}
 
 	MH_LEAF
-	static inline unsigned to_unicode(MH_NOESCAPE wchar_t* destbuf, MH_NOESCAPE const char* srcb) {
+		static inline unsigned to_unicode(MH_NOESCAPE wchar_t* destbuf, MH_NOESCAPE const char* srcb) {
 		return g_shalgo.m_sroutines.m_to_unicode(destbuf, srcb);
 	}
 	MH_LEAF
-	static inline unsigned from_unicode(MH_NOESCAPE char* destbuf, MH_NOESCAPE const wchar_t* srcb) {
+		static inline unsigned from_unicode(MH_NOESCAPE char* destbuf, MH_NOESCAPE const wchar_t* srcb) {
 		return g_shalgo.m_sroutines.m_from_unicode(destbuf, srcb);
+	}
+	static inline
+		unsigned strlen_smol(const char* s) {
+#if defined(MAY_USE_INLINE_ASM)
+		unsigned output = 0;
+		unsigned findval = 0;
+		const char* savedstart = s;
+		unsigned ecx = 0;
+		//bitnot is done to generate 0xFFFFFFFF in 4 bytes instead of five
+		__asm__(
+			"notl %1\n\t"
+			"repne scasb"
+			: "+D"(s), "+c"(ecx)
+			: "a"(findval)
+			: );
+		return ~ecx;
+#else
+		return strlen(s);
+#endif
 	}
 }
 
@@ -496,7 +577,7 @@ namespace sh::sns {
 	static inline void sort16ptr_unrolled(void** ptrs) { return g_shalgo.m_snsroutines.m_sort16ptr_unrolled(ptrs); }
 	static inline void sort16ptr(void* ptrs[8]) { return g_shalgo.m_snsroutines.m_sort16ptr(ptrs); }
 }
-
+#ifndef SHALGO_DISABLE_INTBULK
 namespace sh::ibulk {
 	static inline unsigned find_first_equal32(unsigned* values, unsigned nvalues, unsigned tofind) { return g_shalgo.m_ibulkroutines.m_find_first_equal32(values, nvalues, tofind); }
 	static inline unsigned find_first_notequal32(unsigned* values, unsigned nvalues, unsigned tofind) { return g_shalgo.m_ibulkroutines.m_find_first_notequal32(values, nvalues, tofind); }
@@ -505,7 +586,7 @@ namespace sh::ibulk {
 	static inline void mulscalar_32(unsigned* values, unsigned nvalues, unsigned mult) { return g_shalgo.m_ibulkroutines.m_mulscalar_32(values, nvalues, mult); }
 
 }
-
+#endif
 namespace sh::math {
 
 
@@ -523,7 +604,7 @@ namespace sh::math {
 		}
 
 		static real_t floorr(real_t r) {
-			return real_t{.m_data = g_shalgo.m_realroutines.m_floor(r.m_data)};
+			return real_t{ .m_data = g_shalgo.m_realroutines.m_floor(r.m_data) };
 		}
 		static real_t from_double(double v) {
 			return real_t{ .m_data = g_shalgo.m_realroutines.m_real_from_double(v) };
@@ -692,9 +773,9 @@ namespace sh::math {
 				return false;
 			}*/
 
-		//	const real_t rcpDet = 1.0f / det;
+			//	const real_t rcpDet = 1.0f / det;
 
-			// remaining 2x2 sub-determinants
+				// remaining 2x2 sub-determinants
 			const real_t det2_03_01 = src.m[0 * FRL + 0] * src.m[3 * FRL + 1] - src.m[0 * FRL + 1] * src.m[3 * FRL + 0];
 			const real_t det2_03_02 = src.m[0 * FRL + 0] * src.m[3 * FRL + 2] - src.m[0 * FRL + 2] * src.m[3 * FRL + 0];
 			const real_t det2_03_03 = src.m[0 * FRL + 0] * src.m[3 * FRL + 3] - src.m[0 * FRL + 3] * src.m[3 * FRL + 0];

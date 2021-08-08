@@ -18,3 +18,8 @@ static inline void idMemorySystem_free(void* ptr) {
 	 return ((void(__fastcall*)(void*, void*))memorysys[0][6])(memorysys, ptr);
 
 }
+
+static inline void* idNew(size_t nbytes) {
+
+	return call_as<void*>(descan::g_doom_operator_new, nbytes, 0);
+}

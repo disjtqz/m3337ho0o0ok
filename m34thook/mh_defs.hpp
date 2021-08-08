@@ -3,6 +3,7 @@
 //#define			MH_DEV_BUILD
 
 #include <intrin.h>
+#include <array>
 #define		MH_FORCEINLINE		__forceinline
 #define		MH_CODE_SEG(name)	__declspec(code_seg(name)) 
 
@@ -76,3 +77,40 @@ static TRet mh_pure_call(TRet (*fn)(Ts...), Ts... args) {
 	return fn(args...);
 }
 
+template<char... s>
+struct _yuckystring_t {
+	static constexpr unsigned yucky_length() {
+		char tmpbuf[] = { s... };
+
+		unsigned i = 0;
+		for (; tmpbuf[i]; ++i) {
+
+		}
+		return i;
+	}
+
+	static constexpr unsigned temp_length = yucky_length();
+	using str_storage_type_t = std::array<char, temp_length + 1>;
+
+	static constexpr str_storage_type_t get_actual_string_trimmed() {
+		str_storage_type_t result{ 0 };
+
+		char tmpbuf[] = { s... };
+
+		for (unsigned i = 0; i < temp_length; ++i) {
+			result[i] = tmpbuf[i];
+
+		}
+		return result;
+	}
+
+	static constexpr str_storage_type_t actual_string = get_actual_string_trimmed();
+
+};
+
+
+#define		YUCKYSTRCHAR(s, idx)		(idx < sizeof(s) ? s[idx] : 0)
+#define		YUCKYSTRING_MAXLENGTH			64
+
+#define		yuckystring_m(s)		_yuckystring_t<0<sizeof(s)?s[0]:0,1<sizeof(s)?s[1]:0,2<sizeof(s)?s[2]:0,3<sizeof(s)?s[3]:0,4<sizeof(s)?s[4]:0,5<sizeof(s)?s[5]:0,6<sizeof(s)?s[6]:0,7<sizeof(s)?s[7]:0,8<sizeof(s)?s[8]:0,9<sizeof(s)?s[9]:0,10<sizeof(s)?s[10]:0,11<sizeof(s)?s[11]:0,12<sizeof(s)?s[12]:0,13<sizeof(s)?s[13]:0,14<sizeof(s)?s[14]:0,15<sizeof(s)?s[15]:0,16<sizeof(s)?s[16]:0,17<sizeof(s)?s[17]:0,18<sizeof(s)?s[18]:0,19<sizeof(s)?s[19]:0,20<sizeof(s)?s[20]:0,21<sizeof(s)?s[21]:0,22<sizeof(s)?s[22]:0,23<sizeof(s)?s[23]:0,24<sizeof(s)?s[24]:0,25<sizeof(s)?s[25]:0,26<sizeof(s)?s[26]:0,27<sizeof(s)?s[27]:0,28<sizeof(s)?s[28]:0,29<sizeof(s)?s[29]:0,30<sizeof(s)?s[30]:0,31<sizeof(s)?s[31]:0,32<sizeof(s)?s[32]:0,33<sizeof(s)?s[33]:0,34<sizeof(s)?s[34]:0,35<sizeof(s)?s[35]:0,36<sizeof(s)?s[36]:0,37<sizeof(s)?s[37]:0,38<sizeof(s)?s[38]:0,39<sizeof(s)?s[39]:0,40<sizeof(s)?s[40]:0,41<sizeof(s)?s[41]:0,42<sizeof(s)?s[42]:0,43<sizeof(s)?s[43]:0,44<sizeof(s)?s[44]:0,45<sizeof(s)?s[45]:0,46<sizeof(s)?s[46]:0,47<sizeof(s)?s[47]:0,48<sizeof(s)?s[48]:0,49<sizeof(s)?s[49]:0,50<sizeof(s)?s[50]:0,51<sizeof(s)?s[51]:0,52<sizeof(s)?s[52]:0,53<sizeof(s)?s[53]:0,54<sizeof(s)?s[54]:0,55<sizeof(s)?s[55]:0,56<sizeof(s)?s[56]:0,57<sizeof(s)?s[57]:0,58<sizeof(s)?s[58]:0,59<sizeof(s)?s[59]:0,60<sizeof(s)?s[60]:0,61<sizeof(s)?s[61]:0,62<sizeof(s)?s[62]:0,63<sizeof(s)?s[63]:0>
+#define		yuckystring_str_from_type_m(...)			(&__VA_ARGS__::actual_string[0])

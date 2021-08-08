@@ -47,3 +47,21 @@ static void unpair2u32(unsigned long long paired, unsigned& lo, unsigned& hi) {
 #define		MH_NOESCAPE		
 #endif
 #define		MH_NOALIAS		__declspec(noalias)
+
+#define		MH_SMALLLOOP	_Pragma("clang loop unroll(disable) vectorize(disable)")
+
+#define		SHALGO_DISABLE_INTBULK
+#define		SHALGO_DISABLE_BITMAP
+#define		SHALGO_ONE_SEGMENT
+
+//matches asm version
+struct low_gpregs_t {
+	unsigned long long m_rax;
+	unsigned long long m_rcx;
+	unsigned long long  m_rdx;
+	unsigned long long  m_rbx;
+	unsigned long long  m_rsi;
+	unsigned long long  m_rdi;
+	unsigned long long  m_rbp;
+};
+

@@ -7,4 +7,6 @@ struct snaphak_virtmemroutines_t {
 	void (*m_release_rw)(void* mem);
 	void (*m_discard_contents)(void* mem, size_t size);
 	void (*m_prefetch_for_seq_access)(void* mem, size_t size);
+	//for engine instrumentation purposes only, we dont need hugepages for normal user releases that dont collect info on the engine
+	int (*m_try_enable_hugepages)();
 };
