@@ -17,6 +17,11 @@ PUBLIC cs_rbnode_erase_from
 PUBLIC cs_rb_last
 PUBLIC cs_rb_first
 PUBLIC cs_rb_next_or_prev
+
+short_call macro WHERE
+   call WHERE
+endm
+
 ;struct for saved "low" (original pre x64) registers
 ;we do not include rsp because we try not to mess with it
 low_gpregs_t STRUCT
@@ -472,7 +477,8 @@ loc_180031F67:
                 mov     [rcx+rb_node.rb_parent_color], rax
                 and     byte ptr [rbx+rb_node.rb_parent_color], 0FEh
                 mov     rcx, rbx
-                call    cs_rbnode_rotate_direction
+                short_call cs_rbnode_rotate_direction
+                ;call    cs_rbnode_rotate_direction
                 mov     rcx, [rdi+rb_node.rb_parent_color]
                 and     rcx, 0FFFFFFFFFFFFFFF8h
                 jnz     short loc_180031FB0

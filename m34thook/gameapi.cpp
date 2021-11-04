@@ -19,6 +19,9 @@
 #include "mh_inputsys.hpp"
 #include "mh_guirender.hpp"
 #include "mh_mainloop.hpp"
+
+
+
 void* find_entity(const char* name) {
 	void* gamloc = *reinterpret_cast<void**>(descan::g_gamelocal);
 
@@ -446,27 +449,30 @@ void* spawn_entity_from_entitydef(void* entdef) {
 
 }
 
+idEventArg mh_ScriptCmdEnt(idEventDef* tdef_name, void* self, idEventArg* args) {
+	idEventArg result;
+	call_as<void>(descan::g_eventreceiver_processeventargs, self, &result, tdef_name, args);
+	return result;
+
+}
+
+idEventArg mh_ScriptCmdEnt(const char* eventdef_name, void* self, idEventArg* args) {
+
+	return mh_ScriptCmdEnt(idEventDefInterfaceLocal::Singleton()->FindEvent(eventdef_name), self, args);
+}
+
+static idEventDef* g_cached_teleport_evdef = nullptr;
 
 void set_entity_position(void* entity, idVec3* pos) {
-	const char* ename = get_entity_name(entity);
+	if (!g_cached_teleport_evdef) {
 
-	if (!ename) {
-		idLib::Printf("Entity name was null?!?!?!?\n");
-		return;
+		g_cached_teleport_evdef = idEventDefInterfaceLocal::Singleton()->FindEvent("teleport");
 	}
-
-	char outbuff[1024];
-	sprintf_s(outbuff, "ai_ScriptCmdEnt %s teleport %f %f %f .0 .0 .0\n", ename, pos->x, pos->y, pos->z);
-
-	idCmd::execute_command_text(outbuff);
-	//the below does work, but is not portable
-//2208
-//entity vftbl function at offset 3624 just returns physicsObj pointer on idEntity
-//offset 64 on physics might be set position
-//yup looks right to me
-//void* ent_phys = get_entity_physics_obj(resulting_entity);
-
-//call_as<void>(reinterpret_cast<void***>(ent_phys)[0][64/8], ent_phys, &playertrace);
+	idEventArg teleargs[2];
+	teleargs[0].make_vec3(pos);
+	idAngles nothin{ .0f, .0f, .0f };
+	teleargs[1].make_angles(&nothin);
+	mh_ScriptCmdEnt(g_cached_teleport_evdef, entity, teleargs);
 }
 
 

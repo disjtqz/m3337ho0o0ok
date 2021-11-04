@@ -157,3 +157,26 @@ float idRenderModelGui::GetVirtualWidth() {
 float idRenderModelGui::GetVirtualHeight() {
 	return call_as<float>(descan::g_idRenderModelGui_GetVirtualHeight, this);
 }
+
+unsigned  idRenderModelGui::GetStringWidth(
+	const char* string,
+	const float scale)
+{
+	int i; // er8
+	char v4; // cl
+	__int64 v5; // rax
+
+	for (i = 0; *string; string += v5)
+	{
+		if (*string == 94 && ((v4 = string[1], (unsigned __int8)(v4 - 48) <= 9u) || (unsigned __int8)(v4 - 97) <= 3u))
+		{
+			v5 = 2i64;
+		}
+		else
+		{
+			++i;
+			v5 = 1i64;
+		}
+	}
+	return (unsigned int)(int)(float)((float)((float)i * get_SMALLCHAR_WIDTH()) * scale);
+}

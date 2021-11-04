@@ -451,6 +451,7 @@ struct match_within_variable_distance {
 void* scanner_late_get_cvar(const char* s);
 unsigned scanner_late_get_struct_size(const char* s);
 
+void* scanner_late_get_eventdef(const char* name);
 /*
 	late-stage scanner types
 */
@@ -488,7 +489,51 @@ struct late_riprel_to_cvar_data {
 
 	}
 };
+
+
 #define		late_riprel_to_cvar_data_m(...)		late_riprel_to_cvar_data<yuckystring_m(__VA_ARGS__)>
+
+template<typename TYuckyStr>
+struct late_riprel_to_eventdef {
+
+	static constexpr const char* parm = yuckystring_str_from_type_m(TYuckyStr);
+
+
+	static inline void* g_evloc = nullptr;
+	static constexpr unsigned required_valid_size = 4;
+
+	//copy and paste, idc. should be a generic late get template with the implementation just calling the init func and the match being shared between them
+	MH_NOINLINE
+		MH_REGFREE_CALL
+		static void init_cvar() {
+		g_evloc = scanner_late_get_eventdef(parm);
+	}
+
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
+		MH_UNLIKELY_IF(!g_evloc) {
+			init_cvar();
+			if (!g_evloc) {
+				mh_error_message("Wasnt able to find eventdef %s", parm);
+			}
+		}
+		if (!state.dll->is_in_image(state.addr))
+			return false;
+		ptrdiff_t df = *reinterpret_cast<int*>(state.addr);
+
+		if (g_evloc != (void*)(state.addr + 4 + df)) {
+			return false;
+		}
+
+		state.addr += 4;
+		return true;
+
+
+	}
+};
+
+#define		late_riprel_to_eventdef_m(...)		late_riprel_to_eventdef<yuckystring_m(__VA_ARGS__)>
+
 /*
 	another late stage scanner type, must run after phase2
 */

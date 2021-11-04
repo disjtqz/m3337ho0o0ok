@@ -147,7 +147,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLRelease|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>Q:\DOOMEternal_dev_version</OutDir>
+    <OutDir>D:\Program Files (x86)\Steam\steamapps\common\DOOMEternal</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">

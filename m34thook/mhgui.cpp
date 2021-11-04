@@ -50,8 +50,8 @@ void calculate_text_size(const char* msg, float* out_w, float* out_h, float scal
 			++currentlinelength;
 		}
 	}
-
-	*out_w = (idRenderModelGui::get_SMALLCHAR_WIDTH() * (float)maxchars) * scale;
+	float maxcharf = (float)maxchars;
+	*out_w = (idRenderModelGui::get_SMALLCHAR_WIDTH() * scale) * maxcharf;
 	*out_h = nlines * (scale * idRenderModelGui::get_SMALLCHAR_HEIGHT());
 	*out_longest_line = maxchars;
 	*out_nlines = nlines;
@@ -169,10 +169,11 @@ void mh_ui_ele_t::draw(gui_draw_context_t& g) {
 		//g.m_guimod->DrawStretchPic(&vrts[0], &vrts[1], &vrts[2], &vrts[3], material, 1.0);
 
 	}
-
-
+	char current_drawcharbuf[2048];
+	unsigned drawcharbuf_pos = 0;
+	sh::memops::smol_memzero(current_drawcharbuf, 2048);
 	if (txt) {
-#if 0
+#if 1
 		float fx, fy;
 		unsigned longline;
 		unsigned maxline;
@@ -211,10 +212,19 @@ void mh_ui_ele_t::draw(gui_draw_context_t& g) {
 				}
 			}
 		}
+		auto drain_drawcharbuf = [&current_drawcharbuf, &drawcharbuf_pos, &currenty, &just, &g, ry,rx, this]() {
+			if (drawcharbuf_pos != 0) {
+				g.m_guimod->DrawString(just + rx, currenty + ry, current_drawcharbuf, &colorWhite, false, txt_scale);
+
+				sh::memops::smol_memzero(current_drawcharbuf, drawcharbuf_pos);
+				drawcharbuf_pos = 0;
+			}
+		};
+
 		for (; txt[i]; ++i) {
 			if (txt[i] == '\n') {
 
-
+				drain_drawcharbuf();
 				currenty += text_increment_y;
 
 				if (currenty + text_increment_y > rh) { //text would be chopped off
@@ -225,11 +235,14 @@ void mh_ui_ele_t::draw(gui_draw_context_t& g) {
 			}
 			else {
 				if (txt[i] != '\t') {
-					g.m_guimod->DrawChar(currentx + rx, currenty + ry, txt[i], txt_scale);
+					current_drawcharbuf[drawcharbuf_pos++] = txt[i];
+					//g.m_guimod->DrawChar(currentx + rx, currenty + ry, txt[i], txt_scale);
 				}
-				currentx += txt_scale * idRenderModelGui::get_SMALLCHAR_WIDTH();
+				currentx += static_cast<unsigned>((txt_scale * idRenderModelGui::get_SMALLCHAR_WIDTH()));
 			}
 		}
+		drain_drawcharbuf();
+
 #else
 		float txt_w = .0f;
 		float txt_h = .0f;

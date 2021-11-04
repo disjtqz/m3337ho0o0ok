@@ -75,6 +75,13 @@ struct idVec2 {
 struct idVec4 {
 	float x, y, z, w;
 };
+struct  idAngles
+{
+	float pitch;
+	float yaw;
+	float roll;
+};
+
 struct  idDrawVert
 {
 	idVec3 xyz;

@@ -6,7 +6,6 @@ struct idStaticModelPtr {
 
 	static idStaticModelPtr CreateNew();
 
-
 	
 
 };

@@ -7,6 +7,7 @@
 #include "idtypeinfo.hpp"
 #include "gameapi.hpp"
 #include "snaphakalgo.hpp"
+#include "idLib.hpp"
 void idCmd::register_command(const char* name, cmdcb_t cb, const char* description) {
 	//auto cmdSystem = *doomsym<char**>(doomoffs::cmdSystem);
 
@@ -41,7 +42,7 @@ struct idCmdSystemLocalVftbl
   void *_GenerateTestCases__$TestDummyTemplatedParametricTestFixture_V_$hash_map_H_NU_$hash_H_core__U_$equal_to_H_std___core___SuiteTemplatedTestkUnitTestCategory__SAXAEAU_$TestCaseEmitter_HXXXX_Testing___Z;
   void *field_60;
   __int64 (__fastcall  *field_68)(_QWORD *a1);
-  void* (__fastcall *GetCommands)(idCmdSystemLocal *a1);
+  idListVoid* (__fastcall *GetCommands)(idCmdSystemLocal *a1);
   _QWORD (*_ZN16idCmdSystemLocal20ExecuteCommandBufferEv)(idCmdSystemLocal * thiz);
   void *field_80;
 };
@@ -85,17 +86,20 @@ void* idCmd::find_command_by_name(const char* name) {
 
 	auto cmdsystem = cmdSystem_get();
 
-	void* cmds = cmdsystem->vftbl->GetCommands(cmdsystem);
+	idListVoid* cmds_lists = cmdsystem->vftbl->GetCommands(cmdsystem);
 
-	while (cmds) {
 
+	//while (cmds) {
+
+	for(unsigned i = 0; i < cmds_lists->num; ++i) {
+		void* cmds = reinterpret_cast<void*>(cmds_lists->list[i]);
 		const char* cmdname = *g_idCommandLink_cmdName(cmds, "idCommandLink", "cmdName");
 
 		if (sh::string::streq(cmdname, name)) {
 			return *g_idCommandLink_function(cmds, "idCommandLink", "function");
 		}
 
-		cmds = *g_idCommandLink_next(cmds, "idCommandLink", "next");
+		//cmds = *g_idCommandLink_next(cmds, "idCommandLink", "next");
 	}
 	return nullptr;
 }

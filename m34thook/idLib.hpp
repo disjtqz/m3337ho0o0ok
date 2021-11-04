@@ -28,3 +28,12 @@ struct idHashIndexWithExtra
   int field_28;
   int initial_gran;
 };
+struct idListVoid
+{
+	unsigned __int64* list;
+	int num;
+	int size;
+	__int16 granularity;
+	unsigned __int8 memTag;
+	unsigned __int8 listStatic;
+};

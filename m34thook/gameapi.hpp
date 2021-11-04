@@ -32,6 +32,7 @@ unsigned resourceList_t_get_length(void* reslist);
 
 void* resourceList_t_lookup_index(void* reslist, unsigned idx);
 const char* get_resource_name(void* resource);
+struct idEventDef;
 #if 0
 #define		RENDERMODELGUI_VERTEXCOLOR_OFFSET		1200
 #else
@@ -60,9 +61,9 @@ struct idRenderModelGui {
 	//extension
 
 	MH_NOINLINE
-	void DrawRectMaterial(float xstart, float ystart, float width, float height, void* material);
+		void DrawRectMaterial(float xstart, float ystart, float width, float height, void* material);
 	MH_NOINLINE
-	void DrawRectMaterial(float xstart, float ystart, float width, float height, const char* material);
+		void DrawRectMaterial(float xstart, float ystart, float width, float height, const char* material);
 
 	/*
 		use non-temporal writes to write out the verts
@@ -89,6 +90,7 @@ struct idRenderModelGui {
 
 	float GetVirtualWidth();
 	float GetVirtualHeight();
+	unsigned GetStringWidth(const char* string, const float scale);
 
 };
 struct idDebugHUD;
@@ -277,3 +279,154 @@ void install_gameapi_hooks();
 
 
 void upload_2d_imagedata(const char* imagename, const void* picdata, unsigned width, unsigned height);
+
+
+union idEventArg_unnamed_type_value
+{
+	int i;
+	float f;
+	float v[3];
+	float q[4];
+	float c[4];
+	const char* s;
+	const unsigned __int8* x;
+	const struct idDecl* d;
+	const struct idMD6Anim* anim;
+	unsigned int h;
+	struct idEventReceiver* er;
+	struct idDamageParms* dp;
+};
+
+struct __declspec(align(8)) idEventArg
+{
+	char type;
+	char pad[7];
+	idEventArg_unnamed_type_value value;
+
+	void __fastcall Copy(
+
+		const idEventArg* other)
+	{
+		int type; // eax
+		const char* s; // rcx
+		const char* v6; // rcx
+
+		type = other->type;
+		this->type = type;
+		switch (type)
+		{
+		case '1':
+		case '2':
+		case '4':
+		case '5':
+		case 'd':
+		case 'g':
+		case 'i':
+		case 'r':
+		case 's':
+		case 'x':
+		case 'y':
+			this->value.s = other->value.s;
+			break;
+		case '3':
+			this->value.i = LOWORD(other->value.f);
+			break;
+		case '8':
+			s = this->value.s;
+			if (s)
+			{
+				if (s[8])
+					(**(void(__fastcall***)(const char*, __int64))s)(s, 1i64);
+			}
+			v6 = other->value.s;
+			if (v6)
+			{
+				if (v6[8])//hopefully the number of args here is correct
+					v6 = (const char*)(*(__int64(__fastcall**)(const char*))(*(uint64_t*)v6 + 8i64))(v6);
+			}
+			this->value.s = v6;
+			break;
+		case 'a':
+		case 'v':
+			this->value.s = other->value.s;
+			this->value.v[2] = other->value.v[2];
+			break;
+		case 'c':
+			this->value = other->value;
+			break;
+		case 'e':
+			this->value.s = (const char*)other->value.i;
+			break;
+		case 'f':
+		case 'm':
+		case 'w':
+			this->value.i = other->value.i;
+			break;
+		case 'q':
+			this->value = other->value;
+			break;
+		default:
+			return;
+		}
+	}
+	~idEventArg()
+	{
+		const char* s; // rcx
+
+		if (this->type == 56)
+		{
+			s = this->value.s;
+			if (s)
+			{
+				if (s[8])
+					(**(void(__fastcall***)(const char*, __int64))s)(s, 1i64);
+			}
+			this->value.s = 0;
+			this->type = 0;
+		}
+		else
+		{
+			this->value.s = 0;
+			this->type = 0;
+		}
+	}
+
+	idEventArg() : type(0) {
+
+	}
+
+	idEventArg(const idEventArg& a) {
+		Copy(&a);
+	}
+	//call ctor for identity
+	void make_entity(void* entity) {
+		call_as<void>(descan::g_eventarg_ctor_identityptr, this, entity);
+
+	}
+
+	void make_vec3(idVec3* p) {
+		type = 'v';
+		value.v[0] = p->x;
+		value.v[1] = p->y;
+		value.v[2] = p->z;
+
+	}
+	void make_angles(idAngles* aa) {
+
+
+
+		type = 'a';
+		value.v[0] = aa->yaw;
+		value.v[1] = aa->pitch;
+		value.v[2] = aa->roll;
+	}
+
+};
+//i expect the reader is more familiar with ai_ScriptCmdEnt than they are with ProcessEventArgs, so this name was chosen
+//with the ability to post events like this you have an insane amount of power. i recommend writing some code
+//to iterate through all of the eventdefs on the evdef interface and generate boilerplate code that A: at startup grabs all the eventdef pointers
+//into global variables and then B: generates boilerplate c++ code with the proper types to call all of the eventdefs
+//also using the typeinfo api and declinfo stuff you can reimplement the ai_scriptcmdent command but thats an exercise for the reader
+idEventArg mh_ScriptCmdEnt(idEventDef* tdef_name, void* self, idEventArg* args);
+
+idEventArg mh_ScriptCmdEnt(const char* eventdef_name, void* self, idEventArg* args);

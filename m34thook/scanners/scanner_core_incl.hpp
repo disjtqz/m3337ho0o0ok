@@ -481,7 +481,7 @@ static void descan_run_gamelib_postinit_scangroups() {
 
 	run_scanners_over_staticmodelmanager_init();
 	run_scanners_over_idconsolelocal_draw();
-	run_scanners_over_ExportDuplicatCollisionGeometryModel();
+	//run_scanners_over_ExportDuplicatCollisionGeometryModel();
 	scanners_phase3::tertiary_scangroup_pass.execute_on_image();
 
 	postinit_timer.end("Postinit scan");

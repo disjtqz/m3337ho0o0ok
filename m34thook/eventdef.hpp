@@ -1,6 +1,8 @@
 #pragma once
 struct idEventDefInterfaceLocal;
 #include "idStr.hpp"
+
+struct idEventDef;
 struct idEventDefInterfaceLocalVftbl
 {
   void *(__fastcall  *dctor)(void *Memory, char a2);
@@ -40,6 +42,11 @@ struct idEventDefInterfaceLocal {
 		vftbl->_ZNK24idEventDefInterfaceLocal15GetEventArgNameEiiR5idStr(this, evt, arg, outstr);
 	}
 
+
+	idEventDef* FindEvent(const char* name) {
+
+		return (idEventDef*) vftbl->_ZNK24idEventDefInterfaceLocal9FindEventEPKc(this, (long long)name);
+	}
 
 	static idEventDefInterfaceLocal* Singleton();
 };

@@ -290,6 +290,7 @@ using locate_idcommonlocal_frame = memscanner_t<
   0x55, 0x4C, 0x4C, 0x21, 0x00> //idCommonLocal::Frame - frameInfo->mapInstance == NULL!
 >;
 
+
 namespace initial_scanners {
 
 	/*
@@ -346,7 +347,6 @@ namespace initial_scanners {
 	BSCANENT(locate_rtti_typeinfo_string_entry, &descan::g_rtti_typeinfo_string, scanbehavior_locate_func<locate_rtti_typeinfo_string>);
 	BSCANENT(locate_resourcestreamer_getfile, &descan::g_resourceStorageDiskStreamer_GetFile, scanbehavior_locate_func_with_start_search<locate_resourcestoragediskstreamer_getfile>);
 	BSCANENT(locate_idcommonlocal_frame_entry, &descan::g_idCommonLocal_Frame, scanbehavior_locate_func_with_start_search<locate_idcommonlocal_frame>);
-
 #define		PAR_SCANGROUP_P1_1				find_alloca_probe_entry, find_security_check_cookie_entry, find_doom_operator_new_and_idfile_memory_ctor_entry, locate_idoodle_decompress_entry, locate_idlib_vprintf_entry
 #define		PAR_SCANGROUP_P1_2				locate_game_engine_init_ptr_entry, idstr_ctor_void_locator_entry, idgamelocal_locator_entry
 
@@ -355,7 +355,7 @@ namespace initial_scanners {
 #define		PAR_SCANGROUP_P1_4				idgamesystemlocal_locator_entry,resourcelist_index_locator_entry,locate_rtti_typeinfo_string_entry,locate_idcommonlocal_frame_entry
 #ifdef DISABLE_PARALLEL_SCANGROUPS
 
-
+	
 	using initial_scangroup_type = scangroup_t <
 		PAR_SCANGROUP_P1_1,
 		PAR_SCANGROUP_P1_2,

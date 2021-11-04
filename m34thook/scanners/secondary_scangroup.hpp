@@ -193,6 +193,9 @@ using locate_atomicstring_set = memscanner_t<
 	//last four bytes = riprel to atomstrset
 >;
 #endif
+
+
+
 namespace scanners_phase2 {
 #if !defined(MH_ETERNAL_V6)
 	BSCANENT(entry_phase2_locate_findclassinfo, &descan::g_idtypeinfo_findclassinfo, scanbehavior_locate_func<scanner_locate_findclassinfo>);
@@ -224,7 +227,6 @@ namespace scanners_phase2 {
 
 	BSCANENT(locate_idstaticmodel_finish_entry, &descan::g_idRenderModelStatic_FinishStaticModel, scanbehavior_identity<&descan::g_idRenderModelStatic_FinishStaticModel,locate_idstaticmodel_finish>);
 	BSCANENT(getentitystate_needsoffset, &descan::g_declentitydef_gettextwithinheritance, scanbehavior_locate_func_with_start_search<locate_getentitystate_in_body>);
-
 	#if !defined(MH_ETERNAL_V6)
 	BSCANENT(locate_getlevelmap_entry, &descan::g_maplocal_getlevelmap, scanbehavior_locate_func<locate_body_of_getlevelmap>);
 #else

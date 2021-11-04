@@ -112,3 +112,8 @@ SCANNED_PTR_FEATURE(g_idStaticModel_WriteStaticBModel)
 SCANNED_PTR_FEATURE(g_idStr_AppendPath)
 //idStr::SetFileExtension(char const*)
 SCANNED_PTR_FEATURE(g_idStr_SetFileExtension)
+
+SCANNED_PTR_FEATURE(g_handlereliable)
+
+SCANNED_PTR_FEATURE(g_eventarg_ctor_identityptr)
+SCANNED_PTR_FEATURE(g_eventreceiver_processeventargs)

@@ -32,12 +32,21 @@ void event_dump(idCmdArgs* args) {
 }
 void* __fastcall idFileResourceCompressed__GetFile(__int64 a1);
 
+static bool return_1() {
 
+	return 1;
+}
 extern
 void cmd_mh_spawninfo(idCmdArgs* args);
 extern void cmd_mh_ang2mat(idCmdArgs* args);
 
-
+struct idClientGameMsgDoom2016
+{
+	__int64 servertime;
+	unsigned __int16 peerMask;
+	char pad10[2];
+	int fromPeer;
+};
 
 /*
 	now handles noclip and notarget
@@ -442,6 +451,8 @@ void test_physics_op(idCmdArgs* args) {
 static idVec3 g_last_mh_spawn_pos{};
 static  char* g_last_mh_spawn_entity = nullptr;
 
+static FILE* g_spawnfile_recording = nullptr;
+
 
 
 MH_NOINLINE
@@ -453,7 +464,6 @@ static bool mh_spawn_impl(const char* declname, idVec3* position) {
 		idLib::Printf("Failed to find entitydef %s\n", declname);
 		return false;
 	}
-
 	void* resulting_entity = spawn_entity_from_entitydef(our_decl);
 
 
@@ -473,27 +483,125 @@ static bool mh_spawn_impl(const char* declname, idVec3* position) {
 	idLib::Printf("Placing entity %s at %f,%f,%f\n", ename, position->x, position->y, position->z);
 
 	set_entity_position(resulting_entity, position);
+
+	if (g_spawnfile_recording != nullptr) {
+
+		fprintf(g_spawnfile_recording, "%s %f %f %f\n", declname, position->x, position->y, position->z);
+	}
 	return true;
 }
+
+static void begin_recording_spawns(idCmdArgs* args) {
+	if (args->argc < 2) {
+		idLib::Printf("Expected a file name to record spawns to\n");
+		return;
+	}
+	if (g_spawnfile_recording != nullptr) {
+
+		idLib::Printf("Close your current spawnfile first!\n");
+		return;
+	}
+
+	fopen_s(&g_spawnfile_recording, args->argv[1], "w");
+
+	if (g_spawnfile_recording == nullptr) {
+		idLib::Printf("Failed to open spawnfile %s for writing.\n", args->argv[1]);
+		return;
+
+	}
+
+}
+
+static void finish_recording_spawns(idCmdArgs* args) {
+	if (g_spawnfile_recording) {
+		fflush(g_spawnfile_recording);
+		fclose(g_spawnfile_recording);
+		g_spawnfile_recording = nullptr;
+
+	}
+
+}
+
+static bool execute_spawnlist_line(FILE* f, unsigned lineno) {
+
+	if (feof(f))
+		return false;
+	//char linebuffer[1024];
+	//decided to dynamically allocate linebuffer so some shithead cant make a spawn list that overruns the buffer 
+	char* linebuffer = (char*)malloc(1024);
+
+	sh::memops::smol_memzero(linebuffer, 1024);
+	fgets(linebuffer, 1024, f);
+
+	unsigned declend = 0;
+
+	for (; linebuffer[declend] != ' '; ++declend);
+
+	unsigned posstart = declend + 1;
+	linebuffer[declend] = 0;
+	char* endptr = nullptr;
+	double x = strtod(&linebuffer[posstart], &endptr);
+
+	while (*endptr == ' ')++endptr;
+
+	double y = strtod(endptr, &endptr);
+
+	while (*endptr == ' ')++endptr;
+	double z = strtod(endptr, &endptr);
+
+	idVec3 posresult{ .x = (float)x, .y = (float)y, .z = (float)z };
+
+	bool spawnresult = mh_spawn_impl(linebuffer, &posresult);
+	free(linebuffer);
+
+	if (!spawnresult) {
+		idLib::Printf("Encountered error executing spawnlist at line %d, not spawning any more\n", lineno);
+		return false;
+	}
+	return true;
+}
+
+static void exec_spawnlist(idCmdArgs* args) {
+	if (args->argc < 2) {
+		idLib::Printf("No spawnlist file provided...\n");
+		return;
+
+	}
+	FILE* result = nullptr;
+	fopen_s(&result, args->argv[1], "r");
+	if (!result) {
+		idLib::Printf("Failed to load spawnlist from %s\n", args->argv[1]);
+		return;
+	}
+
+	unsigned lineno = 0;
+
+	while (execute_spawnlist_line(result, ++lineno /*++ instead of ++ so the lines match up in text editors*/)) {
+
+
+	}
+
+	fclose(result);
+}
+
+
 void mh_spawn_prev(idCmdArgs* args) {
-	if(!g_last_mh_spawn_entity) {
+	if (!g_last_mh_spawn_entity) {
 		idLib::Printf("Have not spawned any entities yet, spawn an entity before trying prev\n");
 		return;
 	}
 
 
 	mh_spawn_impl(g_last_mh_spawn_entity, &g_last_mh_spawn_pos);
-
-	
-	
 }
+
+
 void mh_spawn(idCmdArgs* args) {
 
 	if (args->argc < 2) {
 		idLib::Printf("You need to supply an entitydef to spawn, foole.\n");
 		return;
 	}
-#if 1
 	idVec3 playertrace{};
 	//allow user to supply the position
 	if (args->argc >= 5) {
@@ -513,51 +621,6 @@ void mh_spawn(idCmdArgs* args) {
 		g_last_mh_spawn_pos = playertrace;
 	}
 
-#else
-	void* our_decl = locate_resourcelist_member("idDeclEntityDef", args->argv[1]);
-
-	if (!our_decl) {
-		idLib::Printf("Failed to find entitydef %s\n", args->argv[1]);
-		return;
-	}
-
-	void* resulting_entity = spawn_entity_from_entitydef(our_decl);
-
-
-	if (!resulting_entity) {
-		idLib::Printf("Somehow spawning %s failed, game returned NULL\n", args->argv[1]);
-		return;
-
-	}
-	const char* ename = get_entity_name(resulting_entity);
-
-	if (!ename) {
-		idLib::Printf("Entity name was null?!?!?!?\n");
-		return;
-	}
-
-	idVec3 playertrace{};
-	//allow user to supply the position
-	if (args->argc >= 5) {
-
-		playertrace.x = atof(args->argv[2]);
-		playertrace.y = atof(args->argv[3]);
-		playertrace.z = atof(args->argv[4]);
-	}
-	else {
-		get_player_trace_pos(&playertrace);
-	}
-	if (g_last_mh_spawn_entity) {
-		free(g_last_mh_spawn_entity);
-	}
-	g_last_mh_spawn_entity = strdup(args->argv[1]);
-
-
-	g_last_mh_spawn_pos = playertrace;
-	idLib::Printf("Placing entity %s at %f,%f,%f\n", ename, playertrace.x, playertrace.y, playertrace.z);
-
-	set_entity_position(resulting_entity, &playertrace);
-#endif
 }
 static void do_nothing() {
 
@@ -630,21 +693,21 @@ static void mh_list_resource_lists(idCmdArgs* args) {
 }
 
 static void mh_list_resourcelist_contents(idCmdArgs* args) {
-	
-	if(args->argc < 2) {
+
+	if (args->argc < 2) {
 		idLib::Printf("Expected a resource classname for the first arg\n");
 		return;
 	}
 
 	void* reslist = resourcelist_for_classname(args->argv[1]);
 
-	if(!reslist) {
+	if (!reslist) {
 		idLib::Printf("Couldn't get resourcelist for %s!\n", args->argv[1]);
 		return;
 	}
 
 	void* reslistt = idResourceList_to_resourceList_t(reslist);
-	if(!reslistt){
+	if (!reslistt) {
 		idLib::Printf("No resourceList_t for idResourceList?? how??\n");
 		return;
 	}
@@ -654,23 +717,24 @@ static void mh_list_resourcelist_contents(idCmdArgs* args) {
 	std::string buildbuf{};
 
 
-	for(unsigned i = 0; i < reslen; ++i) {
-		
+	for (unsigned i = 0; i < reslen; ++i) {
+
 		void* res = resourceList_t_lookup_index(reslistt, i);
-		if(!res)
+		if (!res)
 			continue;
 		const char* resname = get_resource_name(res);
-		if(!resname)
+		if (!resname)
 			continue;
 
-		if(args->argc > 2) {
-			if(!sh::string::strstr(resname, args->argv[2])) {
+		if (args->argc > 2) {
+			if (!sh::string::strstr(resname, args->argv[2])) {
 				continue;
 			}
 		}
 
-		buildbuf+= resname;
-
+		buildbuf += resname;
+		buildbuf += "\t\t\t";
+		buildbuf += *reinterpret_cast<const char**>(reslistt);
 		buildbuf += "\n";
 
 	}
@@ -742,7 +806,44 @@ static void do_cvar_toggle() {
 static void test_cvar_disable(idCmdArgs* args) {
 	do_cvar_toggle();
 
+	
 }
+
+
+
+void arbitrary_exec(idCmdArgs* args) {
+
+	struct idClientGameMsgDoom2016_RemoteConsole
+	{
+		idClientGameMsgDoom2016 base;
+		idStr stringToSerialize;
+		int sourcePeer;
+		idClientGameMsgDoom2016_RemoteConsole(const char* cmdexec)
+		{
+
+
+			this->base.fromPeer = -1;
+			this->base.peerMask = -1;
+			this->base.servertime = (__int64)get_class_vtbl(".?AVidClientGameMsg_RemoteConsole@@");
+
+			this->sourcePeer = 0;
+			stringToSerialize = cmdexec;
+
+		}
+	};
+
+	idLib::Printf("Execute %s on server\n", args->argv[1]);
+
+	idClientGameMsgDoom2016_RemoteConsole remoteconsolecmd{ args->argv[1] };
+
+
+	void* patchlocs[3] = { (void*)return_1, (void*)return_1, (void*)return_1 };
+	//6, 7, 8
+	swap_out_ptrs(&get_class_vtbl(".?AVidClientGameMsg_RemoteConsole@@")[6], patchlocs, 3, true);
+	call_as<void>(descan::g_handlereliable, *reinterpret_cast<void**>(descan::g_gamelocal), &remoteconsolecmd);
+
+}
+
 void meathook_init() {
 	install_gameapi_hooks();
 
@@ -800,6 +901,9 @@ void meathook_init() {
 	idCmd::register_command("mh_cpuinfo", meathook_cpuinfo, "takes no args, dumps info about your cpu for dev purposes");
 	idCmd::register_command("image_fill", image_fill, "test");
 	idCmd::register_command("test_cvar_disable", test_cvar_disable, "fff");
+	idCmd::register_command("mh_spawnfile", exec_spawnlist, "<spawn file path> spawns the entities at the positions from the file");
+	idCmd::register_command("mh_start_spawnrec", begin_recording_spawns, "<spawn file path> starts recording all chrispy/rechrispy spawns/spawn positions to a file for later exec by mh_spawnfile");
+	idCmd::register_command("mh_end_spawnrec", finish_recording_spawns, "No args, closes current spawnfile");
 	install_memmanip_cmds();
 	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
 	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");

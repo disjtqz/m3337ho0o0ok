@@ -6,7 +6,7 @@
 #include "scanner_core.hpp"
 #include "idtypeinfo.hpp"
 #include "gameapi.hpp"
-
+#include "eventdef.hpp"
 static std::mutex g_failure_message_mutex{};
 
 __declspec(noinline)
@@ -26,4 +26,8 @@ void* scanner_late_get_cvar(const char* s) {
 
 unsigned scanner_late_get_struct_size(const char* s) {
 	return idType::FindClassInfo(s)->size;
+}
+void* scanner_late_get_eventdef(const char* name) {
+
+	return idEventDefInterfaceLocal::Singleton()->FindEvent(name);
 }
