@@ -105,48 +105,50 @@ void filesys::seek_file(cs_fd_t fd, std::int64_t position) {
 static
 bool filesys::file_exists(const char* filename) {
 
-#if 1
-	wchar_t tmppath[MH_FILESYS_PATHBUFFER_LENGTH];
+	if (sh::syscall_interface_available()) {
+		wchar_t tmppath[MH_FILESYS_PATHBUFFER_LENGTH];
 
-	tmppath[0] = '\\';
-	tmppath[1] = '?';
-	tmppath[2] = '?';
-	tmppath[3] = '\\';
+		tmppath[0] = '\\';
+		tmppath[1] = '?';
+		tmppath[2] = '?';
+		tmppath[3] = '\\';
 
-	// \??\C:\
+		// \??\C:\
 
-	unsigned namelen = sh::string::to_unicode(&tmppath[4], filename);
-	namelen += 4;
-	UNICODE_STRING tmpstr;
-	tmpstr.Buffer = tmppath;
-	tmpstr.Length = namelen * 2;
-	tmpstr.MaximumLength = namelen * 2;
+		unsigned namelen = sh::string::to_unicode(&tmppath[4], filename);
+		namelen += 4;
+		UNICODE_STRING tmpstr;
+		tmpstr.Buffer = tmppath;
+		tmpstr.Length = namelen * 2;
+		tmpstr.MaximumLength = namelen * 2;
 
 
 
-	OBJECT_ATTRIBUTES objattr;
+		OBJECT_ATTRIBUTES objattr;
 
-	sh::memops::smol_memzero(&objattr, sizeof(OBJECT_ATTRIBUTES));
+		sh::memops::smol_memzero(&objattr, sizeof(OBJECT_ATTRIBUTES));
 
-	FILE_BASIC_INFORMATION info;
-	objattr.ObjectName = &tmpstr;
+		FILE_BASIC_INFORMATION info;
+		objattr.ObjectName = &tmpstr;
 
-	objattr.Length = sizeof(OBJECT_ATTRIBUTES);
-	objattr.Attributes = 64;
+		objattr.Length = sizeof(OBJECT_ATTRIBUTES);
+		objattr.Attributes = 64;
 
-	MH_UNLIKELY_IF(!sh::syscall_interface_available()) {
-		return NtQueryAttributesFile(&objattr, &info) >= 0 && info.FileAttributes != -1;
+		MH_UNLIKELY_IF(!sh::syscall_interface_available()) {
+			return NtQueryAttributesFile(&objattr, &info) >= 0 && info.FileAttributes != -1;
+		}
+		else {
+			return sh::perform_syscall<_ZwQueryAttributesFile, NTSTATUS>(&objattr, &info) >= 0 && info.FileAttributes != -1;
+		}
+	
 	}
 	else {
-		return sh::perform_syscall<_ZwQueryAttributesFile, NTSTATUS>(&objattr, &info) >= 0 && info.FileAttributes != -1;
-	}
-#else
-	cs_fd_t result = open_file(filename, filemode_e::READ);
+		cs_fd_t result = open_file(filename, filemode_e::READ);
 
-	if (result)
-		NtClose(result);
-	return result != nullptr;
-#endif
+		if (result)
+			NtClose(result);
+		return result != nullptr;
+	}
 }
 
 static BOOLEAN(*g_fnptr_RtlDosPathNameToRelativeNtPathName_U)(

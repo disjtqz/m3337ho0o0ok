@@ -68,6 +68,25 @@ struct idColor {
 
 struct idVec3 {
 	float x, y, z;
+
+	float Distance(idVec3& other) {
+		
+		float xx = x - other.x;
+		float yy = y - other.y;
+		float zz = z - other.z;
+		xx *= xx;
+		yy *= yy;
+		zz *= zz;
+
+		return sqrtf(xx + yy + zz);
+
+	}
+
+	void Set(float val) {
+		x = val;
+		y = val;
+		z = val;
+	}
 };
 struct idVec2 {
 	float x, y;

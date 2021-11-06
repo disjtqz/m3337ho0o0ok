@@ -362,6 +362,7 @@
     <ClCompile Include="mhserver.cpp" />
     <ClCompile Include="mhutil\mh_filesystem.cpp" />
     <ClCompile Include="mh_dev_hooks.cpp" />
+    <ClCompile Include="mh_editor_mode.cpp" />
     <ClCompile Include="mh_guirender.cpp" />
     <ClCompile Include="mh_inputsys.cpp" />
     <ClCompile Include="mh_mainloop.cpp" />
@@ -409,6 +410,7 @@
     <ClInclude Include="mhutil\mh_filesystem.hpp" />
     <ClInclude Include="mh_defs.hpp" />
     <ClInclude Include="mh_dev_hooks.hpp" />
+    <ClInclude Include="mh_editor_mode.hpp" />
     <ClInclude Include="mh_mainloop.hpp" />
     <ClInclude Include="mh_guirender.hpp" />
     <ClInclude Include="mh_inputsys.hpp" />

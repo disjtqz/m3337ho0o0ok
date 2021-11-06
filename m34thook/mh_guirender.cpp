@@ -66,7 +66,9 @@ static void mh_rendergui_callback(idDebugHUD* dbghud, idRenderModelGui* rgui) {
 	call_as<void>(g_original_rendergui, dbghud, rgui);
 
 	mh_render_doms(rgui);
-
+	//also has memory corruption :(
+	// 
+	//rgui->DrawFilled(colorBlue, 100, 100, 200, 200);
 	if(g_testmaterial.length()) {
 
 		void* mtr = get_material(g_testmaterial.c_str());

@@ -9,6 +9,12 @@ namespace idLib {
 		VPrintf(1, format, ap);
 		va_end(ap);
 	}
+	//for compat with decomp code
+	template<typename... Ts>
+	static void Warning(const char* format, Ts... vs) {
+
+		Printf(format, vs...);
+	}
 }
 enum memTag_t;
 struct __declspec(align(8)) idHashIndex

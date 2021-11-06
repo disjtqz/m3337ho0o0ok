@@ -222,7 +222,7 @@ namespace sh::heap {
 		inline sh_heap_based_allocator_t& operator=(const sh_heap_based_allocator_t<U, static_heap_ptr, heapflags>&) { return *this; }
 	};
 }
-
+#define	DISABLE_RB_ASM
 namespace sh::rb {
 	static inline rb_node* rb_next(const struct rb_node* n) {
 		return g_shalgo.m_rbroutines.m_rb_next(n);
@@ -236,8 +236,6 @@ namespace sh::rb {
 	static inline rb_node* rb_last(const struct rb_root* r) {
 		return g_shalgo.m_rbroutines.m_rb_last(r);
 	}
-
-
 	static inline void asm_rb_insert_color(struct rb_node* n, struct rb_root* r, low_gpregs_t* saverestore_area) {
 
 		register rb_root* rpass asm("r14") = r;
@@ -265,14 +263,20 @@ namespace sh::rb {
 	}
 	static inline void rb_insert_color(struct rb_node* n, struct rb_root* r) {
 		low_gpregs_t saver;
-
+#if !defined(DISABLE_RB_ASM)
 		asm_rb_insert_color(n, r, &saver);
-		//return g_shalgo.m_rbroutines.m_rb_insert_color(n, r);
+#else
+		return g_shalgo.m_rbroutines.m_rb_insert_color(n, r);
+#endif
 	}
 
 	static inline void rb_erase(struct rb_node* n, struct rb_root* r) {
+#if !defined(DISABLE_RB_ASM)
 		low_gpregs_t saver;
 		asm_rb_erase(n, r, &saver);
+#else
+		g_shalgo.m_rbroutines.m_rb_erase(n, r);
+#endif
 	}
 	struct insert_hint_t {
 		rb_node** iterpos_hint;

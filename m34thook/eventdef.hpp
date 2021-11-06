@@ -53,3 +53,32 @@ struct idEventDefInterfaceLocal {
 
 
 void DumpEventDefs(bool as_enum);
+enum eventType_t
+{
+	EVENT_GAME = 0x0,
+	EVENT_ACTION = 0x1,
+	EVENT_ANIMEVENT = 0x2,
+	EVENT_FSMEVENT = 0x3,
+	EVENT_NOTICE = 0x4,
+	EVENT_SSACTION = 0x5,
+};
+
+struct idEventDef {
+	char* name;
+	char* formatspec;
+	char* argTypes;
+	char* argNames;
+	char* argDefaultValues;
+	int returnType;
+	int numargs;
+	int numstrings;
+	int eventnum;
+	int flags;
+	eventType_t type;
+	char* timelineEventGroup;
+	char* comment;
+	idEventDef* noticeEvent;
+	idEventDef* next;
+	//copied from decompilation, for reimplementing scriptcmdent
+	bool GetArgTypeName(int arg, std::string* tname);
+};

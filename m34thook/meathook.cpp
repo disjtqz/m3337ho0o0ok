@@ -20,6 +20,7 @@
 #include "snaphakalgo.hpp"
 #include <string.h>
 #include "mh_guirender.hpp"
+#include "mh_editor_mode.hpp"
 
 extern void cmd_optimize(idCmdArgs* args);
 void idlib_dump(idCmdArgs* args) {
@@ -74,7 +75,7 @@ static void toggle_idplayer_boolean(void* player, const char* property_name) {
 
 
 void cmd_noclip(idCmdArgs* args) {
-	auto player = find_entity("player1");
+	auto player = get_local_player();
 
 	if (!player) {
 		/*
@@ -92,7 +93,7 @@ void cmd_noclip(idCmdArgs* args) {
 
 
 void cmd_notarget(idCmdArgs* args) {
-	auto player = find_entity("player1");
+	auto player = get_local_player();
 	if (!player) {
 		idLib::Printf("No player1 instance available.\n");
 		return;
@@ -843,7 +844,113 @@ void arbitrary_exec(idCmdArgs* args) {
 	call_as<void>(descan::g_handlereliable, *reinterpret_cast<void**>(descan::g_gamelocal), &remoteconsolecmd);
 
 }
+/*
+	this i think is a fairly accurate recreation of killai's behavior.
+	the code for killai is a little more complex than i expected so i decided to ignore the decompilation
+	and write a fresh impl instead
+*/
+static void mh_killai(idCmdArgs* args) {
+	void* next_airef = nullptr;
 
+
+#if 0
+
+	for (void* airef = find_next_entity_with_class("idAI2"); airef != nullptr; airef = next_airef) {
+
+		next_airef = find_next_entity_with_class("idAI2", airef);
+
+		idEventArg unused;
+		mh_ScriptCmdEnt("remove", airef);
+
+	}
+
+#else
+
+	void* player1 = get_local_player();
+
+	void* damaged_decl = locate_resourcelist_member("idDeclDamage", "damage/player/fists");
+	if (!damaged_decl) {
+
+		idLib::Printf("Couldn't find damage decl for player fists for killai\n");
+		return;
+	}
+	if (!player1)
+		return;
+
+	idEventArg entargs[2];
+
+	entargs[0].make_entity(player1);
+	entargs[1].make_decl((struct idDecl*)damaged_decl);
+	for (void* airef = find_next_entity_with_class("idAI2"); airef != nullptr; airef = next_airef) {
+
+		next_airef = find_next_entity_with_class("idAI2", airef);
+
+		
+		mh_ScriptCmdEnt("kill", airef, entargs);
+
+	}
+
+#endif
+}
+
+
+static bool is_bound_to(void* ent, void* owner) {
+
+	return ((void*)ev_getBindMaster(ent).value.er) == owner || ((void*)ev_getBindParent(ent).value.er) == owner;
+}
+static void goofy_op(idCmdArgs* args) {
+
+	float distance = atof(args->argv[1]);
+	float pushamount = atof(args->argv[2]);
+	
+	void* player1 = get_local_player();
+	idVec3 playerpos;
+
+	idEventArg setlinarg{};
+	setlinarg.type = 'v';
+	setlinarg.value.v_vec3.Set(pushamount);
+
+	idEventDef* position_getter = ev_getWorldOrigin.Get();
+
+
+
+	void* vtmember_identity_callevent = VTBL_MEMBER(idEntity, VTBLOFFS_CALLEVENT)::Get();
+
+
+	cs_uninit_t<idEventArg> getpos_result;
+
+
+	call_as<void>(vtmember_identity_callevent,player1, &getpos_result, position_getter, &g_null_eventargs);
+
+
+
+	playerpos = getpos_result->value.v_vec3;
+
+	nonplayer_entities_within_distance_iterate(&playerpos, distance, [&pushamount,&setlinarg](void* current) {
+
+		ev_setLinearVelocity(current, &setlinarg);
+
+	});
+}
+
+static void mh_removeAi(idCmdArgs* args) {
+	void* next_airef = nullptr;
+
+	for (void* airef = find_next_entity_with_class("idAI2"); airef != nullptr; airef = next_airef) {
+
+		next_airef = find_next_entity_with_class("idAI2", airef);
+		mh_ScriptCmdEnt("remove", airef);
+
+	}
+}
+//best way rn to reference an entity that may stop existing 
+//todo: need entity ptrs
+static std::string g_prev_bound_name{};
+static void mh_grab(idCmdArgs* args) {
+
+	get_current_editor()->grab_player_focus();
+
+}
 void meathook_init() {
 	install_gameapi_hooks();
 
@@ -887,7 +994,7 @@ void meathook_init() {
 	idCmd::register_command("mh_force_reload", cmd_mh_forcereload, "Force reload current level");
 	idCmd::register_command("mh_active_encounter", cmd_active_encounter, "Get the list of active encounter managers");
 	idCmd::register_command("mh_current_checkpoint", cmd_current_checkpoint, "Get the current checkpoint name");
-	idCmd::register_command("mh_optimize", cmd_optimize, "Patches the engine to make stuff run faster. do not use online");
+	idCmd::register_command("mh_optimize", cmd_optimize, "Patches the engine to make stuff run faster. do not use online, might result in slightly different floating point results (probably not though)");
 	idCmd::register_command("mh_ang2mat", cmd_mh_ang2mat, "mh_ang2mat pitch yaw roll : converts the pitch, yawand roll values for idAngles to a decl - formatted matrix, copying the result to your clipboard");
 	idCmd::register_command("mh_dumpeventdefs", event_dump, "mh_dumpeventdefs <as enum = 0/1>");
 	idCmd::register_command("chrispy", mh_spawn, "chrispy <entitydef> <optional xyz position, uses your look direction as default> - spawns an entity at the position");
@@ -904,6 +1011,10 @@ void meathook_init() {
 	idCmd::register_command("mh_spawnfile", exec_spawnlist, "<spawn file path> spawns the entities at the positions from the file");
 	idCmd::register_command("mh_start_spawnrec", begin_recording_spawns, "<spawn file path> starts recording all chrispy/rechrispy spawns/spawn positions to a file for later exec by mh_spawnfile");
 	idCmd::register_command("mh_end_spawnrec", finish_recording_spawns, "No args, closes current spawnfile");
+	idCmd::register_command("mh_killAi", mh_killai, "Kills all living ai");
+	idCmd::register_command("mh_removeAi", mh_removeAi, "Removes all living ai");
+	idCmd::register_command("mh_grab", mh_grab, "Grab an object");
+	idCmd::register_command("mh_pushinradius", goofy_op, "<distance> <force> pushes all within distance by force");
 	install_memmanip_cmds();
 	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
 	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");

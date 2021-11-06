@@ -88,3 +88,40 @@ void DumpEventDefs(bool as_enum) {
 }
 
 #pragma clang optimize on
+
+bool idEventDef::GetArgTypeName(int arg, std::string* tname) {
+
+	char* argTypes; // rcx
+	int v8; // ebx
+	int v9; // edi
+	int v10; // eax
+	signed int v11; // eax
+	__int64 v12; // rbx
+	char Dst[256]; // [rsp+20h] [rbp-128h] BYREF
+
+	argTypes = this->argTypes;
+	if (!argTypes)
+		return 0;
+	v8 = 0;
+	v9 = 0;
+	v10 = idStr::Find(argTypes, 59, 0, -1);
+	if (v10 == -1)
+		return 0;
+	while (v8 != arg)
+	{
+		v9 = v10 + 1;
+		++v8;
+		v10 = idStr::Find(this->argTypes, 59, v10 + 1, -1);
+		if (v10 == -1)
+			return 0;
+	}
+	v11 = v10 - v9;
+	if ((unsigned int)v11 > 0xFF)
+		v11 = 255;
+	v12 = v11;
+	memmove(Dst, &this->argTypes[v9], v11);
+	Dst[v12] = 0;
+	*tname = Dst;
+
+	return 1;
+}

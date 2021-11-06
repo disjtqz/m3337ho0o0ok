@@ -23,7 +23,7 @@
 
 
 void* find_entity(const char* name) {
-	void* gamloc = *reinterpret_cast<void**>(descan::g_gamelocal);
+	void* gamloc = get_gamelocal();
 
 	void* vftbl = reinterpret_cast<void**>(gamloc)[0];
 
@@ -32,8 +32,19 @@ void* find_entity(const char* name) {
 
 	return reinterpret_cast<void* (*)(void*, const char*)>(findentity_func)(gamloc, name);
 }
+
+void* get_local_player() {
+	return find_entity("player1"); //alternatively, lookup entity index 0
+}
+
+void* get_world() {
+	void** etable = get_entity_table();
+	MH_UNLIKELY_IF(!etable)
+		return nullptr;
+	return etable[WORLD_ENTITY_IDX];
+}
 void* find_next_entity_with_class(const char* classname, void* entity_iterator) {
-	void* gamloc = *reinterpret_cast<void**>(descan::g_gamelocal);
+	void* gamloc = get_gamelocal();
 
 	return call_as<void*>(descan::g_find_next_entity_with_class, gamloc, entity_iterator, classname);
 }
@@ -42,7 +53,7 @@ void* get_level_map() {
 #if !defined(MH_ETERNAL_V6)
 	return call_as<void*>(descan::g_maplocal_getlevelmap, *reinterpret_cast<void**>(descan::g_gamelocal));
 #else
-	void* gamelocal = *reinterpret_cast<void**>(descan::g_gamelocal);
+	void* gamelocal = get_gamelocal();
 
 	char* gamelocal_vftbl = *reinterpret_cast<char**>(gamelocal);
 
@@ -210,7 +221,7 @@ static mh_fieldcached_t<idManagedClassPtr> g_field_player_focus{};
 
 
 void* get_player_look_target() {
-	void* player1 = find_entity("player1");
+	void* player1 = get_local_player();
 	MH_UNLIKELY_IF(!player1)
 		return nullptr;
 	idManagedClassPtr* looktarg = g_field_player_focus(player1, "idPlayer", "focusTracker", "focusEntity");
@@ -331,7 +342,7 @@ void* get_globalImages() {
 
 static mh_fieldcached_t<idVec3> g_player_focus_trace{};
 void get_player_trace_pos(idVec3* outvec) {
-	void* player = find_entity("player1");
+	void* player = get_local_player();
 	if (!player)
 		return;
 	*outvec = *g_player_focus_trace(player, "idPlayer", "focusTracker", "focusTrace", "close");
@@ -437,7 +448,7 @@ void* spawn_entity_from_entitydef(void* entdef) {
 	unsigned VFTBLIDX_GAMELOCAL_SPAWN = 0x40 / 8;
 	//ewwww
 
-	void* gamelocal = *(void**)descan::g_gamelocal;
+	void* gamelocal = get_gamelocal();
 
 	void* gamelocal_vftbl = *(void**)gamelocal;
 
@@ -448,12 +459,28 @@ void* spawn_entity_from_entitydef(void* entdef) {
 	return resulting_entity;
 
 }
-
+//for 0 arg events
+idEventArg g_null_eventargs;
 idEventArg mh_ScriptCmdEnt(idEventDef* tdef_name, void* self, idEventArg* args) {
+
+	if (args == nullptr) {
+		args = &g_null_eventargs;
+	}
 	idEventArg result;
 	call_as<void>(descan::g_eventreceiver_processeventargs, self, &result, tdef_name, args);
 	return result;
 
+}
+//directly calls vftbl offset +0x30 on entity, which seems to be CallEvent on all versions
+//this does not call the notice event though for the event passed in, unlike processeventargs, so only use
+//for ones with no notice event
+idEventArg mh_ScriptCmdEntFast(idEventDef* tdef_name, void* self, idEventArg* args) {
+	if (args == nullptr) {
+		args = &g_null_eventargs;
+	}
+	idEventArg result;
+	call_virtual<void>(self, VTBLOFFS_CALLEVENT, &result, tdef_name, args);
+	return result;
 }
 
 idEventArg mh_ScriptCmdEnt(const char* eventdef_name, void* self, idEventArg* args) {
@@ -461,21 +488,35 @@ idEventArg mh_ScriptCmdEnt(const char* eventdef_name, void* self, idEventArg* ar
 	return mh_ScriptCmdEnt(idEventDefInterfaceLocal::Singleton()->FindEvent(eventdef_name), self, args);
 }
 
-static idEventDef* g_cached_teleport_evdef = nullptr;
+idEventArg mh_ScriptCmdEnt_idEntity(idEventDef* tdef_name, void* self, idEventArg* args ) {
+	void* callev = VTBL_MEMBER(idEntity, VTBLOFFS_CALLEVENT)::Get();
+	idEventArg result;
+	call_as<void>(callev,self, &result, tdef_name, args);
+	return result;
+}
+
+static cs_uninit_t<idEventArg> g_sink_eventarg_ret{};
+
+
+void mh_ScriptCmdEnt_idEntity_void(idEventDef* tdef_name, void* self, idEventArg* args) {
+
+	void* callev = VTBL_MEMBER(idEntity, VTBLOFFS_CALLEVENT)::Get();
+	call_as<void>(callev, &g_sink_eventarg_ret, tdef_name, args);
+}
+
 
 void set_entity_position(void* entity, idVec3* pos) {
-	if (!g_cached_teleport_evdef) {
 
-		g_cached_teleport_evdef = idEventDefInterfaceLocal::Singleton()->FindEvent("teleport");
-	}
 	idEventArg teleargs[2];
 	teleargs[0].make_vec3(pos);
 	idAngles nothin{ .0f, .0f, .0f };
 	teleargs[1].make_angles(&nothin);
-	mh_ScriptCmdEnt(g_cached_teleport_evdef, entity, teleargs);
+	ev_teleport(entity, teleargs);
 }
 
-
+void get_entity_position(void* entity, idVec3* pos) {
+	*pos = ev_getWorldOrigin(entity).value.v_vec3;
+}
 void** get_class_vtbl(std::string_view clsname) {
 
 	auto iter = g_str_to_rrti_type_descr.find(clsname);
@@ -489,6 +530,71 @@ void** get_class_vtbl(std::string_view clsname) {
 
 static int located_decl_read_prod_file = -1;
 
+static unsigned g_gameLocal_entitytbl_offset = 0;
+
+MH_NOINLINE 
+MH_REGFREE_CALL
+CS_COLD_CODE
+static void init_entity_table_offset() {
+
+	void** tablechecker = (void**)get_gamelocal();
+
+	if (!tablechecker)
+		return;
+	//dont use get_local_player here, it might depend on the entity table offset
+	void* player1 = find_entity("player1");
+	void* world = find_entity("world");
+	if (!player1|| !world)
+		return;
+
+
+	//16382 = world
+	//0 = player1
+
+	//search within bounds of gamelocal in old v1 idb.
+	//hopefully the size doesnt grow hugely
+	for (unsigned i = 0; i < 0x1FF9C0 / 8; ++i) {
+
+		if (tablechecker[i] == player1) {
+
+			/*for (unsigned j = 16380; j < 25; ++j) {
+				if (tablechecker[i + j] == world) {
+					idLib::Printf("world is located at %u\n", j);
+				}
+			}*/
+
+			if (tablechecker[i + 16382] == world) {
+				g_gameLocal_entitytbl_offset = (i * 8);
+				break;
+			}
+		}
+	}
+
+}
+
+void** get_entity_table() {
+	MH_UNLIKELY_IF(!g_gameLocal_entitytbl_offset) {
+		init_entity_table_offset();
+		MH_UNLIKELY_IF(!g_gameLocal_entitytbl_offset)//if cant get the offset yet, return nul and let caller handle 
+			return nullptr;
+	}
+	return mh_lea<void*>(get_gamelocal(), g_gameLocal_entitytbl_offset);
+
+}
+
+int* get_entity_spawnid_table() {
+
+	//spawnid table is always after entity table, has been since at least wolf
+	return reinterpret_cast<int*>(&get_entity_table()[16383]);
+}
+
+void* lookup_entity_index(unsigned idx) {
+	return get_entity_table()[idx];
+}
+
+void remove_entity(void* entity) {
+	ev_remove(entity);
+}
 
 //clang unrolls the loop lol
 #pragma clang optimize off
@@ -630,3 +736,341 @@ void upload_2d_imagedata(const char* imagename, const void* picdata, unsigned wi
 	call_as<void>(descan::g_idImage_SubImageUpload, image, 0, 0, 0, 0, 0, width, height, 1, picdata, 0);
 
 }
+
+void* get_entity_typeinfo_object(void* ent) {
+	//GetType technically takes the this pointer as an arg, but all of them just lea rax and return anyway without referencing rcx
+	return call_virtual<void*>(ent, 0x16);
+}
+#if 0
+void __fastcall ScriptCmd(__int64 rcx0, idEntity* ent, const idCmdArgs* scriptargs)
+{
+	bool v3; // cc
+	const char* eventname; // r12
+	const char* v6; // rdx
+	idEventDef* Event; // rax
+	idEventDef* v8; // rdi
+	char* formatspec; // rbx
+	unsigned int v10; // er15
+	int v11; // er13
+	int v12; // edx
+	int v13; // er14
+	char* v14; // rax
+	__int64 v15; // r9
+	int v16; // ebx
+	__int64 v17; // rdi
+	enumTypeInfo_t* EnumInfo; // rax
+	char* v19; // r8
+	const enumValueInfo_t* EnumValueInfo; // rax
+	char* v21; // rcx
+	const char* v22; // rcx
+	char* v23; // rcx
+	float v24; // xmm1_4
+	char** v25; // r14
+	__int64 j; // r15
+	char* v27; // rcx
+	float v28; // xmm1_4
+	const char** v29; // r14
+	__int64 i; // r15
+	const char* v31; // rcx
+	float v32; // xmm1_4
+	const char* v33; // rax
+	char* v34; // rdx
+	void* EntityByName; // rax
+	unsigned int as_entity_index; // eax
+	__int64 v37; // rbx
+	void* DeclType; // rax
+	char* data; // rdx
+	const idDecl* v40; // rax
+	int v41; // [rsp+20h] [rbp-E0h]
+	float v42[3]; // [rsp+28h] [rbp-D8h] BYREF
+	int v43; // [rsp+38h] [rbp-C8h]
+	unsigned int v44; // [rsp+3Ch] [rbp-C4h]
+	idEventArg* v45; // [rsp+40h] [rbp-C0h]
+	char* v46; // [rsp+48h] [rbp-B8h]
+	idEventDef* v48; // [rsp+58h] [rbp-A8h]
+	char* v49; // [rsp+60h] [rbp-A0h]
+	idEventArg a1; // [rsp+70h] [rbp-90h] BYREF
+	std::string v52; // [rsp+A0h] [rbp-60h] BYREF
+	std::string typname; // [rsp+D0h] [rbp-30h] BYREF
+	std::string v54; // [rsp+100h] [rbp+0h] BYREF
+	idEventArg args[8]; // [rsp+130h] [rbp+30h] BYREF
+
+	v3 = scriptargs->argc <= 0;
+	eventname = blankstr;
+	if (v3)
+		v6 = blankstr;
+	else
+		v6 = scriptargs->argv[0];
+	
+	Event = idEventDefInterfaceLocal::Singleton()->FindEvent( v6);
+	v48 = Event;
+	v8 = Event;
+	if (!Event)
+	{
+		if (scriptargs->argc > 1)
+			eventname = scriptargs->argv[1];
+		idLib::Warning("ai_ScriptCmd unknown event '%s'", eventname);
+		return;
+	}
+	formatspec = Event->formatspec;
+	v49 = formatspec;
+	v10 = 0;
+	v11 = 1;
+	v44 = 0;
+	if (!*formatspec)
+		goto process_eventargs_and_return;
+	v12 = 4;
+	v46 = formatspec;
+	v41 = 4;
+	v45 = args;
+	v13 = 2;
+	v14 = formatspec;
+	while (2)
+	{
+		v15 = (unsigned int)*v14;
+		*(uint64_t*)&v16 = v11;
+		v17 = v11;
+		switch (*v14)
+		{
+		case '1':
+		case '2':
+		case '5':
+		case 's':
+			if (v13 > scriptargs->argc)
+			{
+				idLib::Warning("ai_ScriptCmd parm %d expects %d values for %c", v10, 1i64, v15);
+				v12 = v41;
+			}
+			++v11;
+			++v13;
+			v41 = v12 + 1;
+			if (v16 < 0 || v16 >= scriptargs->argc)
+				v33 = blankstr;
+			else
+				v33 = scriptargs->argv[v17];
+			a1.value.i_64 = (uint64_t)v33;
+			a1.type = 's';
+			args[v10].Copy(&a1);
+			v45->type = *v46;
+			goto LABEL_79;
+		case 'a':
+			if (v12 > scriptargs->argc)
+			{
+				idLib::Warning("ai_ScriptCmd parm %d expects %d values for %c", v10, 3i64, v15);
+				v12 = v41;
+			}
+			memset(v42, 0, sizeof(v42));
+			v43 = v13 + 3;
+			v41 = v12 + 3;
+			v11 += 3;
+			v29 = (const char**) & scriptargs->argv[v17];
+			for (i = 0; i < 3; ++i)
+			{
+				if (v17 < 0 || v16 >= scriptargs->argc)
+					v31 = blankstr;
+				else
+					v31 = *v29;
+				++v16;
+				v32 = atof(v31);
+				++v17;
+				++v29;
+				v42[i] = v32;
+			}
+			a1.type = 97;
+			goto LABEL_50;
+		case 'b':
+			if (v13 > scriptargs->argc)
+			{
+				idLib::Warning("ai_ScriptCmd parm %d expects %d values for %c", v10, 1i64, v15);
+				v12 = v41;
+			}
+			++v11;
+			++v13;
+			v41 = v12 + 1;
+			if (v16 < 0 || v16 >= scriptargs->argc)
+				v22 = blankstr;
+			else
+				v22 = scriptargs->argv[v17];
+			a1.type = 'i';
+			*(uint64_t*)&a1.value.i = atoi(v22) != 0;
+			goto LABEL_78;
+		case 'd':
+			if (v11 + 1 > scriptargs->argc)
+				idLib::Warning("ai_ScriptCmd parm %d expects %d values for %c", v10, 1i64, (unsigned int)v49[v10]);
+
+			if (v11 >= 0 && v11 < scriptargs->argc)
+				eventname = scriptargs->argv[v11];
+			std::string a12;
+			a12 = eventname;
+			v37 = (int)idStr::Find(a12.data(), 58, 0, -1);
+
+
+
+			idStr::Append(&v54, (char*)a1.value.s, v37);
+			idStr::Append(&v52, (char*)(v37 + a1.value.i_64 + 1), LODWORD(a1.value.v[2]) - (int)v37);
+			if (!v52.len)
+			{
+				idLib::Warning("ai_ScriptCmd decl parm expects declType:declName");
+				return;
+			}
+			DeclType = idDeclManagerLocal::GetDeclType(engine.declManager, v54.data);
+			if (DeclType)
+			{
+				data = v52.data;
+				if (v52.data)
+				{
+					v40 = idDeclInfo::FindWithInheritance(DeclType, v52.data, 1);
+					if (v40)
+					{
+						a1.value.d = v40;
+						a1.type = 'd';
+						idEventArg::idEventArg(&args[v10], &a1);
+						return;
+					}
+					data = v52.data;
+				}
+				idLib::Warning("ai_ScriptCmd decl '%s' not found", data);
+			}
+			else
+			{
+				idLib::Warning("ai_ScriptCmd decl type '%s' not found", v54.data);
+			}
+			return;
+		case 'e':
+			if (v13 > scriptargs->argc)
+			{
+				idLib::Warning("ai_ScriptCmd parm %d expects %d values for %c", v10, 1i64, v15);
+				v12 = v41;
+			}
+			++v11;
+			++v13;
+			v41 = v12 + 1;
+			if (v16 < 0 || v16 >= scriptargs->argc)
+				v34 = blankstr;
+			else
+				v34 = scriptargs->argv[v17];
+			EntityByName = idGameLocal::FindEntityByName(gameLocal, v34);
+			if (!EntityByName)
+			{                               // failed to get entity by name, try parsing the arg as an entity index instead
+				as_entity_index = atoi(scriptargs->argv[v17]);
+				if (as_entity_index > 0x3FFF)
+					EntityByName = 0i64;
+				else
+					EntityByName = idEntity::CastTo(gameLocal->entities_list[as_entity_index]);
+			}
+			idEventArg::idEventArg(&a1, EntityByName);
+			goto LABEL_78;
+		case 'f':
+			if (v13 > scriptargs->argc)
+			{
+				idLib::Warning("ai_ScriptCmd parm %d expects %d values for %c", v10, 1i64, v15);
+				v12 = v41;
+			}
+			++v11;
+			++v13;
+			v41 = v12 + 1;
+			if (v16 < 0 || v16 >= scriptargs->argc)
+				v23 = blankstr;
+			else
+				v23 = scriptargs->argv[v17];
+			a1.type = 'f';
+			v24 = atof(v23);
+			a1.value.f = v24;
+			goto LABEL_78;
+		case 'i':
+			if (v13 > scriptargs->argc)
+			{
+				idLib::Warning("ai_ScriptCmd parm %d expects %d values for %c", v10, 1i64, v15);
+				v12 = v41;
+			}
+			++v11;
+			v41 = v12 + 1;
+			++v13;
+			if (v48->GetArgTypeName( v10, &typname) && operator!=(&typname, "int"))
+			{
+				EnumInfo = idTypeInfoTools::FindEnumInfo(rcx0, typname.data);
+				if (!EnumInfo)
+				{
+					idLib::Warning("no enum %s", typname.data);
+					return;
+				}
+				if (v16 < 0 || v16 >= scriptargs->argc)
+					v19 = blankstr;
+				else
+					v19 = scriptargs->argv[v17];
+				EnumValueInfo = idTypeInfoTools::FindEnumValueInfo((idTypeInfoTools*)rcx0, EnumInfo, v19, 0);
+				if (!EnumValueInfo)
+				{
+					if (v16 >= 0 && v16 < scriptargs->argc)
+						eventname = scriptargs->argv[*(_QWORD*)&v16];
+					idLib::Warning("no enum or value for %s::%s", typname.data, eventname);
+					return;
+				}
+				a1.value.i_64 = EnumValueInfo->value;
+				a1.type = 'i';
+			}
+			else
+			{
+				if (v16 < 0 || v16 >= scriptargs->argc)
+					v21 = blankstr;
+				else
+					v21 = scriptargs->argv[v17];
+				a1.value.i_64 = atoi(v21);
+				a1.type = 'i';
+			}
+		LABEL_78:
+			idEventArg::idEventArg(&args[v10], &a1);
+		LABEL_79:
+			v12 = v41;
+		LABEL_80:
+			++v10;
+			++v45;
+			v14 = v46 + 1;
+			v44 = v10;
+			v46 = v14;
+			if (*v14)
+				continue;
+			v8 = v48;
+		process_eventargs_and_return:
+			idEventReceiver::ProcessEventArgPtr(ent, &a1, v8, args);
+			return;
+		case 'v':
+			if (v12 > scriptargs->argc)
+			{
+				idLib::Warning("ai_ScriptCmd parm %d expects %d values for %c", v10, 3i64, v15);
+				v12 = v41;
+			}
+			memset(v42, 0, sizeof(v42));
+			v43 = v13 + 3;
+			v41 = v12 + 3;
+			v11 += 3;
+			v25 = &scriptargs->argv[v17];
+			for (j = 0i64; j < 3; ++j)
+			{
+				if (v17 < 0 || v16 >= scriptargs->argc)
+					v27 = blankstr;
+				else
+					v27 = *v25;
+				++v16;
+				v28 = atof(v27);
+				++v17;
+				++v25;
+				v42[j] = v28;
+			}
+			a1.type = 'v';
+		LABEL_50:
+			v10 = v44;
+			*(_QWORD*)a1.value.v = *(_QWORD*)v42;
+			a1.value.v[2] = v42[2];
+			idEventArg::idEventArg(&args[v44], &a1);
+			v13 = v43;
+			goto LABEL_79;
+		case 'x':
+			idLib::Warning("ai_ScriptCmd var args not supported from console right now");
+			return;
+		default:
+			goto LABEL_80;
+		}
+	}
+}
+#endif

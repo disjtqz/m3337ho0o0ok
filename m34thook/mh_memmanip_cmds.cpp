@@ -211,14 +211,27 @@ static constexpr const uint_feature_entry_t g_uint_features[] = {
 #undef SCANNED_PTR_FEATURE
 
 static void list_scanned_features(idCmdArgs* args) {
-	
+	std::string result{};
+	char tmpbuf[1024];
+
+	auto translate_ptr = [](void** p) {
+
+		return ((uintptr_t)((char*)(*p) - g_blamdll.image_base)) + 0x140000000;
+
+	};
 	for(auto&& feat : g_vptr_features) {
-		idLib::Printf("\t%s\t\t\t=\t\t\t%p\n", feat.m_name.data(), *(feat.m_ptr));
+
+		sprintf_s(tmpbuf, "\t%s\t\t\t=\t\t\t%p(%p)\n", feat.m_name.data(), *(feat.m_ptr), translate_ptr(feat.m_ptr));
+		result += &tmpbuf[0];
 	}
 
 	for(auto&& feat : g_uint_features) {
-		idLib::Printf("\t%s\t\t\t=\t\t\t%u\n", feat.m_name.data(), *(feat.m_ptr));
+		sprintf_s(tmpbuf, "\t%s\t\t\t=\t\t\t%u\n", feat.m_name.data(), *(feat.m_ptr));
+
+		result += &tmpbuf[0];
 	}
+	idLib::Printf(result.data());
+	set_clipboard_data(result.data());
 }
 
 
@@ -285,13 +298,13 @@ void hide_special_cmds(idCmdArgs* args) {
 			idLib::Printf("Okay, thats not the real password, its a collision with an awful hash, but i respect the effort. don't expect any documentation for these commands though.\n");
 		}
 		idCmd::register_command("mh_fieldoffs", mh_fieldoffs, "Calculate offset of fieldspec");
-
+		//
 		idCmd::register_command("mh_setentityfloat", mh_setentityfloat, "Set a floating point value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
 		idCmd::register_command("mh_setentityint32", mh_setentityint32, "Set a 32 bit integer value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
 		idCmd::register_command("mh_setentityint16", mh_setentityint16, "Set a 16 bit integer value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
 		idCmd::register_command("mh_setentityint8", mh_setentityint8, "Set a 8 bit integer value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
 		idCmd::register_command("mh_getresourceptr",mh_getresourceptr, "<resource classname (ex:idDeclEntityDef)> <resource name> <optional pathspec> - Copies the address of a resource instance to your clipboard. Intended for use with a debugger.");
-	
+
 		idCmd::register_command("mh_pokei8", mh_pokei<char>, "Set a byte in memory to value (hex value no 0x) = second arg");
 		idCmd::register_command("mh_pokei16", mh_pokei<short>, "Set a short in memory to value (hex value no 0x) = second arg");
 		idCmd::register_command("mh_pokei32", mh_pokei<int>, "Set an int in memory to value (hex value no 0x) = second arg");
