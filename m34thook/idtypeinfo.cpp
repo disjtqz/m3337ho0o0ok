@@ -241,6 +241,11 @@ static bool should_skip_type(std::string_view typenam) {
 
 }
 static char opsbuffer[256];
+
+
+
+
+
 void idType::generate_idc() {
 
 

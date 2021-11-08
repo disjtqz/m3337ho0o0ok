@@ -360,22 +360,29 @@ struct cmp_backref {
 		return true;
 	}
 };
+
+template<typename T, T mask, T expected_value>
+struct masked_eq_value {
+	static constexpr unsigned required_valid_size = sizeof(T);
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
+		T bval = *(T*)(&state.addr[0]);
+		if ((bval & mask) != expected_value)
+			return false;
+		state.addr += sizeof(T);
+		return true;
+	}
+};
 /*
 	checks if current byte & mask == expected_value
 */
-template<unsigned mask, unsigned expected_value>
-struct masked_eq_byte {
-	static constexpr unsigned required_valid_size = 1;
-	MH_FORCEINLINE
-	static bool match(scanstate_t& state) {
-		unsigned bval = state.addr[0];
-		if((bval & mask) != expected_value)
-			return false;
-		state.addr+=1;
-		return true;
-	}
+template<unsigned char mask, unsigned char expected_value>
+using masked_eq_byte = masked_eq_value<unsigned char, mask, expected_value>;
 
-};
+template<unsigned  mask, unsigned  expected_value>
+using masked_eq_u32 = masked_eq_value<unsigned, mask, expected_value>;
+
+
 
 enum memscanner_flags_e {
 	_test_mapped_displ_in_image = 1,

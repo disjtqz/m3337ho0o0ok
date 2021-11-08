@@ -34,7 +34,6 @@ SCANNED_PTR_FEATURE(g_declentitydef_setentitystate)
 SCANNED_PTR_FEATURE(g_declentitydef_gettextwithinheritance)
 SCANNED_PTR_FEATURE(g_idstr_dctor)
 SCANNED_PTR_FEATURE(g_idstr_assign_charptr)
-SCANNED_PTR_FEATURE(g_noclip_func)
 SCANNED_PTR_FEATURE(g_global_typeinfo_tools)
 SCANNED_PTR_FEATURE(g_maplocal_getlevelmap)
 SCANNED_PTR_FEATURE(g_idmapfile_write)
@@ -43,10 +42,8 @@ SCANNED_PTR_FEATURE(g_idlib_fatalerror)
 SCANNED_PTR_FEATURE(g_idlib_error)
 
 SCANNED_PTR_FEATURE(g_idfilesystemlocal)
-SCANNED_PTR_FEATURE(g_levelreload)
-SCANNED_PTR_FEATURE(g_init_func_rva_992170)
 SCANNED_PTR_FEATURE(g_find_next_entity_with_class)
-	//actually expects resourceList_t*, not idResourceList
+//actually expects resourceList_t*, not idResourceList
 SCANNED_PTR_FEATURE(g_resourcelist_index)
 SCANNED_PTR_FEATURE(g_rtti_typeinfo_string)
 
@@ -57,7 +54,10 @@ SCANNED_PTR_FEATURE(g_resourceManager2)
 SCANNED_UINT_FEATURE(g_offset_resourcelist_length)
 
 SCANNED_UINT_FEATURE(g_vftbl_offset_getlevelmap)
-
+SCANNED_UINT_FEATURE(g_vftbl_offset_MapFindEntity_idEntity)
+SCANNED_UINT_FEATURE(g_vftbl_offset_MapFindEntity_ccharptr)
+SCANNED_UINT_FEATURE(g_vftbl_offset_MapSaveReference)
+SCANNED_UINT_FEATURE(g_vftbl_offset_MapRemoveEntity)
 SCANNED_PTR_FEATURE(g_resourceStorageDiskStreamer_GetFile)
 
 SCANNED_PTR_FEATURE(g_resourceStorageInterface2)
@@ -67,6 +67,8 @@ SCANNED_PTR_FEATURE(g_idImage_SubImageUpload)
 SCANNED_PTR_FEATURE(g_idRenderModelGui__DrawString)
 //?DrawStretchPic@idRenderModelGui@@QEAAXMMMMMMMMMPEBVidMaterial@@@Z
 SCANNED_PTR_FEATURE(g_idRenderModelGui__DrawStretchPic)
+
+SCANNED_PTR_FEATURE(g_idRenderModelGui__DrawFilled)
 
 //_ZN16idRenderModelGui14DrawStretchPicERK6idVec4S2_S2_S2_PK10idMaterialf
 SCANNED_PTR_FEATURE(g_idRenderModelGui__DrawStretchPicVec4Version)
@@ -101,6 +103,10 @@ SCANNED_PTR_FEATURE(g_idTriangles_ctor)
 SCANNED_PTR_FEATURE(g_idTriangles_AllocStaticTriSurfVerts)
 SCANNED_PTR_FEATURE(g_idTriangles_AllocStaticTriSurfIndexes)
 
+SCANNED_PTR_FEATURE(g_idListVoid_SetSize)
+SCANNED_PTR_FEATURE(g_idTriangles_dctor)
+SCANNED_PTR_FEATURE(g_doom_operator_delete)
+
 SCANNED_PTR_FEATURE(g_idTriangles_AddCubeFace)
 
 SCANNED_PTR_FEATURE(g_idStaticModel_UpdateBuffers)
@@ -117,3 +123,11 @@ SCANNED_PTR_FEATURE(g_handlereliable)
 
 SCANNED_PTR_FEATURE(g_eventarg_ctor_identityptr)
 SCANNED_PTR_FEATURE(g_eventreceiver_processeventargs)
+//va is just used in other scanners
+SCANNED_PTR_FEATURE(g_va_va)
+
+SCANNED_PTR_FEATURE(g_idResource_SetName)
+SCANNED_PTR_FEATURE(g_idDecl_SetText)
+
+SCANNED_PTR_FEATURE(g_idDecl_Reparse)
+SCANNED_PTR_FEATURE(g_idMapEntity_SetEntityDef)

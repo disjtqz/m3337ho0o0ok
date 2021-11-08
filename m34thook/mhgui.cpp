@@ -23,13 +23,37 @@ static void* g_ui_frontend_backing_storage = nullptr;
 template<typename T>
 using allocator_sh_ui_t = sh::heap::sh_heap_based_allocator_t<T, &g_ui_frontend_heap, 0>;
 
+float SMALLCHAR_WIDTH_OVERRIDE = .0f;
+float SMALLCHAR_HEIGHT_OVERRIDE =.0f;
 
 
+static float get_smallchar_w() {
+	if (SMALLCHAR_WIDTH_OVERRIDE <= .0f)
+		return idRenderModelGui::get_SMALLCHAR_WIDTH();
+	return SMALLCHAR_WIDTH_OVERRIDE;
+}
+
+static float get_smallchar_h() {
+	if (SMALLCHAR_HEIGHT_OVERRIDE <= .0f)
+		return idRenderModelGui::get_SMALLCHAR_HEIGHT();
+	return SMALLCHAR_HEIGHT_OVERRIDE;
+}
+
+void cmd_set_charconsts(idCmdArgs* args) {
+	if (args->argc < 3)
+		return;
+
+	SMALLCHAR_WIDTH_OVERRIDE = atof(args->argv[1]);
+	SMALLCHAR_HEIGHT_OVERRIDE = atof(args->argv[2]);
+
+
+}
 void init_sh_ingame_ui() {
 	g_ui_frontend_backing_storage = sh::vmem::allocate_rw(1024 * 1024);
 	g_ui_frontend_heap = sh::heap::create_heap_from_mem(g_ui_frontend_backing_storage, 1024 * 1024, 0);
-}
 
+	idCmd::register_command("mh_set_charscaling", cmd_set_charconsts, "<w> <h> smallchar w/h override");
+}
 
 void calculate_text_size(const char* msg, float* out_w, float* out_h, float scale, unsigned* out_longest_line, unsigned* out_nlines) {
 
@@ -51,8 +75,8 @@ void calculate_text_size(const char* msg, float* out_w, float* out_h, float scal
 		}
 	}
 	float maxcharf = (float)maxchars;
-	*out_w = (idRenderModelGui::get_SMALLCHAR_WIDTH() * scale) * maxcharf;
-	*out_h = nlines * (scale * idRenderModelGui::get_SMALLCHAR_HEIGHT());
+	*out_w = (get_smallchar_w() * scale) * maxcharf;
+	*out_h = nlines * (scale * get_smallchar_h());
 	*out_longest_line = maxchars;
 	*out_nlines = nlines;
 
@@ -194,7 +218,7 @@ void mh_ui_ele_t::draw(gui_draw_context_t& g) {
 
 
 
-		float text_increment_y = (txt_scale * idRenderModelGui::get_SMALLCHAR_HEIGHT()) + 1;
+		float text_increment_y = (txt_scale *get_smallchar_h()) + 1;
 		unsigned current_line = 0;
 		unsigned i = 0;
 
@@ -238,7 +262,7 @@ void mh_ui_ele_t::draw(gui_draw_context_t& g) {
 					current_drawcharbuf[drawcharbuf_pos++] = txt[i];
 					//g.m_guimod->DrawChar(currentx + rx, currenty + ry, txt[i], txt_scale);
 				}
-				currentx += static_cast<unsigned>((txt_scale * idRenderModelGui::get_SMALLCHAR_WIDTH()));
+				currentx += static_cast<unsigned>((txt_scale * get_smallchar_w()));
 			}
 		}
 		drain_drawcharbuf();

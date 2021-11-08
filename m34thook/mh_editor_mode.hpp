@@ -9,7 +9,7 @@ public:
 	virtual void grab_player_focus() = 0;
 	virtual void ungrab() = 0;
 
-
+	virtual void init_for_session() = 0;
 };
 
 mh_editor_interface_t* get_current_editor();

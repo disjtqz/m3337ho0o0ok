@@ -22,8 +22,16 @@
 template<typename T>
 static T load8_no_cache(T* ptr) {
 	
-	return reinterpret_cast<T>(_InterlockedExchangeAdd64((volatile long long*)ptr, 0));
+	return (T)(_InterlockedExchangeAdd64((volatile long long*)ptr, 0));
 }
+
+template<typename T>
+static void store8_no_cache(T* ptr, T value) {
+	InterlockedExchange64((volatile long long*)ptr, (long long)(void*)value);
+}
+
+
+
 
 struct alignas(64) frame_callbacks_t {
 	mh_mainloop::frame_cb_t m_cbs[MAX_FRAME_CALLBACKS];
@@ -32,29 +40,29 @@ struct alignas(64) frame_callbacks_t {
 
 
 	void init() {
-		sh::memops::nt_zero_mem(this, sizeof(*this));
+		//sh::memops::nt_zero_mem(this, sizeof(*this));
 		m_numcallbacks=0;
-		sh::memops::sfence_if();
+	//	sh::memops::sfence_if();
 	}
 
 	unsigned add_callback(mh_mainloop::frame_cb_t cb, void* ud) {
 
-
-		long long numcb = _InterlockedIncrement64((volatile long long*)&m_numcallbacks);
+		//doofus, it returns the incremented value so thats why it was segfaulting
+		long long numcb = _InterlockedIncrement64((volatile long long*)&m_numcallbacks) - 1;
 		MH_UNLIKELY_IF(numcb >= MAX_FRAME_CALLBACKS) {
 			sh::fatal("M347h00k exceeded MAX_FRAME_CALLBACKS!");
 
 		}
-		
-		InterlockedExchange64((volatile long long*)&m_cbs[numcb], (long long)(void*)cb);
-		InterlockedExchange64((volatile long long*)&m_uds[numcb], (long long)ud);
+		store8_no_cache(&m_cbs[numcb], cb);
+		store8_no_cache(&m_uds[numcb], ud);
+
 
 		return (unsigned)numcb;
 	}
 	
 
 	void run_callbacks() {
-		unsigned numcb = _InterlockedExchangeAdd64((volatile long long*)&m_numcallbacks, 0);
+		unsigned numcb = load8_no_cache((volatile long long*)&m_numcallbacks);
 
 		for(unsigned i = 0; i < numcb; ++i) {
 			mh_mainloop::frame_cb_t cb = load8_no_cache(&m_cbs[i]);

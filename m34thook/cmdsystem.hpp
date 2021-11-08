@@ -53,4 +53,6 @@ struct __declspec(align(8)) idCVar
 
 
 	static idCVar* Find(const char* name);
+
+	static idCVar** GetList(unsigned& out_n);
 };

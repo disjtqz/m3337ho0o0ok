@@ -260,12 +260,17 @@ using scanner_extract_getvirtualdims = memscanner_t<
 MH_NOINLINE
 static void obtain_rendermodelgui_stuff() {
 	void** dbgmodel = get_class_vtbl(".?AVidDebugModelGui@@");
-
+#if 0
 	descan::g_idRenderModelGui__DrawString = mh_disassembler_t::first_jump_target(dbgmodel[DRAWSTRING_VFTBL_INDEX]);
 	descan::g_idRenderModelGui__DrawStretchPic = mh_disassembler_t::first_call_target(dbgmodel[DRAWSTRETCHPIC_VFTBL_INDEX]);
 	descan::g_idRenderModelGui__DrawStretchPicVec4Version = mh_disassembler_t::first_call_target(descan::g_idRenderModelGui__DrawStretchPic);
 	descan::g_idRenderModelGui__DrawChar = mh_disassembler_t::first_jump_target(dbgmodel[DRAWCHAR_VFTBL_INDEX]);
 
+#else
+
+	descan::g_idRenderModelGui__DrawStretchPic = mh_disassembler_t::nth_call_target(descan::g_idRenderModelGui__DrawFilled, 2);
+	descan::g_idRenderModelGui__DrawStretchPicVec4Version = mh_disassembler_t::first_call_target(descan::g_idRenderModelGui__DrawStretchPic);
+#endif
 	void** aasgui = get_class_vtbl(".?AVidAASGUI@@");
 	//renderdebuggui function
 	void* start = aasgui[3];
@@ -411,6 +416,25 @@ static void run_scanners_over_staticmodelmanager_init() {
 	void* nextjmp_is_freecpu = run_range_scanner<scanbehavior_simple<scanner_find_updatebuffers>>(cubeface_next, end);
 
 	descan::g_idStaticModel_FreeCPUData = mh_disassembler_t::first_jump_target(nextjmp_is_freecpu);
+
+	mh_disassembler_t::extract_call_targets(descan::g_idStaticModel_FreeSurfaces, descan::g_idListVoid_SetSize, descan::g_idTriangles_dctor, descan::g_doom_operator_delete);
+}
+
+static void extract_extra_functions_from_mapsavereference() {
+
+	auto gamelocal_vtbl = get_class_vtbl(".?AVidMapInstanceLocal@@");
+
+	void* mapsaveref = gamelocal_vtbl[descan::g_vftbl_offset_MapSaveReference / 8];
+
+	void* expected_end = mh_disassembler_t::after_first_return(mapsaveref);
+
+
+	using locate_lea_of_world = memscanner_t<scanbytes< 0x48, 0x8D, 0x15>, riprel32_data_equals< 0x77, 0x6F, 0x72, 0x6C, 0x64, 0x00>>;
+
+	void* start_extracting_loc = run_range_scanner<scanbehavior_simple<locate_lea_of_world>>(mapsaveref, expected_end);
+
+
+	mh_disassembler_t::extract_call_targets(start_extracting_loc, descan::g_idResource_SetName, descan::g_idDecl_SetText, descan::g_idDecl_Reparse, descan::g_idMapEntity_SetEntityDef);
 }
 
 MH_NOINLINE
@@ -423,6 +447,22 @@ static void descan_run_late_scangroups() {
 
 	//scan_for_vftbls();
 	scanners_phase2::secondary_scangroup_pass.execute_on_image();
+
+	unsigned levelmapoffs = descan::g_vftbl_offset_getlevelmap;
+	if (levelmapoffs) {
+
+		/*
+		SCANNED_UINT_FEATURE(g_vftbl_offset_MapFindEntity_idEntity)
+SCANNED_UINT_FEATURE(g_vftbl_offset_MapFindEntity_ccharptr)
+SCANNED_UINT_FEATURE(g_vftbl_offset_MapSaveReference)
+SCANNED_UINT_FEATURE(g_vftbl_offset_MapRemoveEntity)
+		*/
+		descan::g_vftbl_offset_MapFindEntity_idEntity = levelmapoffs - 16;
+		descan::g_vftbl_offset_MapFindEntity_ccharptr = levelmapoffs - 24;
+		descan::g_vftbl_offset_MapSaveReference = levelmapoffs - 32;
+		descan::g_vftbl_offset_MapRemoveEntity = levelmapoffs - 48;
+		extract_extra_functions_from_mapsavereference();
+	}
 	descan::g_idtypeinfo_findclassinfo = hunt_assumed_func_start_back(descan::g_idtypeinfo_findclassinfo);
 	descan::g_idfilecompressed_getfile = hunt_assumed_func_start_back(descan::g_idfilecompressed_getfile);
 	descan::g__ZN5idStr4IcmpEPKcS1_ =

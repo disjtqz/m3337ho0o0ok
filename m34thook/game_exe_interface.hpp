@@ -218,6 +218,39 @@ struct mh_disassembler_t {
 
 	}
 
+	static void* nth_call_target(void* funcaddr, unsigned Nth) {
+
+		MH_UNLIKELY_IF(!funcaddr)
+			return nullptr;
+		mh_disassembler_t dis{};
+		dis.setup_for_addr(funcaddr);
+
+		for (unsigned i = 0; i < Nth; ++i) {
+			if (!dis.find_next_of_mnem<UD_Icall>())
+				return nullptr;
+
+		}
+		return dis.extract_pcrel_value(0);
+	}
+
+	template<typename... Ts>
+	static bool extract_call_targets(void* startaddr, Ts&... outputs) {
+		MH_UNLIKELY_IF(!startaddr)
+			return false;
+		mh_disassembler_t dis{};
+		dis.setup_for_addr(startaddr);
+
+		void** outs[] = { &outputs... };
+
+		for (unsigned i = 0; i < sizeof...(Ts); ++i) {
+			if (!dis.find_next_of_mnem<UD_Icall>())
+				return false;
+			*outs[i] = dis.extract_pcrel_value(0);
+		}
+		return true;
+
+	}
+
 	static void* after_first_return(void* funcaddr) {
 		MH_UNLIKELY_IF(!funcaddr)
 			return nullptr;

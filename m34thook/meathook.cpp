@@ -951,6 +951,19 @@ static void mh_grab(idCmdArgs* args) {
 	get_current_editor()->grab_player_focus();
 
 }
+
+static void mh_kw(idCmdArgs* args) {
+
+	std::string output = idType::keyword_search((const char**)  & args->argv[0], args->argc);
+	set_clipboard_data(output.c_str());
+	idLib::Printf("%s", output.c_str());
+}
+
+static void mh_editor(idCmdArgs* args) {
+
+	get_current_editor()->init_for_session();
+
+}
 void meathook_init() {
 	install_gameapi_hooks();
 
@@ -1015,6 +1028,8 @@ void meathook_init() {
 	idCmd::register_command("mh_removeAi", mh_removeAi, "Removes all living ai");
 	idCmd::register_command("mh_grab", mh_grab, "Grab an object");
 	idCmd::register_command("mh_pushinradius", goofy_op, "<distance> <force> pushes all within distance by force");
+	idCmd::register_command("mh_kw", mh_kw, "Searches all types, enums, typedefs, their comments, field names, typename, template args for the provided keywords");
+	idCmd::register_command("mh_editor", mh_editor, "Sets up the editor session");
 	install_memmanip_cmds();
 	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
 	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");

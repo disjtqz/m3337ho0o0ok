@@ -103,3 +103,17 @@ void* idCmd::find_command_by_name(const char* name) {
 	}
 	return nullptr;
 }
+
+idCVar** idCVar::GetList(unsigned& out_n) {
+	void* sys = get_cvarsystem();
+	
+	idListVoid* entries = *mh_lea<idListVoid*>(sys, 8);
+
+
+	out_n = entries->num;
+
+
+	return (idCVar**)entries->list;
+
+
+}

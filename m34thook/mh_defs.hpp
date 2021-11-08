@@ -181,8 +181,9 @@ struct intern_const_str_t {
 #define		yuckystring_m(...)		intern_const_str_t<MAKE_CONSTANT_STR(__VA_ARGS__)>
 #define		yuckystring_str_from_type_m(...)			(&__VA_ARGS__::value[0])
 
+#define		yuckystr_parampack_unp_m(ts)				(&ts::value[0])...
 
-
+#define		YS(...)		yuckystring_m(__VA_ARGS__)
 #endif
 
 

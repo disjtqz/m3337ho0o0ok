@@ -532,6 +532,11 @@ namespace sh::string {
 		static inline unsigned from_unicode(MH_NOESCAPE char* destbuf, MH_NOESCAPE const wchar_t* srcb) {
 		return g_shalgo.m_sroutines.m_from_unicode(destbuf, srcb);
 	}
+
+	MH_LEAF
+		static inline unsigned find_string_insens(const char* haystack, const char* needle) {
+		return g_shalgo.m_sroutines.m_find_str_insens(haystack, needle);
+	}
 	static inline
 		unsigned strlen_smol(const char* s) {
 #if defined(MAY_USE_INLINE_ASM)

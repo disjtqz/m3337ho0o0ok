@@ -499,11 +499,25 @@ struct __declspec(align(8)) idEventArg
 		value.v[2] = p->z;
 
 	}
+	void make_vec3(idVec3 p) {
+		type = 'v';
+		value.v[0] = p.x;
+		value.v[1] = p.y;
+		value.v[2] = p.z;
 
+	}
 	void make_string(const char* s) {
 		this->type = 's';
 		this->value.s = s;
 
+	}
+	void make_float(float f) {
+		this->type = 'f';
+		this->value.f = f;
+	}
+	void make_int(int i) {
+		this->type = 'i';
+		this->value.i = i;
 	}
 
 	void make_bool(bool b) {
@@ -2038,6 +2052,7 @@ enum evnum_t
 */
 CACHED_EVENTDEF(teleport);
 CACHED_EVENTDEF(getWorldOrigin);
+CACHED_EVENTDEF(setWorldOrigin);
 CACHED_EVENTDEF(kill);
 CACHED_EVENTDEF(remove);
 CACHED_EVENTDEF(removeBinds);
@@ -2063,6 +2078,8 @@ static void nonplayer_entities_within_distance_iterate(idVec3* base_point, float
 
 
 	void** entity_tbl = get_entity_table();
+
+	cs_uninit_t<idEventArg> getpos_result;
 	if (!entity_tbl)
 		return;
 

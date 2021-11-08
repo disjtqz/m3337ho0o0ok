@@ -291,6 +291,15 @@ using locate_idcommonlocal_frame = memscanner_t<
 >;
 
 
+//v1 = 141266550
+//v6.66 = 14150F0D0
+
+using locate_va = memscanner_t<
+	scanbytes<0x44, 0x8b, 0xc6, 0x48, 0x8d, 0x15>,
+	riprel32_data_equals< 0x70, 0x69, 0x70, 0x25, 0x69, 0x00>,
+	scanbytes<0x48, 0x8d, 0x4d, 0xe0, 0xe8>
+>;//last 4 = va rva
+
 namespace initial_scanners {
 
 	/*
@@ -329,7 +338,6 @@ namespace initial_scanners {
 	BSCANENT(locate_idstr_dctor_entry, &descan::g_idstr_dctor, scanbehavior_locate_func<locate_idstr_dctor>);
 #endif
 	BSCANENT(locate_idstr_assign_charptr_entry, &descan::g_idstr_assign_charptr, scanbehavior_locate_csrel_after<locate_idstr_assign_charptr>);
-	BSCANENT(locate_noclip_code_entry, &descan::g_noclip_func, scanbehavior_locate_func<locate_noclip_code>);
 	BSCANENT(locate_typeinfo_tools_entry, &descan::g_global_typeinfo_tools, scanbehavior_locate_csrel_after<scanner_locate_global_typeinfo_tools>);
 	BSCANENT(locate_resourceManager2_entry, &descan::g_resourceManager2, scanbehavior_locate_csrel_after<locate_resourceManager2>);
 
@@ -347,8 +355,10 @@ namespace initial_scanners {
 	BSCANENT(locate_rtti_typeinfo_string_entry, &descan::g_rtti_typeinfo_string, scanbehavior_locate_func<locate_rtti_typeinfo_string>);
 	BSCANENT(locate_resourcestreamer_getfile, &descan::g_resourceStorageDiskStreamer_GetFile, scanbehavior_locate_func_with_start_search<locate_resourcestoragediskstreamer_getfile>);
 	BSCANENT(locate_idcommonlocal_frame_entry, &descan::g_idCommonLocal_Frame, scanbehavior_locate_func_with_start_search<locate_idcommonlocal_frame>);
+
+	BSCANENT(locate_va_entry, &descan::g_va_va, scanbehavior_locate_csrel_after<locate_va>);
 #define		PAR_SCANGROUP_P1_1				find_alloca_probe_entry, find_security_check_cookie_entry, find_doom_operator_new_and_idfile_memory_ctor_entry, locate_idoodle_decompress_entry, locate_idlib_vprintf_entry
-#define		PAR_SCANGROUP_P1_2				locate_game_engine_init_ptr_entry, idstr_ctor_void_locator_entry, idgamelocal_locator_entry
+#define		PAR_SCANGROUP_P1_2				locate_game_engine_init_ptr_entry, idstr_ctor_void_locator_entry, idgamelocal_locator_entry, locate_va_entry
 
 #define		PAR_SCANGROUP_P1_3				locate_idstr_dctor_entry, locate_idstr_assign_charptr_entry, locate_typeinfo_tools_entry, locate_resourceManager2_entry,locate_resourcestreamer_getfile
 

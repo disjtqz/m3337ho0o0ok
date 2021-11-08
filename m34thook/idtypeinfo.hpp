@@ -1,6 +1,6 @@
 #pragma once
 #pragma pack(push, 1)
-
+#include <string>
 struct enumValueInfo_t {
 	//offset 0 , size 8
 	char* name;
@@ -25,6 +25,7 @@ struct typedefInfo_t {
 	char* type;
 	char* ops;
 	int size;
+	int padding;
 };
 struct classMetaDataInfo_t
 {
@@ -91,6 +92,9 @@ namespace idType {
 	//generate an ida idc file that tries to  define all structs, enums and their fields
 	void generate_idc();
 
+	//returns formatted search results
+	//defined in mh_kwsearch
+	std::string keyword_search(const char** args, unsigned argc);
 	void generate_json();
 	MH_NOINLINE
 	classVariableInfo_t* try_locate_var_by_name(classVariableInfo_t* from, const char* field);
@@ -169,6 +173,38 @@ public:
 		}
 		return reinterpret_cast<TRet*>(((char*)obj) + tmpoffs);
 	}
+};
+
+template<typename TRet,typename TClassname, typename... TYuckyStrings>
+class mh_new_fieldcached_t {
+	unsigned m_offset;
+
+	static constexpr const char* classname = yuckystring_str_from_type_m(TClassname);
+
+	template<typename... TRest>
+	MH_NOINLINE
+	MH_CODE_SEG(".field_init")
+	MH_REGFREE_CALL
+	MH_NOALIAS
+	void init_field() {
+		m_offset = idType::_impl_get_nested_field_offset_by_name(0, idType::FindClassInfo(classname), yuckystr_parampack_unp_m(TYuckyStrings));
+	}
+public:
+	constexpr mh_new_fieldcached_t() : m_offset(~0u) {}
+
+
+
+
+	template< typename TObj>
+	inline TRet* operator ()(TObj obj) {
+		unsigned tmpoffs = m_offset;
+		MH_UNLIKELY_IF(!~tmpoffs) {
+			init_field();
+			tmpoffs = *(volatile unsigned*)&m_offset;
+		}
+		return reinterpret_cast<TRet*>(((char*)obj) + tmpoffs);
+	}
+
 };
 
 template<typename yuckyname>

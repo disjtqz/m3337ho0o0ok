@@ -1,23 +1,4 @@
-#if defined(__AVX2__)
-#define		STR_TOLOWER_CONST(...)				(((__VA_ARGS__) <= 'Z' && (__VA_ARGS__) >= 'A') ? ((__VA_ARGS__) + ('a' - 'A')) : (__VA_ARGS__))
-#define hasbetween(x,m,n) \
-((~0UL/255*(127+(n))-((x)&~0UL/255*127)&~(x)&((x)&~0UL/255*127)+~0UL/255*(127-(m)))&~0UL/255*128)
-CS_FORCEINLINE
-static inline __m128i tolower_m128i(__m128i first_16_tested) {
-	__m128i upperv1 = _mm_set1_epi8('Z' + 1);
-	__m128i upperv2 = _mm_set1_epi8('A' - 1);
 
-	__m128i addend = _mm_set1_epi8(('a' - 'A'));
-
-	__m128i xlated = _mm256_castsi256_si128(_mm256_blendv_epi8(
-		_mm256_castsi128_si256(first_16_tested),
-		_mm256_castsi128_si256(_mm_add_epi8(first_16_tested, addend)),
-		_mm256_castsi128_si256(_mm_and_si128(_mm_cmpgt_epi8(upperv1, first_16_tested),
-
-			_mm_cmpgt_epi8(first_16_tested, upperv2)))));
-	return xlated;
-}
-#endif
 template<bool insensitive>
 CS_FORCEINLINE static bool cs_strcmpeq_impl(const char* s1, const char* s2) {
 #if defined(__AVX2__)
@@ -75,6 +56,180 @@ CS_FORCEINLINE static bool cs_strcmpeq_impl(const char* s1, const char* s2) {
 
 #endif
 }
+
+CS_FORCEINLINE
+static __m128i tolower_m128i(__m128i vals) {
+	/*
+			if (c1 <= 'Z' && c1 >= 'A')
+		{
+			d += ('a' - 'A');
+			if (!d)
+			{
+				break;
+			}
+		}
+*/
+
+//c1 <= 'Z'
+//'Z' + 1 > c1
+	__m128i rangecheck_r = _mm_cmpgt_epi8(vals, _mm_set1_epi8('A' - 1));
+	__m128i rangecheck_l = _mm_cmpgt_epi8(_mm_set1_epi8('Z' + 1), vals);
+
+	__m128i combined = _mm_and_si128(rangecheck_l, rangecheck_r);
+	//and is 0.25 through whereas blend is 0.33, so do a mask instead of a blend
+	__m128i addend = _mm_and_si128(combined, _mm_set1_epi8('a' - 'A'));
+	return _mm_add_epi8(addend, vals);
+}
+#if defined(__AVX2__)
+CS_FORCEINLINE
+static __m256i tolower_m256i(__m256i vals) {
+	/*
+				if (c1 <= 'Z' && c1 >= 'A')
+			{
+				d += ('a' - 'A');
+				if (!d)
+				{
+					break;
+				}
+			}
+	*/
+
+	//c1 <= 'Z'
+	//'Z' + 1 > c1
+	__m256i rangecheck_r = _mm256_cmpgt_epi8(vals, _mm256_set1_epi8('A' - 1));
+	__m256i rangecheck_l = _mm256_cmpgt_epi8(_mm256_set1_epi8('Z' + 1), vals);
+
+	__m256i combined = _mm256_and_si256(rangecheck_l, rangecheck_r);
+	//and is 0.25 through whereas blend is 0.33, so do a mask instead of a blend
+	__m256i addend = _mm256_and_si256(combined, _mm256_set1_epi8('a' - 'A'));
+	return _mm256_add_epi8(addend, vals);
+
+}
+#endif
+
+/*
+	the case insensitive version of this is pretty fast and achieves 5.19 uops per cycle on zen 2, close to its maximum uops per cycle of 6
+	(all of this is according to llvm-mca)
+*/
+template<bool insens = true>
+CS_FORCEINLINE
+static int cs_stricmp_tmpl(const char* s1, const char* s2) {
+#if defined(__AVX2__)
+	const __m256i* sv1 = (const __m256i*)s1;
+	const __m256i* sv2 = (const __m256i*)s2;
+	__m256i zreg = _mm256_setzero_si256();
+	while (true) {
+		__m256i v1 = _mm256_loadu_si256(sv1);
+
+		__m256i v2 = _mm256_loadu_si256(sv2);
+
+		__m256i zm1 = _mm256_cmpeq_epi8(v1, zreg);
+		__m256i zm2 = _mm256_cmpeq_epi8(v2, zreg);
+
+		__m256i orcomb = _mm256_or_si256(zm1, zm2);
+
+
+
+		__m256i lowerv1, lowerv2;
+		if constexpr (insens) {
+			lowerv1 = tolower_m256i(v1);
+			lowerv2 = tolower_m256i(v2);
+		}
+		else {
+			lowerv1 = v1;
+			lowerv2 = v2;
+		}
+
+
+		__m256i cmped = _mm256_cmpeq_epi8(lowerv1, lowerv2);
+
+		/*
+			todo : turn this into a single ptest so that long strings dont deal with the latency of two movemasks, and instead only have to deal with one simd->gp transfer per iteration best case
+		*/
+		unsigned zmask = _mm256_movemask_epi8(orcomb);
+
+
+		unsigned cmpmask = _mm256_movemask_epi8(cmped);
+
+
+
+		if ((!zmask) & (!~cmpmask)) {
+			sv1++;
+			sv2++;
+			continue;
+		}
+		unsigned firstzeroidx = _tzcnt_u32(zmask);
+
+		unsigned firstmismatchidx = _tzcnt_u32(~cmpmask);
+
+		if ((ignore_subject_null ? firstzeroidx <= firstmismatchidx : firstzeroidx < firstmismatchidx)) {
+			return 0;
+		}
+		else {
+			return reinterpret_cast<const char*>(sv1)[firstmismatchidx] - reinterpret_cast<const char*>(sv2)[firstmismatchidx];
+		}
+
+	}
+#else
+	
+	const __m128i* sv1 = (const __m128i*)s1;
+	const __m128i* sv2 = (const __m128i*)s2;
+	__m128i zreg = _mm_setzero_si128();
+	while (true) {
+		__m128i v1 = _mm_loadu_si128(sv1);
+
+		__m128i v2 = _mm_loadu_si128(sv2);
+
+		__m128i zm1 = _mm_cmpeq_epi8(v1, zreg);
+		__m128i zm2 = _mm_cmpeq_epi8(v2, zreg);
+
+		__m128i orcomb = _mm_or_si128(zm1, zm2);
+
+
+
+		__m128i lowerv1, lowerv2;
+		if constexpr (insens) {
+			lowerv1 = tolower_m128i(v1);
+			lowerv2 = tolower_m128i(v2);
+		}
+		else {
+			lowerv1 = v1;
+			lowerv2 = v2;
+		}
+
+
+		__m128i cmped = _mm_cmpeq_epi8(lowerv1, lowerv2);
+
+		/*
+			todo : turn this into a single ptest so that long strings dont deal with the latency of two movemasks, and instead only have to deal with one simd->gp transfer per iteration best case
+		*/
+		unsigned zmask = _mm_movemask_epi8(orcomb);
+
+
+		unsigned cmpmask = _mm_movemask_epi8(cmped);
+
+
+
+		if ((!zmask) & (!~cmpmask)) {
+			sv1++;
+			sv2++;
+			continue;
+		}
+		unsigned firstzeroidx = _tzcnt_u32(zmask);
+
+		unsigned firstmismatchidx = _tzcnt_u32(~cmpmask);
+
+		if (firstzeroidx < firstmismatchidx)) {
+			return 0;
+		}
+		else {
+			return reinterpret_cast<const char*>(sv1)[firstmismatchidx] - reinterpret_cast<const char*>(sv2)[firstmismatchidx];
+		}
+
+	}
+#endif
+}
+
 #if defined(__AVX2__)
 __attribute__((naked))
 static bool cs_strcmpeq_avx2_asm(const char* s1, const char* s2) {
@@ -1355,6 +1510,56 @@ unsigned cs_from_unicode(char* dstbuf, const wchar_t* inbuf) {
 	cs_assume_m(false);
 	return 0;
 }
+#define IS_ALPHA(c) (((c) >= 'A' && (c) <= 'Z') || ((c) >= 'a' && (c) <= 'z'))
+#define TO_UPPER(c) ((c) & 0xDF)
+static
+char* __cdecl strstri(const char* str1, const char* str2) {
+	char* cp = (char*)str1;
+	char* s1, * s2;
+
+	if (!*str2)
+		return((char*)str1);
+
+	while (*cp) {
+		s1 = cp;
+		s2 = (char*)str2;
+
+		while (*s1 && *s2 && (IS_ALPHA(*s1) && IS_ALPHA(*s2)) ? !(TO_UPPER(*s1) - TO_UPPER(*s2)) : !(*s1 - *s2))
+			++s1, ++s2;
+
+		if (!*s2)
+			return(cp);
+
+		++cp;
+	}
+	return(NULL);
+}
+IMPL_CODE_SEG
+static unsigned cs_find_str_insens(const char* haystack, const char* needle) {
+#if 0
+	unsigned i = 0;
+
+	while (haystack[i]) {
+#if 1
+		if (cs_stricmp_tmpl<true, true>(&haystack[i], needle) == 0) {
+#else
+		if (_stricmp(&haystack[i], needle) == 0) {
+#endif
+			return i;
+		}
+		i++;
+	}
+	return ~0u;
+#else
+	char* fuk = strstri(haystack, needle);
+	if (fuk)
+		return (const char*)fuk - haystack;
+	else
+		return ~0u;
+#endif
+}
+
+
 /*
 
 	int (*m_str_to_long)(const char* str, const char** out_endptr, unsigned base);
@@ -1405,4 +1610,5 @@ static void str_algos_init(snaphak_sroutines_t* out_str) {
 	out_str->m_strcpy = cs_strcpy;
 	out_str->m_to_unicode = cs_to_unicode;
 	out_str->m_from_unicode = cs_from_unicode;
+	out_str->m_find_str_insens = cs_find_str_insens;
 }

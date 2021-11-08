@@ -194,6 +194,77 @@ using locate_atomicstring_set = memscanner_t<
 >;
 #endif
 
+/*
+	in 6.66 - 1406FFCB1 
+	in v1 - 14066AE46 
+	exact same sequence
+	.text:000000014066AE46 66 0F 6E C0                             movd    xmm0, eax
+.text:000000014066AE4A F2 0F 59 0D 36 91 F4 01                 mulsd   xmm1, cs:qword_1425B3F88
+.text:000000014066AE52 0F 5B C0                                cvtdq2ps xmm0, xmm0
+.text:000000014066AE55 F2 0F 58 0D 3B 91 F4 01                 addsd   xmm1, cs:qword_1425B3F98
+.text:000000014066AE5D 66 0F 5A D1                             cvtpd2ps xmm2, xmm1
+.text:000000014066AE61 F3 0F 11 54 24 28                       movss   dword ptr [rsp+28h], xmm2 ; h
+.text:000000014066AE67 F3 0F 10 15 31 9B F0 01                 movss   xmm2, cs:flt_1425749A0 ; x
+.text:000000014066AE6F F3 0F 11 44 24 20                       movss   dword ptr [rsp+20h], xmm0 ; w
+.text:000000014066AE75 E8 B6 3D F3 FF                          call    _ZN16idRenderModelGui10DrawFilledERK6idVec4ffff
+*/
+//g_idRenderModelGui__DrawFilled
+
+using locate_idRenderModelGui_DrawFilled = memscanner_t<
+	scanbytes<0x66, 0xf, 0x6e, 0xc0, 0xf2, 0xf, 0x59, 0xd>,
+	riprel32_data_equals< 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xE8, 0x3F>,
+	scanbytes<0xf, 0x5b, 0xc0, 0xf2, 0xf, 0x58, 0xd>,
+	riprel32_data_equals< 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x34, 0x40>,
+	scanbytes<0x66, 0xf, 0x5a, 0xd1, 0xf3, 0xf, 0x11, 0x54, 0x24>,
+	skip<1>, //skip rsp offset even though its 0x28 in all versions
+
+	scanbytes<0xf3, 0xf, 0x10, 0x15>,
+	riprel32_data_equals< 0x00, 0x00, 0x20, 0x41>,
+	scanbytes<0xf3, 0xf, 0x11, 0x44, 0x24>,
+	//skip rsp offset even though same in all ver
+	skip<1>,
+	scanbytes<0xe8>>; //last 4 bytes = rva to drawfilled
+
+//honestly i could have done this with a much simpler scanner but i like the challenge
+using locate_idRenderModelGui_DrawString = memscanner_t <
+
+	scanbytes<0x89, 0x4c, 0x24, 0x28, 0x41, 0x8b, 0xc0, 0x41, 0x2b, 0xc1, 0x48, 0x8d, 0x8d>,
+
+	masked_eq_u32<0xFFFFFF00, 0x100>, //0x100 in v1, 0x110 in v6.66
+	scanbytes<0x89, 0x44, 0x24, 0x20, 0xe8>,
+	match_riprel32_to<&descan::g_va_va>,
+	scanbytes<0xf3, 0x44, 0xf, 0x11, 0x64, 0x24, 0x30, 0x4c, 0x8b, 0xc8, 0xc6, 0x44, 0x24, 0x28, 0x0, 0x41, 0xf, 0x28, 0xd0, 0x41, 0xf, 0x28, 0xcd>,
+	masked_eq_byte<0x48, 0x48>,
+	scanbytes<0x89>,
+	masked_eq_byte<0x5F, 0x5C>,
+	scanbytes<0x24, 0x20>,
+	masked_eq_byte<0b11111110, 0x48>,
+	scanbytes<0x8B>,
+	masked_eq_byte<0xF8, 0xC8>,
+	scanbytes<0xE8>
+	//last 4 = rva to drawstring
+	>;
+
+/*
+
+v1 = 1404412DF
+v6.66 = 140491C1F
+no changes between them lol, even the jmp displ is the same...
+*/
+//we cant extract this one from DrawString because it gets inlined into its body in v6.66
+using locate_idRenderModelGui_DrawChar = memscanner_t<
+	scanbytes<0x48, 0x8b, 0x84, 0x24, 0x78, 0x40, 0x0, 0x0, 0x80, 0x38, 0x2e, 0x74>,
+	skip<1>, //skip the jmp
+	scanbytes<0xf3, 0xf, 0x59, 0xd>,
+	riprel32_data_equals<  0x00, 0x00, 0x40, 0x40>,
+
+	scanbytes<0xf3, 0xf, 0x59, 0xd>,
+	riprel32_data_equals<  0x00, 0x00, 0x00, 0x3E>,
+	//now we're at v1 1404412FC , v6.66 140491C3C
+	//todo:this could definitely be shortened... we ought to be pretty certain right now and could just use mh_disassembler 
+
+	scanbytes<0x41, 0xb9, 0x2e, 0x0, 0x0, 0x0, 0x48, 0x8b, 0x8f, 0xd8, 0x0, 0x0, 0x0, 0x66, 0xf, 0x6e, 0xc6, 0xf, 0x5b, 0xc0, 0x66, 0x41, 0xf, 0x6e, 0xfd, 0xf3, 0xf, 0x5c, 0xc1, 0xf3, 0x44, 0xf, 0x11, 0x4c, 0x24, 0x20, 0xf, 0x5b, 0xff, 0xf3, 0xf, 0x2c, 0xc0, 0xf, 0x28, 0xd7, 0x66, 0xf, 0x6e, 0xf0, 0xf, 0x5b, 0xf6, 0xf, 0x28, 0xce, 0xe8>
+>;
 
 
 namespace scanners_phase2 {
@@ -222,7 +293,7 @@ namespace scanners_phase2 {
 	BSCANENT(locate_resourcelist_add_entry, &descan::g_idResourceList_Add, scanbehavior_locate_func_with_start_search<locate_resourcelist_add>);
 
 	BSCANENT(locate_idimagemanager_scratchimage_entry, &descan::g_idImageManager_ScratchImage, scanbehavior_locate_func_with_start_search<locate_idimagemanager_scratchimage>);
-
+	//this could be replaced by using first_call_target on the drawfilled result
 	BSCANENT(entry_find_idcolor_pack, &descan::g_idcolor_packcolor, scanbehavior_locate_func<locate_idcolor_packcolor>);
 
 	BSCANENT(locate_idstaticmodel_finish_entry, &descan::g_idRenderModelStatic_FinishStaticModel, scanbehavior_identity<&descan::g_idRenderModelStatic_FinishStaticModel,locate_idstaticmodel_finish>);
@@ -240,14 +311,18 @@ namespace scanners_phase2 {
 #endif
 	BSCANENT(sqrtf_locator_entry, &descan::g_sqrtf, scanbehavior_locate_func<locate_sqrtf>);
 	BSCANENT(sqrt_locator_entry, &descan::g_sqrt, scanbehavior_locate_func<locate_sqrt>);
+
+	BSCANENT(drawfilled_located_entry, &descan::g_idRenderModelGui__DrawFilled, scanbehavior_locate_csrel_after< locate_idRenderModelGui_DrawFilled>);
+	BSCANENT(drawstring_locator_entry, &descan::g_idRenderModelGui__DrawString, scanbehavior_locate_csrel_after< locate_idRenderModelGui_DrawString>);
+	BSCANENT(drawchar_locator_entry, &descan::g_idRenderModelGui__DrawChar, scanbehavior_locate_csrel_after< locate_idRenderModelGui_DrawChar>);
 	//9 scanners
 #define		PAR_SCANGROUP_P2_1 				entry_phase2_locate_findclassinfo, entry_phase2_locate_idfilecompressed_getfile
 #define		PAR_SCANGROUP_P2_2				entry_phase2_locate_resourcelist_for_classname,locate_subimage_upload_entry
-#define		PAR_SCANGROUP_P2_3				locate_idmapfilelocal_write_body_entry,locate_findenuminfo_entry
-#define		PAR_SCANGROUP_P2_4				locate_idlib_fatalerror_entry,locate_idlib_error_entry, sqrtf_locator_entry
+#define		PAR_SCANGROUP_P2_3				locate_idmapfilelocal_write_body_entry,locate_findenuminfo_entry,drawfilled_located_entry
+#define		PAR_SCANGROUP_P2_4				locate_idlib_fatalerror_entry,locate_idlib_error_entry, sqrtf_locator_entry,drawchar_locator_entry
 
 #define		PAR_SCANGROUP_P2_5 				locate_resourcelist_add_entry,find_next_ent_with_class_locator_entry, getentitystate_needsoffset
-#define		PAR_SCANGROUP_P2_6				locate_idstaticmodel_finish_entry,locate_commonlocal_frame_job_pointer
+#define		PAR_SCANGROUP_P2_6				locate_idstaticmodel_finish_entry,locate_commonlocal_frame_job_pointer,drawstring_locator_entry
 #define		PAR_SCANGROUP_P2_7				entry_find_idcolor_pack,locate_rendermodelgui_alloctris_entry,atomicstringset_locator_entry
 #define		PAR_SCANGROUP_P2_8				locate_idimagemanager_scratchimage_entry,locate_getlevelmap_entry, sqrt_locator_entry
 #if defined(DISABLE_PHASE2_PARALLEL_SCANGROUPS)

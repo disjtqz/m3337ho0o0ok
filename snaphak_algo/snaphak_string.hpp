@@ -36,4 +36,5 @@ struct snaphak_sroutines_t {
 
 	unsigned (*m_to_unicode)(wchar_t* dstbuf, const char* inbuf);
 	unsigned (*m_from_unicode)(char* dstbuf, const wchar_t* inbuf);
+	unsigned (*m_find_str_insens)(const char* haystack, const char* needle);
 };
