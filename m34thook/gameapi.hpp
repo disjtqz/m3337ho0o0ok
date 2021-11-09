@@ -2063,8 +2063,17 @@ CACHED_EVENTDEF(bindPosition);
 CACHED_EVENTDEF(getBindMaster);
 CACHED_EVENTDEF(getBindParent);
 CACHED_EVENTDEF(unbind);
+CACHED_EVENTDEF(lerpRenderScale);
+
+CACHED_EVENTDEF(isClass);
+
 extern idEventArg g_null_eventargs;
 
+
+bool is_entity_of_class(void* ent, const char* cname);
+
+void* get_debug_target();
+void set_debug_target(void* newtarget);
 
 template<typename TCallable>
 static void nonplayer_entities_within_distance_iterate(idVec3* base_point, float distance, TCallable&& callback) {
@@ -2104,3 +2113,7 @@ static void nonplayer_entities_within_distance_iterate(idVec3* base_point, float
 		
 	}
 }
+
+void set_object_scale(void* ent, idVec3 newscale);
+
+idVec3 get_object_scale(void* ent);

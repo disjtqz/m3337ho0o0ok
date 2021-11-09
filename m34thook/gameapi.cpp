@@ -494,6 +494,11 @@ idEventArg mh_ScriptCmdEnt_idEntity(idEventDef* tdef_name, void* self, idEventAr
 	call_as<void>(callev,self, &result, tdef_name, args);
 	return result;
 }
+void mh_ScriptCmdEnt_idEntity(idEventDef* tdef_name, void* self, idEventArg* args, idEventArg* out_arg) {
+	void* callev = VTBL_MEMBER(idEntity, VTBLOFFS_CALLEVENT)::Get();
+
+	call_as<void>(callev, self, out_arg, tdef_name, args);
+}
 
 static cs_uninit_t<idEventArg> g_sink_eventarg_ret{};
 
@@ -740,6 +745,28 @@ void upload_2d_imagedata(const char* imagename, const void* picdata, unsigned wi
 void* get_entity_typeinfo_object(void* ent) {
 	//GetType technically takes the this pointer as an arg, but all of them just lea rax and return anyway without referencing rcx
 	return call_virtual<void*>(ent, 0x16);
+}
+
+static mh_new_fieldcached_t<idVec3, YS("idBloatedEntity"), YS("clipModelInfo"), YS("size")> g_clipmodel_size{};
+static mh_new_fieldcached_t<idVec3, YS("idBloatedEntity"), YS("renderModelInfo"), YS("scale")> g_new_field_renderscale{};
+
+void set_object_scale(void* ent, idVec3 newscale) {
+	cs_uninit_array_t<idEventArg, 6> args{};
+	args[0].make_float(newscale.x);
+	args[1].make_float(newscale.y);
+	args[2].make_float(newscale.z);
+	args[3].make_int(0);
+	args[4].make_int(0);
+	args[5].make_int(0);
+	ev_lerpRenderScale(ent, &args[0]);
+
+	//*g_clipmodel_size(ent) = newscale;
+
+}
+
+idVec3 get_object_scale(void* ent) {
+
+	return *g_new_field_renderscale(ent);
 }
 #if 0
 void __fastcall ScriptCmd(__int64 rcx0, idEntity* ent, const idCmdArgs* scriptargs)
@@ -1074,3 +1101,27 @@ void __fastcall ScriptCmd(__int64 rcx0, idEntity* ent, const idCmdArgs* scriptar
 	}
 }
 #endif
+
+
+bool is_entity_of_class(void* ent, const char* cname) {
+	cs_uninit_t<idEventArg> result;
+
+	cs_uninit_t<idEventArg> namearg;
+	namearg->make_string(cname);
+	mh_ScriptCmdEnt_idEntity(ev_isClass.Get(), ent, &namearg, &result);
+	return (result->value.i & 0xff) != 0;
+}
+CACHED_EVENTDEF(getDebugTarget);
+
+CACHED_EVENTDEF(setDebugTarget);
+
+void* get_debug_target() {
+
+	return ev_getDebugTarget(get_world()).value.er;
+}
+void set_debug_target(void* newtarget) {
+
+	idEventArg rg;
+	rg.make_entity(newtarget);
+	ev_setDebugTarget(get_world(), &rg);
+}

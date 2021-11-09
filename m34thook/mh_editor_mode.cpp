@@ -110,6 +110,8 @@ struct editor_vec3_t {
 	editor_vec3_t(const idVec3& v) : editor_vec3_t(&v) {}
 	editor_vec3_t(__m128d lowpart, __m128d highpart) : xmmlo(lowpart), xmmhi(highpart) {}
 
+
+	editor_vec3_t(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
 	editor_vec3_t(double dval) {
 		xmmlo = _mm_set1_pd(dval);
 		xmmhi = xmmlo;
@@ -196,7 +198,7 @@ static mh_new_fieldcached_t<const char*, YS("idDecl"), YS("textSource")> g_iddec
 static mh_new_fieldcached_t<idVec3, YS("idBloatedEntity"), YS("renderModelInfo"), YS("scale")> g_field_renderscale{};
 static mh_new_fieldcached_t<idVec3, YS("idBloatedEntity"), YS("clipModelInfo"), YS("size")> g_clipmodel_size{};
 static mh_new_fieldcached_t<idVec3, YS("idBloatedEntity"), YS("renderModelInfo"), YS("scale")> g_new_field_renderscale{};
-CACHED_EVENTDEF(lerpRenderScale);
+
 
 class entity_iface_t {
 
@@ -218,7 +220,6 @@ public:
 //entity at runtime
 class entity_rt_t : public entity_iface_t {
 	void* m_ptr;
-
 public:
 	virtual editor_vec3_t get_entity_scale() {
 		return *g_new_field_renderscale(m_ptr);
@@ -266,13 +267,98 @@ public:
 		arg->make_vec3(pos);
 
 		mh_ScriptCmdEntFast(ev_setWorldOrigin.Get(), m_ptr, &arg);
-		
 	}
+	entity_rt_t() : m_ptr(nullptr) {}
+
+	void set_entity(void* en) {
+		m_ptr = (en);
+	}
+	
 };
+using dmemb_iter_t = rapiddecl::Value::MemberIterator;
 
 class entity_decl_t : public entity_iface_t {
 	rapiddecl::Document m_decl;
+	rapiddecl::Value* m_edit;//cached edit
+
 public:
+
+
+	static double get_value_or_z(rapiddecl::Value* v, const char* name) {
+		if (!v->HasMember(name))
+			return .0;
+
+		return v->FindMember(name)->value.GetDouble();
+
+	}
+	editor_vec3_t get_vec3_from_value(rapiddecl::Value* v) {
+
+		return editor_vec3_t{ get_value_or_z(v, "x"), get_value_or_z(v, "y"), get_value_or_z(v, "z") };
+
+	}
+
+	auto& al() {
+		return m_decl.GetAllocator();
+	}
+
+	void create_value_from_vec3(rapiddecl::Value& r, editor_vec3_t v) {
+		r.SetObject();
+
+		r.AddMember("x", v.x, al());
+		r.AddMember("y", v.y, al());
+		r.AddMember("z", v.z, al());
+
+		
+	}
+
+
+	rapiddecl::Value* edit() {
+		return m_edit;
+
+	}
+	virtual editor_vec3_t get_entity_scale() {
+
+		auto ed = edit();
+
+		dmemb_iter_t iter = ed->FindMember("renderModelInfo");
+		if (iter == ed->MemberEnd())
+			return editor_vec3_t{ 1.0 };
+
+		dmemb_iter_t scaleiter = iter->value.FindMember("scale");
+
+		if (scaleiter == iter->value.MemberEnd()) {
+			return editor_vec3_t{ 1.0 };
+		}
+
+		return get_vec3_from_value(&scaleiter->value);
+	}
+	virtual void set_entity_scale(editor_vec3_t newscale) {
+
+	}
+
+	virtual editor_vec3_t get_entity_clipscale() {
+
+	}
+	virtual void set_entity_clipscale(editor_vec3_t newscale) {
+
+	}
+
+	virtual std::string get_entitydef_text() {
+
+	}
+
+
+	virtual editor_vec3_t get_entity_position() {
+
+		return get_vec3_from_value(&m_decl.FindMember("edit")->value.FindMember("spawnPosition")->value);
+	}
+
+	virtual void set_entity_position(editor_vec3_t pos) {
+
+	}
+
+	
+
 };
 
 class mh_editor_local_t : public mh_editor_interface_t {
@@ -315,7 +401,12 @@ class mh_editor_local_t : public mh_editor_interface_t {
 		reinterpret_cast<mh_editor_local_t*>(ud)->tick_postrun();
 	}
 
+	void* get_local_player_focus_trace();
 
+
+	editor_vec3_t get_player_look_direction();
+	//normal of the surface that the line trace from the player hit
+	editor_vec3_t get_player_look_hit_normal();
 
 public:
 	virtual void grab(void* entity);
@@ -330,12 +421,37 @@ public:
 	virtual void init_for_session();
 };
 
-//returns idMapEntityLocal corresponding to grabbed entity
+static mh_new_fieldcached_t<void, YS("idPlayer"), YS("focusTracker"), YS("focusPointTrace")> g_idPlayer_focusTracker_focusTrace;
 
+static mh_new_fieldcached_t<idVec3, YS("idFocusTrace"), YS("close")> g_focustrace_close;
+
+static mh_new_fieldcached_t < idVec3, YS("idFocusTrace"), YS("tr"), YS("c"), YS("normal")> g_focustrace_tr_contact_normal{};
+
+
+void* mh_editor_local_t::get_local_player_focus_trace() {
+	return g_idPlayer_focusTracker_focusTrace(get_local_player());
+}
+
+editor_vec3_t mh_editor_local_t::get_player_look_direction() {
+	editor_vec3_t endpoint = *g_focustrace_close(get_local_player_focus_trace());
+	idVec3 tmp_playerpos;
+	get_entity_position(get_local_player(), &tmp_playerpos);
+	editor_vec3_t playerpos = tmp_playerpos;
+
+
+	return (endpoint - playerpos).normalized();
+}
+
+editor_vec3_t mh_editor_local_t::get_player_look_hit_normal() {
+	return *g_focustrace_tr_contact_normal(get_local_player_focus_trace());
+
+}
+//returns idMapEntityLocal corresponding to grabbed entity
 void* mh_editor_local_t::get_mapentity() {
 	void* res =call_virtual<void*>(get_gamelocal(), descan::g_vftbl_offset_MapFindEntity_idEntity / 8, get_gamelocal(), get_grabbed_entity());
 
 	TRACE_EDITOR("get_mapentity returned %p", res);
+	
 	return res;
 
 }

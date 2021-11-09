@@ -898,7 +898,19 @@ static bool is_bound_to(void* ent, void* owner) {
 
 	return ((void*)ev_getBindMaster(ent).value.er) == owner || ((void*)ev_getBindParent(ent).value.er) == owner;
 }
+
+static double get_rand_float(double range) {
+	return (((double)rand() / (double)RAND_MAX) * range) - (range / 2.0);
+}
+
+
+#include <immintrin.h>
+
 static void goofy_op(idCmdArgs* args) {
+	
+	srand((((uintptr_t)args) * (uintptr_t)NtCurrentTeb()) ^ GetTickCount64());
+
+
 
 	float distance = atof(args->argv[1]);
 	float pushamount = atof(args->argv[2]);
@@ -927,8 +939,37 @@ static void goofy_op(idCmdArgs* args) {
 	playerpos = getpos_result->value.v_vec3;
 
 	nonplayer_entities_within_distance_iterate(&playerpos, distance, [&pushamount,&setlinarg](void* current) {
+		//random float in range -5 to 5
 
-		ev_setLinearVelocity(current, &setlinarg);
+		unsigned randomact = rand();
+		idVec3& velfloat = setlinarg.value.v_vec3;
+		velfloat.x = get_rand_float(pushamount);
+		velfloat.y = get_rand_float(pushamount);
+		velfloat.z = get_rand_float(pushamount);
+
+	
+
+		if(randomact & 1)
+			ev_setLinearVelocity(current, &setlinarg);
+
+		if (randomact & 6) {
+
+			idVec3 scale = get_object_scale(current);
+
+			scale.x += get_rand_float(pushamount/5.0);
+			if (scale.x <= 0)
+				scale.x = -scale.x;
+
+			scale.y += get_rand_float(pushamount / 5.0);
+			if (scale.y <= 0)
+				scale.y = -scale.y;
+
+			scale.z += get_rand_float(pushamount / 5.0);
+			if (scale.z <= 0)
+				scale.z = -scale.z;
+
+			set_object_scale(current, scale);
+		}
 
 	});
 }
@@ -943,9 +984,7 @@ static void mh_removeAi(idCmdArgs* args) {
 
 	}
 }
-//best way rn to reference an entity that may stop existing 
-//todo: need entity ptrs
-static std::string g_prev_bound_name{};
+
 static void mh_grab(idCmdArgs* args) {
 
 	get_current_editor()->grab_player_focus();
