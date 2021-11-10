@@ -1030,6 +1030,11 @@ static void mh_editor(idCmdArgs* args) {
 	get_current_editor()->init_for_session();
 
 }
+
+static void mh_genproptree(idCmdArgs* args) {
+
+	idType::generate_unique_property_key_tree();
+}
 void meathook_init() {
 	install_gameapi_hooks();
 
@@ -1096,6 +1101,8 @@ void meathook_init() {
 	idCmd::register_command("mh_pushinradius", goofy_op, "<distance> <force> pushes all within distance by force");
 	idCmd::register_command("mh_kw", mh_kw, "Searches all types, enums, typedefs, their comments, field names, typename, template args for the provided keywords");
 	idCmd::register_command("mh_editor", mh_editor, "Sets up the editor session");
+
+	idCmd::register_command("mh_genpropset", mh_genproptree, "Builds up the set of all unique property names and writes it to a file. for devs only.");
 	install_memmanip_cmds();
 	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
 	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");

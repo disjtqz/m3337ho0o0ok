@@ -25,6 +25,8 @@
 #include "mh_mainloop.hpp"
 #include "mh_editor_mode.hpp"
 #include "rapiddecl.hpp"
+
+#define		editor_assert_m(...)
 class mh_editor_local_t;
 
 /*
@@ -302,6 +304,64 @@ public:
 	}
 	
 };
+class decl_t;
+/*
+	decl with inheritance chain parsed too
+*/
+class decl_t {
+	//resourceList_t this decl belongs to
+	void* m_resource_class;
+
+	//decl we inherit from
+	decl_t* m_parent;
+	rapiddecl::Document m_decl;
+	
+public:
+	rapiddecl::Document* doc() {
+
+		return &m_decl;
+	}
+
+	decl_t() : m_resource_class(nullptr), m_parent(nullptr), m_decl() {}
+
+	void setup(void* resclass, const char* src) {
+		m_resource_class = resclass;
+
+		decl_parsing::parse(m_decl, src);
+
+		
+		dmemb_iter_t iter = m_decl.FindMember("inherit");
+		if (iter == m_decl.MemberEnd()) {
+			m_parent = nullptr;
+			return;
+		}
+		else {
+			editor_assert_m(iter->value.IsString());
+
+			const char* inher = iter->value.GetString();
+
+			
+			void* parent = locate_resourcelist_member_from_resourceList_t(m_resource_class, inher, true);
+
+			editor_assert_m(parent != nullptr);
+			
+			m_parent = new decl_t(parent);
+		}
+	}
+
+	decl_t(void* resource_class, const char* src) : decl_t() {
+		setup(resource_class, src);
+
+	}
+
+	decl_t(void* idDeclPtr) : decl_t(resourcelist_for_resource(idDeclPtr), *g_iddecl_textsource(idDeclPtr)) {}
+
+
+
+
+
+};
+
 
 class entity_decl_t : public entity_iface_t {
 	rapiddecl::Document m_decl;

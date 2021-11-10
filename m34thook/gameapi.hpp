@@ -282,9 +282,16 @@ using rttisig_ref_t = const char*;
 bool is_subclass_of_rttisig(void* obj, rttisig_ref_t rsig);
 
 void get_player_trace_pos(idVec3* outvec);
+//expects idResourceList as first arg
+//prefer this one and caching the resourcelist pointer to the string version
+
+void* locate_resourcelist_member_from_resourceList_t(void* reslist, const char* member_name, bool end_at_dollar = false);
+void* locate_resourcelist_member_from_idResourceList(void* reslist /* example:"idDeclEntityDef" */, const char* member_name, bool end_at_dollar = false);
+
 
 void* locate_resourcelist_member(const char* reslist_classname /* example:"idDeclEntityDef" */, const char* member_name, bool end_at_dollar = false);
 
+void* get_resourceList_t_containing_resource(void* resource);
 void* spawn_entity_from_entitydef(void* entdef);
 
 void set_entity_position(void* entity, idVec3* pos);

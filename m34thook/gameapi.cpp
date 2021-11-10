@@ -383,20 +383,8 @@ void* resourceList_t_lookup_index(void* reslist, unsigned idx) {
 const char* get_resource_name(void* resource) {
 	return *g_idresource_get_name(resource, "idResource", "name", "str");
 }
+void* locate_resourcelist_member_from_resourceList_t(void* resourcelist, const char* member_name, bool end_at_dollar ) {
 
-void* locate_resourcelist_member(const char* reslist_classname /* example:"idDeclEntityDef" */, const char* member_name, bool end_at_dollar) {
-	void* entitydef_reslist = resourcelist_for_classname(reslist_classname);
-	if (!entitydef_reslist) {
-		idLib::Printf("Failed to locate resourcelist %s\n", reslist_classname);
-		return nullptr;
-
-	}
-	void* resourcelist = idResourceList_to_resourceList_t(entitydef_reslist);
-
-	if (!resourcelist) {
-		idLib::Printf("resourcelist %s doesnt have an underlying resourceList_t???\n", reslist_classname);
-		return nullptr;
-	}
 	int reslist_length = resourceList_t_get_length(resourcelist);
 
 	void* our_resource = nullptr;
@@ -409,20 +397,20 @@ void* locate_resourcelist_member(const char* reslist_classname /* example:"idDec
 		}
 		const char* currname = get_resource_name(current_resource);
 
-		if(end_at_dollar) {
+		if (end_at_dollar) {
 			unsigned i2 = 0;
-			while(true) {
+			while (true) {
 				unsigned passedin = member_name[i2];
 				unsigned fromres = currname[i2];
 				++i2;
-				if(fromres == '$')
+				if (fromres == '$')
 					fromres = 0;
 
-				if(fromres != passedin) {
+				if (fromres != passedin) {
 					break;
 				}
 
-				if(fromres==0){
+				if (fromres == 0) {
 					our_resource = current_resource;
 
 					break;
@@ -439,8 +427,36 @@ void* locate_resourcelist_member(const char* reslist_classname /* example:"idDec
 
 	}
 	return our_resource;
+
+}
+void* locate_resourcelist_member_from_idResourceList(void* reslist /* example:"idDeclEntityDef" */, const char* member_name, bool end_at_dollar) {
+
+	void* resourcelist = idResourceList_to_resourceList_t(reslist);
+
+	if (!resourcelist) {
+		idLib::Printf("resourcelist doesnt have an underlying resourceList_t???\n");
+		return nullptr;
+	}
+	return locate_resourcelist_member_from_resourceList_t(resourcelist, member_name, end_at_dollar);
+}
+void* locate_resourcelist_member(const char* reslist_classname /* example:"idDeclEntityDef" */, const char* member_name, bool end_at_dollar) {
+	void* reslist = resourcelist_for_classname(reslist_classname);
+	if (!reslist) {
+		idLib::Printf("Failed to locate resourcelist %s\n", reslist_classname);
+		return nullptr;
+
+	}
+	return locate_resourcelist_member_from_idResourceList(reslist, member_name, end_at_dollar);
 }
 
+static mh_new_fieldcached_t<void*, YS("idResource"), YS("resourceListPtr")> g_resource_resourceListPtr;
+
+void* get_resourceList_t_containing_resource(void* resource) {
+	if (!resource)
+		return nullptr;
+
+	return *g_resource_resourceListPtr(resource);
+}
 void* spawn_entity_from_entitydef(void* entdef) {
 	/*
 		pray this vftbl displ never changes

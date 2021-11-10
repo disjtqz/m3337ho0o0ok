@@ -95,6 +95,8 @@ namespace idType {
 	//returns formatted search results
 	//defined in mh_kwsearch
 	std::string keyword_search(const char** args, unsigned argc);
+	MH_NOINLINE
+	void generate_unique_property_key_tree();
 	void generate_json();
 	MH_NOINLINE
 	classVariableInfo_t* try_locate_var_by_name(classVariableInfo_t* from, const char* field);

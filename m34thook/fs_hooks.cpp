@@ -641,7 +641,6 @@ struct cs_idfile_override_t : public idFile {
 				break;
 
 		}
-
 		return nread;
 #else
 		return doomcall<size_t>(doomoffs::_ZN6idFile10ReadStringER5idStr, thiz, outstr);
