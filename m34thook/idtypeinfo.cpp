@@ -9,6 +9,7 @@
 #include <vector>
 #include <algorithm>
 #include "idLib.hpp"
+#include "clipboard_helpers.hpp"
 #if 0
 static constexpr const char* g_all_entity_names[] = {
 "jakesDevWidget","idWorldspawn","idWorldClipBounds","idWeaponEntity","idWaveShield","idWaterEntity","idVolume_VisualImpairment","idVolume_Trigger","idVolume_TraversalGen","idVolume_ToggleableDamageOverTime","idVolume_TogglePlayerBodyReaction","idVolume_StreamTreeMarkup","idVolume_StealthField","idVolume_StatusEffect","idVolume_Stairs","idVolume_SpaceWarp","idVolume_Siphon","idVolume_SecretHint","idVolume_RuneHint","idVolume_RunCycleHint","idVolume_RevivePlayer","idVolume_PlayerViewEffect","idVolume_PlayerUseProxy","idVolume_PlayerEnvOverride","idVolume_PlayerBodyReaction","idVolume_PlasmaPuddleFX","idVolume_PlasmaPuddle","idVolume_PlacedFlightVolume","idVolume_OliviasGuardFight_DangerZone","idVolume_MatterBallWarp","idVolume_MancubusSteamFX","idVolume_MancubusSteam","idVolume_MancubusFlamethrower","idVolume_LocationCalling","idVolume_LightRigModifier","idVolume_KillDownedInjured","idVolume_InvasionSpawnZone","idVolume_InvasionInhibit","idVolume_Invasion","idVolume_Gravity","idVolume_ForceDormant","idVolume_FlightObstacle","idVolume_Flight","idVolume_EmpField","idVolume_DoomGravity","idVolume_DeployedLaser","idVolume_DemonicPossession","idVolume_DemonicBait","idVolume_DamageOverTime","idVolume_Damage","idVolume_CustomLedgeGrab","idVolume_ControlPointSpawnInfluence","idVolume_Blocking","idVolume","idUtilityCamera","idUmbraVolume","idUmbraVisibilityContributionVolume","idTurret","idTrigger_VoiceCommunication","idTrigger_VisibilityController","idTrigger_TestPlayerState","idTrigger_Teleporter_Fade","idTrigger_Teleporter","idTrigger_TakeDamage","idTrigger_StatDrivenEvent","idTrigger_SonicBoom","idTrigger_Repulsor","idTrigger_RemoveInventoryItems","idTrigger_RemoveEntities","idTrigger_Push","idTrigger_Multiplayer","idTrigger_MovementModifier","idTrigger_ModPlayerVelocity","idTrigger_InvasionAreaExit","idTrigger_InvasionAreaEnter","idTrigger_Hurt","idTrigger_GorillaBar","idTrigger_ForcePlayerBodyReactionOnce","idTrigger_Facing","idTrigger_EnergyField","idTrigger_DynamicHurt","idTrigger_DummyFire","idTrigger_Dormancy","idTrigger_DemonDamageOutModifier","idTrigger_Damage","idTrigger_ChallengeBoundry","idTrigger_BouncePad","idTrigger_AIInteraction","idTriggerToucher","idTrigger","idTrailerCamera","idToucher","idTexlodNodeGenerationArea","idTest_Sector","idTest_MetaData_WebPath","idTest_MetaData_Target","idTest_MetaData_String","idTest_MetaData_SectorYaw","idTest_MetaData_SectorPitch","idTest_MetaData_Plane","idTest_MetaData_MoveableSpheres","idTest_MetaData_Model","idTest_MetaData_Line","idTest_MetaData_FovYaw","idTest_MetaData_FovPitch","idTest_MetaData_Fov","idTest_MetaData_Cylinder2","idTest_MetaData_Cylinder","idTest_MetaData_Circle","idTest_MetaData_Bounds","idTestModel2","idTestEntity","idTeleporterPad","idTeamCapturePoint","idTarget_VisibilityController","idTarget_ViewPos","idTarget_UnlockUltraNightmare","idTarget_TutorialGui","idTarget_Timer","idTarget_Timeline","idTarget_TestPlayerState","idTarget_Teleport","idTarget_SwapNavMesh","idTarget_SwapFaction","idTarget_Subtitle","idTarget_StartSoundShader","idTarget_Spawn_Target","idTarget_Spawn_Parent","idTarget_Spawn","idTarget_SoundDuck","idTarget_Snap_Objective","idTarget_ShowHands","idTarget_ShowGui","idTarget_Show","idTarget_ShakeTrigger","idTarget_SetSpawnSpot","idTarget_SetInEncounterGroup","idTarget_SetGroupCombatStage","idTarget_Secret","idTarget_RemoveSaveGate","idTarget_RemoveItems","idTarget_Remove","idTarget_RandomImpulse","idTarget_Print","idTarget_PodiumSpawn","idTarget_PlayerWhiplash","idTarget_PlayerViewEffect","idTarget_PlayerStatus","idTarget_PlayerStatModifier","idTarget_PlayerModifier","idTarget_PlayerInvulnerability","idTarget_PlayerCheckpoint","idTarget_PlayVoiceOver","idTarget_Ping","idTarget_Perk","idTarget_Path","idTarget_POI","idTarget_Objective_Triggered","idTarget_Objective_Replace","idTarget_Objective_HideEntities","idTarget_Objective_Give","idTarget_Objective_Complete","idTarget_Notification","idTarget_ModifyTraversalClass","idTarget_ModifyGroup","idTarget_Melee","idTarget_MapGroupUnlock","idTarget_MakeActivatable","idTarget_LightController","idTarget_LevelTransition","idTarget_LayerStateChange","idTarget_InventoryCheck","idTarget_Intro","idTarget_InteractionAction","idTarget_HideHands","idTarget_Hide","idTarget_GroupMessage","idTarget_GroupExpression","idTarget_GiveWeaponUpgradePoints","idTarget_GiveItems","idTarget_GeomCacheStreamer","idTarget_GameStateIntSet","idTarget_GameStateIntInc","idTarget_GameChallengeGameOver","idTarget_GUICommand","idTarget_ForceGroupRole","idTarget_ForceDormancy","idTarget_FirstThinkActivate","idTarget_FireWeapon","idTarget_FastTravelUnlock","idTarget_FastTravelInhibit","idTarget_FakeEnemy","idTarget_FadeComplete","idTarget_EquipItem","idTarget_Enemy","idTarget_EndOfCampaign","idTarget_EndInvasion","idTarget_EncounterChallenge","idTarget_EnableTarget","idTarget_EnableGroup","idTarget_EnableAIEvent","idTarget_DynamicChallenge_Start","idTarget_DynamicChallenge_PointTrigger","idTarget_DynamicChallenge_GiveBonus","idTarget_DynamicChallenge_FailChallenge","idTarget_DynamicChallenge_End","idTarget_DummyFire","idTarget_DormancyRadius","idTarget_Disconnect_GoToScreen","idTarget_Disconnect","idTarget_DisableInvasion","idTarget_DisableEscMenu","idTarget_DevLoadoutSwap","idTarget_DemonBountyAiTypes","idTarget_DeactivateStatusEffects","idTarget_Damage","idTarget_Cvar","idTarget_CurrencyCheck","idTarget_Credits","idTarget_Count_Random","idTarget_Count","idTarget_ConditionalAccessor","idTarget_Conditional","idTarget_Command","idTarget_CollisionDamage","idTarget_Codex","idTarget_ClearFakeEnemy","idTarget_ChangeVolume_PlayerEnvOverride","idTarget_ChangeMaterial","idTarget_ChangeColor","idTarget_Break","idTarget_Award_RushAttack","idTarget_Award_Adrenaline","idTarget_ApplyImpulse","idTarget_ApplyExplosionImpulse","idTarget_AnimWebUnpause","idTarget_AnimWebPause","idTarget_AnimWebChangeStateVia","idTarget_AnimWebChangeState","idTarget_AmplitudeTrigger","idTarget_AdaptiveTickToggle","idTarget_ActionScript","idTarget_AIProxy","idTarget_AIGlobalSettings","idTarget_AIEvent","idTargetSpawnGroup","idTarget","idSyncEntity","idSummoningTemplate","idStaticWaterEntity","idStaticVisibilityBlocker","idStaticMultiGuiEntity","idStaticEntity","idSpringCamera","idSplinePath","idSpitfireCannon","idSpectatorCamera","idSpectacleCamera","idSpawnPoint","idSpawnNodeSplines","idSpawnNode","idSpawnArea","idSoundTrigger","idSoundSubtitlesEntity","idSoundSphereEntity","idSoundPrefetchEntity","idSoundEntity","idSoundBoxEntity","idSoundBeamEntity","idSoundAreaEntity","idSlowMotionCamera","idRotatableCamera","idRiftBuildPosition","idRibbon2Emitter","idResurrectionProxy","idRegenArea","idReferenceMap","idPurifyingBeam","idProp_WeaponStatic","idProp_WeaponPickup","idProp_Usable","idProp_Static","idProp_Spawnable","idProp_PlayableDemonCircle","idProp_Pickup","idProp_OnlineCollectible","idProp_Moveable","idProp_HealthPickup","idProp_Explosive","idProp_ElectricArmor","idProp_DemonCircle","idProp_Coop_Billboard","idProp_Coop","idProp_ContinuallyUsed","idProp_BreakableLoot","idProp_Breakable","idProp_ArmorPickup","idProp_AIArmor","idProp2","idProp","idProjectile_SwarmMissile_V2","idProjectile_SwarmMissile","idProjectile_SiphonGrenade","idProjectile_RollingFire","idProjectile_Rocket","idProjectile_MeatHook","idProjectile_Mancubus_Smoke","idProjectile_GrenadeFast","idProjectile_Grenade","idProjectile_EMP","idProjectile_Destroyer","idProjectile_DamageOverTime","idProjectile_CyberdemonSwarmMissile","idProjectile_CacoDemonRocket","idProjectile_BfgBurn","idProjectile_BfgArc","idProjectile_Auger","idProjectile_AIHomingRocket","idProjectileShield","idProjectile","idPoseableEntity","idPortalWorld","idPortalSurface","idPlayerStart","idPlayer","idPieceEmitter","idPhotoModeCamera","idPerceptionVolume","idPathCorner","idParticleEmitter","idOverTheShoulderCamera","idObjective_Relay","idNetworkedParticleEmitter","idNetworkedEntityFx","idNetworkLight","idMusicEntity","idMultiplayerTrigger","idMoverModifier","idMover","idMidnightCutscene","idLowGravityMover","idLogicEntity","idLight","idLensFlare","idJostleSwivel","idJostleSpring","idJostleAnimated","idItemPropSpawner","idInventoryStorage","idInvasionBlocker","idInvasionAreaManager","idInteractionCamera","idInteractable_WorldCache","idInteractable_WeaponModBot","idInteractable_VegaTraining","idInteractable_Tutorial","idInteractable_SonicBoost","idInteractable_SlayerGate_Coop","idInteractable_SlayerGate","idInteractable_Shooter","idInteractable_Rune","idInteractable_Respec","idInteractable_Obstacle","idInteractable_NightmareMarker","idInteractable_Moveable","idInteractable_Minigame","idInteractable_LootDrop","idInteractable_LootCrate","idInteractable_JukeBox","idInteractable_HighlightSelector","idInteractable_GoreNest","idInteractable_GoreBud","idInteractable_GiveItems","idInteractable_EliteGuard_Coop","idInteractable_EliteGuard","idInteractable_Doom","idInteractable_CurrencyExchange","idInteractable_CollectibleViewer","idInteractable_Challenge_Shrine","idInteractable_BatterySocket","idInteractable_Automap","idInteractable","idInfo_UniversalTraversal","idInfo_Trigger_Facing_Target","idInfo_TraversalPoint","idInfo_TraversalChain","idInfo_TraversalBase","idInfo_TeleportDestination","idInfo_SpawnConditionProxy","idInfo_FastTravel","idInfo_DoorTraversalChain","idInfo_BounceDestination","idInfoWaitForButtonAfterLoad","idInfoTraversal_Ultimate","idInfoTraversal_Bot","idInfoTraversalEndPoint","idInfoTraversal","idInfoTexLod","idInfoStandPoint","idInfoSplineChild","idInfoSpawnPoint","idInfoRuler","idInfoRoam","idInfoPlayerHud","idInfoPath","idInfoOrbit","idInfoLookTargetGroup","idInfoLookTarget","idInfoLevelFadeIn","idInfoGoalPosition","idInfoFocus","idInfoFlightVolumeEntrance","idInfoExportHint","idInfoDebugMarker","idInfoCoverExposed","idInfoCover","idInfoCloudShot","idInfoBounds","idInfoAmbient","idInfoAAS","idInfo","idInfluenceSpawnSettings","idIOS_MeteorCrater","idHeightmapVolumeEntity","idGuiEntity_Text","idGuiEntity_Cinematic","idGuiEntity","idGoreEntity","idGladiatorShield","idGeomCacheEntity","idGameChallenge_Shell","idGameChallenge_PVPTutorial","idGameChallenge_PVP","idGameChallenge_CampaignSinglePlayer","idGameChallenge","idFuncSwing","idFuncShadowCaster","idFuncRotate","idFreeDbgCam","idFreeCamera","idFlightVolumeTraversalSpline","idExtraLifeTeleportLocation","idEscapePod","idEnvironmentalDamage_PointManager_Trigger","idEnvironmentalDamage_Point","idEnvironmentalDamage_Hurt_Trigger","idEnvArea","idEntityFxRandom","idEntityFx","idEntityCamera","idEntity","idEngineEntity","idEnergyShell","idEncounterVolume_ValidCover","idEncounterTrigger_RaiseUserFlag","idEncounterTrigger_PreCombat","idEncounterTrigger_OverrideCombatGrouping","idEncounterTrigger_Exit","idEncounterTrigger_Commit","idEncounterTrigger_AmbientAIAudio","idEncounterModifier_SetNextScriptIndex","idEncounterModifier_SetEnabledState","idEncounterModifier_Reset","idEncounterManager","idEncounterGroupMgr","idEncounterAmbientAudio","idElectricBoltEmitter","idEditorModelEntity","idDynamicVisibilityBlocker","idDynamicEntity_Damageable","idDynamicEntity","idDestructibleManager","idDestructible","idDestroyableProp","idDemonPlayer_Summoner","idDemonPlayer_Revenant","idDemonPlayer_Prowler","idDemonPlayer_Pinky","idDemonPlayer_PainElemental","idDemonPlayer_Marauder","idDemonPlayer_Mancubus","idDemonPlayer_Cacodemon","idDemonPlayer_Baron","idDemonPlayer_Archvile","idDemonPlayer_Arachnotron","idDemonPlayerStart","idDemonPlayer","idDecalEntity_Coop","idDecalEntity","idDebrisEntity","idDeathmatchPlayerStart","idDamageableAttachment","idCyberdemonMissileShooter","idCrusher","idCoopStartingInventory","idCombatVolume","idCombatGrouping","idCollisionStreamArea","idCollisionExclusionVolume","idCollectibleEntity","idCinematicCamera","idCaptureFrames","idCampaignInvaderStart","idCameraView","idCamera","idBuildArea","idBreakablePlatform","idBreakable","idBotPathNodeEntity","idBotActionEntity_Usable","idBotActionEntity_Info_RoamGoal","idBotActionEntity_Info_POI","idBotActionEntity_Info","idBotActionEntity","idBossInfo","idBloatedEntity","idBillboard","idBfgBurn","idBasePropSpawner","idBarricade","idBFG_Geyser","idAutomapSectionRevealTrigger","idAutomapMapGroupRevealEntity","idArchvileTemplate","idAnnouncementManager","idAnimated_ThreatSensor","idAnimated_AnimWeb_Samuel","idAnimated_AnimWeb","idAnimatedSimple_Faust","idAnimatedSimple_AnimSys","idAnimatedInteractable","idAnimatedEntity","idAnimatedAttachment_AF","idAnimatedAttachment","idAnimated","idAnimNode","idAnimCamera","idAmbientTriggerModifier_SetAITypes","idAmbientNodeGenerationArea","idAmbientNodeExclusionArea","idAlignedEntity","idActorWorkNode","idActorAmbientFilter","idActor","idActionNode","idAbnormalPlayerMetrics","idAITest_Rotation","idAITest","idAISearchHintGroup","idAISearchHintAuto","idAISearchHintAnimation","idAIMapMarkupEntity","idAIInteraction","idAIHintGroup","idAIHint","idAIDebugCamera","idAIDeathVolume","idAICombatHint_SuppressionFirePoint","idAICombatHint","idAIAASHint","idAI2","idAFEntity_GetUpTest","idAFEntity_Generic","idAFEntity_Dummy","idAFEntity_Corpse","idAASReachability","idAASObstacle"
@@ -755,17 +756,20 @@ long long* idType::get_enum_member_value(const char* ename, const char* mname) {
 }
 #pragma comment(lib, "cabinet.lib")
 #include "compressapi.h"
-MH_NOINLINE
-void idType::generate_unique_property_key_tree() {
-	std::set<std::string_view> allprops{};
 
-	std::set<char> allusedchars{};
+
+using strviewset_t = std::set<std::string_view>;
+//shared between header gen code and startup prop ptr locating code
+static strviewset_t get_set_of_prop_names() {
+
+	strviewset_t allprops{};
+
 
 
 
 	for (unsigned which = 0; which < 2; ++which) {
 		unsigned nclass = 0;
-		classTypeInfo_t* clss = ClassTypes(nclass, which);
+		classTypeInfo_t* clss = idType::ClassTypes(nclass, which);
 
 		for (unsigned i = 0; i < nclass; ++i) {
 
@@ -786,6 +790,16 @@ void idType::generate_unique_property_key_tree() {
 		}
 
 	}
+	return allprops;
+
+}
+
+#define		PROPERTY_KEY_TABLE_COMPRESSION_ALGO		COMPRESS_ALGORITHM_LZMS
+MH_NOINLINE
+void idType::generate_unique_property_key_tree() {
+	strviewset_t allprops = get_set_of_prop_names();
+
+	std::set<char> allusedchars{};
 	unsigned total_required_bytes = 0;
 	for (auto&& chrs : allprops) {
 
@@ -813,7 +827,7 @@ void idType::generate_unique_property_key_tree() {
 
 	}
 	COMPRESSOR_HANDLE comp;
-	CreateCompressor(COMPRESS_ALGORITHM_LZMS, nullptr, &comp);
+	CreateCompressor(PROPERTY_KEY_TABLE_COMPRESSION_ALGO, nullptr, &comp);
 	for (auto&& c : allusedchars) {
 
 		idLib::Printf("%d\n", c);
@@ -825,11 +839,11 @@ void idType::generate_unique_property_key_tree() {
 	SIZE_T decompres;
 	Compress(comp, (LPCVOID)bbuff.data(), bbuff.size(), compout.data(), compout.size(), &decompres);
 
-
-	const char* propkey_type = "uint32_t";
+	CloseCompressor(comp);
+	const char* propkey_type = "unsigned";
 
 	if (allprops.size() < 65536)
-		propkey_type = "uint16_t";
+		propkey_type = "unsigned short";
 
 
 
@@ -847,9 +861,10 @@ void idType::generate_unique_property_key_tree() {
 		proptxt_result += ",";
 	}
 
-	proptxt_result += "};";
+	proptxt_result += "};static constexpr unsigned DE_NUMPROPS = ";
+	proptxt_result += std::to_string(allprops.size());
 
-	proptxt_result += "static constexpr unsigned DE_PROP_MASK = ";
+	proptxt_result += ";static constexpr unsigned DE_PROP_MASK = ";
 
 	unsigned prop_mask = (~0u >> std::countl_zero(allprops.size()));
 
@@ -917,4 +932,391 @@ void idType::generate_unique_property_key_tree() {
 	fclose(outf);
 
 
+}
+unsigned g_propname_rvas[DE_NUMPROPS];
+
+uint64_t g_propname_hashes[DE_NUMPROPS];
+void idType::compute_classinfo_delta2super() {
+	void* typeinfo_tools = get_typeinfo_tools();
+
+
+
+
+	for (unsigned which = 0; which < 2; ++which) {
+		unsigned nclass = 0;
+		classTypeInfo_t* clss = idType::ClassTypes(nclass, which);
+
+		for (unsigned i = 0; i < nclass; ++i) {
+
+			classTypeInfo_t* cltype = &clss[i];
+
+			if (!cltype->name) {
+				continue;
+			}
+			
+			if (cltype->superType && cltype->superType[0]) {
+
+				classTypeInfo_t* deltaptr = call_as<classTypeInfo_t*>(descan::g_idtypeinfo_findclassinfo, typeinfo_tools, cltype->superType);
+				cltype->m_mh_added_delta2super = static_cast<int>( ((intptr_t)deltaptr) - ((intptr_t)cltype) );
+
+			}
+			else {
+
+				cltype->m_mh_added_delta2super = 0;
+			}
+
+		}
+
+	}
+
+
+	//return reinterpret_cast<classTypeInfo_t * (*)(void*, const char*)>(descan::g_idtypeinfo_findclassinfo)(typeinfo_tools, cname);
+
+}
+
+//called from meathook_final_init because typeinfogenerated doesnt exist until it
+//actually, it probably exists much earlier at some point between the second stage running and us giving exec back to the game, but that would require another hook
+void idType::init_prop_rva_table() {
+
+	
+	DECOMPRESSOR_HANDLE decomp;
+	CreateDecompressor(PROPERTY_KEY_TABLE_COMPRESSION_ALGO, nullptr, &decomp);
+
+	char* hugebuffer_decompress = new char[ALLPROPS_DECOMPRESSED_SIZE];
+
+	SIZE_T decompressed_size;
+	Decompress(decomp, ALLPROPS_COMPRESSED_DATA, ALLPROPS_COMPRESSED_SIZE, hugebuffer_decompress, ALLPROPS_DECOMPRESSED_SIZE, &decompressed_size);
+
+
+	CloseDecompressor(decomp);
+	
+	char* consumepos = hugebuffer_decompress;
+
+	//all of our data is already sorted so this is kinda a waste
+	//made this use emplace_hint pushing back
+	strviewset_t decompressed_set;
+
+
+	for (unsigned i = 0; i < DE_NUMPROPS; ++i) {
+
+		std::string_view current = consumepos;
+
+		consumepos += current.length() + 1;
+		decompressed_set.emplace_hint( decompressed_set.end(), std::move(current));
+
+
+	}
+	//todo: do decompress/build of set and get_set_of_prop_names in parallel
+	strviewset_t unpset = get_set_of_prop_names();
+
+	//put 0 thought into this, but obviously it should be made to take advantage of the fact all the data is sorted
+
+
+	strviewset_t::iterator current_findpos = decompressed_set.begin();
+	for (unsigned i = 0; i < DE_NUMPROPS; ++i) {
+
+		strviewset_t::iterator loc = unpset.find(*current_findpos);
+
+		if (loc == unpset.end()) {
+			//not good!!
+			//add some output here!
+			//probably happens on v1 since these props were generated from 6.66
+
+			g_propname_rvas[i] = 0;
+			g_propname_hashes[i] = 0;
+		}
+		else {
+			g_propname_rvas[i] = loc->data() - g_blamdll.image_base;
+			g_propname_hashes[i] = idType::calculate_field_name_hash(loc->data(), loc->length());
+
+		}
+		current_findpos++;
+	}
+	delete[] hugebuffer_decompress;
+
+}
+
+void idType::dump_prop_rvas() {
+	std::string result = "Dump of all property indices:\n";
+
+	char sprintfbuf[2048];
+	for (unsigned i = 0; i < DE_NUMPROPS; ++i) {
+
+		unsigned currrva = g_propname_rvas[i];
+
+		if (currrva == 0) {
+			sprintf(sprintfbuf, "\tprop index %d = NULL\n", i);
+
+		}
+		else {
+			const char* pos = (g_blamdll.image_base + currrva);
+
+			sprintf(sprintfbuf, "\tprp_%s = (rva 0x%X, ptr %p)\n", pos, currrva, pos);
+		}
+
+
+		result += &sprintfbuf[0];
+
+	}
+
+	idLib::Printf("%s", result.c_str());
+	set_clipboard_data(result.c_str());
+	
+}
+
+#define	__ROL8__	std::rotl<unsigned long long>
+#define	__ROR8__	std::rotr<unsigned long long>
+static 
+unsigned __int64   sub_1419985E0(uint64_t* a1, __int64 a2)
+{
+	char* v3; // rdi
+	__int64 v4; // r8
+	__int64 v5; // rsi
+	unsigned __int64 v6; // rbx
+	__int64 v7; // rdx
+	unsigned __int64 v8; // r10
+	__int64 v9; // rcx
+	unsigned __int64 v10; // rdx
+	__int64 v11; // rax
+	unsigned __int64 v12; // r9
+	__int64 v13; // rcx
+	unsigned __int64 v14; // r10
+	unsigned __int64 v15; // r8
+	
+	v3 = (char*)a1 + a2;
+	v4 = a1[1];
+	v5 = 2 * a2 - 0x651E95C4D06FBFB1i64;
+	v6 = 0x9AE16A3B2F90404Fui64 * *a1;
+	v7 = v5 * *(uint64_t*)((char*)a1 + a2 - 8);
+	v8 = 0x9AE16A3B2F90404Fui64 * *((uint64_t*)v3 - 2)
+		+ std::rotr<unsigned long long>(v7, 30)
+		+ std::rotl(v4 - 0x651E95C4D06FBFB1i64 * *a1, 21);
+	v9 = v7 + std::rotr<unsigned long long>(v4 - 0x651E95C4D06FBFB1i64, 18);
+	v10 = v5 * (v8 + *((uint64_t*)v3 - 4));
+	v11 = a1[3];
+	v12 = (v6 + v9) ^ (v5 * (v8 ^ (v6 + v9))) ^ ((v5 * (v8 ^ (v6 + v9))) >> 47);
+	v13 = v5 * a1[2];
+	v14 = v13 + v10 + std::rotr<unsigned long long>(v11 - 0x651E95C4D06FBFB1i64 * *a1, 18);
+	v15 = v5
+		* (v14 ^ (v5 * (*((uint64_t*)v3 - 3) + v5 * ((v5 * v12) ^ ((v5 * v12) >> 47)))
+			+ std::rotr<unsigned long long>(v10, 30)
+			+ std::rotl<unsigned long long>(v11 + v13, 21)));
+	return v5 * ((v5 * (v14 ^ v15 ^ (v15 >> 47))) ^ ((v5 * (v14 ^ v15 ^ (v15 >> 47))) >> 47));
+}
+static
+unsigned __int64 HashLen0to16(uint64_t* a1, unsigned __int64 a2)
+{
+	unsigned __int64 v3; // r9
+	__int64 v4; // rdx
+	unsigned __int64 v5; // r8
+	unsigned __int64 v6; // rdx
+	unsigned __int64 v8; // r9
+	__int64 v9; // rdx
+	unsigned __int64 v10; // rcx
+	unsigned __int64 v11; // rdx
+
+	if (a2 < 8)
+	{
+		if (a2 < 4)
+		{
+			if (a2)
+			{
+				v11 = (0xC3A5C85C97CB3127ui64 * ((unsigned int)a2 + 4 * *((unsigned __int8*)a1 + a2 - 1))) ^ (0x9AE16A3B2F90404Fui64 * *(unsigned __int8*)a1 - 0x1E95C4D06FBFB100i64 * *((unsigned __int8*)a1 + (a2 >> 1)));
+				return 0x9AE16A3B2F90404Fui64 * (v11 ^ (v11 >> 47));
+			}
+			else
+			{
+				return 0x9AE16A3B2F90404Fui64;
+			}
+		}
+		else
+		{
+			v8 = 2 * a2 - 0x651E95C4D06FBFB1i64;
+			v9 = *(unsigned int*)((char*)a1 + a2 - 4);
+			v10 = v8 * (v9 ^ (a2 + 8i64 * *(unsigned int*)a1));
+			return v8 * ((v8 * (v9 ^ v10 ^ (v10 >> 47))) ^ ((v8 * (v9 ^ v10 ^ (v10 >> 47))) >> 47));
+		}
+	}
+	else
+	{
+		v3 = 2 * a2 - 0x651E95C4D06FBFB1i64;
+		v4 = *(uint64_t*)((char*)a1 + a2 - 8);
+		v5 = v3 * (v4 + __ROR8__(*a1 - 0x651E95C4D06FBFB1i64, 25));
+		v6 = v3 * (v5 ^ (*a1 - 0x651E95C4D06FBFB1i64 + v3 * __ROL8__(v4, 27)));
+		return v3 * ((v3 * (v5 ^ v6 ^ (v6 >> 47))) ^ ((v3 * (v5 ^ v6 ^ (v6 >> 47))) >> 47));
+	}
+}
+#define	_QWORD		long long
+static
+__int64  cryptstr_thunked(_QWORD* a1, unsigned __int64 a2)
+{
+	__int64 v5; // rax
+	unsigned __int64 v6; // rcx
+	unsigned __int64 v7; // r10
+	unsigned __int64 v8; // rdx
+	unsigned __int64 v9; // r9
+	unsigned __int64 v10; // r8
+	__int64 v11; // rdx
+	__int64 v12; // r9
+	__int64 v13; // rax
+	__int64 v14; // r10
+	__int64 v15; // r12
+	__int64 v16; // r15
+	char* v17; // r13
+	__int64 v18; // r8
+	__int64* v19; // r14
+	__int64 v20; // r11
+	__int64 v21; // rdi
+	__int64 v22; // rbx
+	__int64 v23; // rsi
+	__int64 v24; // r12
+	__int64 v25; // r15
+	__int64 v26; // r9
+	__int64 v27; // rax
+	unsigned __int64 v28; // rsi
+	__int64 v29; // r8
+	__int64 v30; // rdx
+	__int64 v31; // r10
+	__int64 v32; // rax
+	__int64 v33; // rcx
+	__int64 v34; // r9
+	__int64 v35; // rcx
+	__int64 v36; // rdx
+	__int64 v37; // r11
+	__int64 v38; // r8
+	__int64 v39; // r11
+	__int64 v40; // rdx
+	__int64 v41; // rbp
+	__int64 v42; // r9
+	__int64 v43; // rcx
+	__int64 v44; // r8
+	__int64 v45; // rdi
+	__int64 v46; // r14
+	unsigned __int64 v47; // rsi
+	__int64 v48; // rcx
+	__int64 v49; // rdx
+	__int64 v50; // r9
+	__int64 v51; // r10
+	__int64 v52; // rbx
+	__int64 v53; // r8
+	__int64 v54; // r11
+	__int64 v55; // rcx
+	__int64 v56; // r10
+	__int64 v57; // rdx
+	unsigned __int64 v58; // r9
+	__int64 v59; // r10
+	unsigned __int64 v60; // rdx
+	unsigned __int64 v61; // r8
+	unsigned __int64 v62; // rdx
+	char* v63; // [rsp+20h] [rbp-48h]
+	__int64 v64; // [rsp+78h] [rbp+10h]
+	__int64 v65; // [rsp+80h] [rbp+18h]
+	__int64 v66; // [rsp+88h] [rbp+20h]
+
+	if (a2 > 0x20)
+	{
+		if (a2 > 0x40)
+		{
+			v11 = 0;
+			v12 = 0x134A747F856D0526i64;
+			v13 = 0;
+			v14 = 0;
+			v15 = *a1 + 0x1529CBA0CA458FFi64;
+			v64 = 0;
+			v16 = 0x226BB95B4E64B6D4i64;
+			v17 = (char*)a1 + ((a2 - 1) & 0xFFFFFFFFFFFFFFC0ui64);
+			v66 = ((int)a2 - 1) & 0x3F;
+			v18 = 0;
+			v63 = &v17[v66 - 63];
+			v19 = a1 + 1;
+			do
+			{
+				v20 = *v19;
+				v21 = v19[5];
+				v22 = v19[4];
+				v19 += 8;
+				v23 = v15 + v16 + v20 + v11;
+				v24 = v14 + v12;
+				v25 = __ROL8__(v21 + v13 + v16, 22);
+				v26 = *(v19 - 6);
+				v27 = *(v19 - 9) - 0x4B6D499041670D8Di64 * v13;
+				v28 = v18 ^ (0xB492B66FBE98F273ui64 * __ROL8__(v23, 27));
+				v16 = v11 + v22 - 0x4B6D499041670D8Di64 * v25;
+				v29 = v14 + v27 + v26;
+				v30 = v27;
+				v31 = *(v19 - 7);
+				v15 = 0xB492B66FBE98F273ui64 * __ROL8__(v24, 31);
+				v32 = v31 + v20 + v27;
+				v33 = v32 + v26;
+				v34 = *(v19 - 2);
+				v65 = v33;
+				v35 = v30 + __ROR8__(v28 + v29, 21);
+				v36 = v15 + v64 + *(v19 - 5);
+				v13 = v35 + __ROL8__(v32, 20);
+				v37 = v22 + v21 + v36;
+				v38 = v36 + __ROR8__(v16 + v34 + v31 + v36, 21);
+				v11 = v65;
+				v14 = v37 + v34;
+				v18 = __ROL8__(v37, 20) + v38;
+				v12 = v28;
+				v64 = v18;
+			}             while (v19 - 1 != (__int64*)v17);
+			v39 = *((_QWORD*)v63 + 1);
+			v40 = v14 + v66 + v65;
+			v41 = 2i64 * (unsigned __int8)v28 - 0x4B6D499041670D8Di64;
+			v42 = v40 + v14 + v66;
+			v43 = 9 * v18;
+			v44 = *((_QWORD*)v63 + 3);
+			v45 = v41 * __ROL8__(v42 + v28, 31);
+			v46 = v43 ^ (v41 * __ROL8__(v16 + v40 + v15 + v39, 27));
+			v47 = 9 * v40 + *((_QWORD*)v63 + 5) + v41 * __ROL8__(v16 + v13 + *((_QWORD*)v63 + 6), 22);
+			v48 = *(_QWORD*)v63 + v13 * v41;
+			v49 = v42 + v48 + v44;
+			v50 = *((_QWORD*)v63 + 2);
+			v51 = v50 + v39 + v48;
+			v52 = v51 + v44;
+			v53 = *((_QWORD*)v63 + 7);
+			v54 = __ROL8__(v51, 20) + v48 + __ROR8__(v46 + v49, 21);
+			v55 = v45 + v64 + *((_QWORD*)v63 + 4);
+			v56 = *((_QWORD*)v63 + 5) + *((_QWORD*)v63 + 6) + v55;
+			v57 = __ROR8__(v47 + v50 + v55 + v53, 21);
+			v58 = v56 + v53;
+			v59 = __ROL8__(v56, 20);
+			v60 = v41
+				* ((v59 + v57 + v55) ^ (v41 * (v54 ^ (v59 + v57 + v55))) ^ ((v41
+					* (v54 ^ (unsigned __int64)(v59 + v57 + v55))) >> 47));
+			v61 = v45 + v41 * (v60 ^ (v60 >> 47));
+			v62 = v41
+				* (v61 ^ (v46
+					+ v41
+					* ((v41 * ((v41 * (v52 ^ v58)) ^ v58 ^ ((v41 * (v52 ^ v58)) >> 47))) ^ ((v41
+						* ((v41 * (v52 ^ v58)) ^ v58 ^ ((v41 * (v52 ^ v58)) >> 47))) >> 47))
+					- 0x3C5A37A36834CED9i64 * (v47 ^ (v47 >> 47))));
+			return v41 * ((v41 * (v61 ^ v62 ^ (v62 >> 47))) ^ ((v41 * (v61 ^ v62 ^ (v62 >> 47))) >> 47));
+		}
+		else
+		{
+			return sub_1419985E0((uint64_t*)a1, a2);
+		}
+	}
+	else if (a2 > 0x10)
+	{
+		v5 = a1[1];
+		v6 = 0xB492B66FBE98F273ui64 * *a1;
+		v7 = 2 * a2 - 0x651E95C4D06FBFB1i64;
+		v8 = v7 * *(_QWORD*)((char*)a1 + a2 - 8);
+		v9 = v6 + v8 + __ROR8__(v5 - 0x651E95C4D06FBFB1i64, 18);
+		v10 = v7
+			* (v9 ^ (0x9AE16A3B2F90404Fui64 * *(_QWORD*)((char*)a1 + a2 - 16)
+				+ __ROR8__(v8, 30)
+				+ __ROL8__(v5 + v6, 21)));
+		return v7 * ((v7 * (v9 ^ v10 ^ (v10 >> 47))) ^ ((v7 * (v9 ^ v10 ^ (v10 >> 47))) >> 47));
+	}
+	else
+	{
+		return HashLen0to16((uint64_t*)a1, a2);
+	}
+}
+uint64_t idType::calculate_field_name_hash(const char* name, size_t length) {
+	return cryptstr_thunked((long long*)name, length);
 }

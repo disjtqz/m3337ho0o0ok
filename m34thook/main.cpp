@@ -105,7 +105,7 @@ static void* g_kernel32_getsysinfo_ptr = nullptr;
 static void patch_engine_after_unpack() {
 
 	descan::locate_critical_features();
-
+	
 	void* gamelib_init_addr = descan::g_gamelib_initialize_ptr;
 
 	void** ourguy = (void**)(gamelib_init_addr);

@@ -372,6 +372,7 @@
     <ClCompile Include="mh_native_api.cpp" />
     <ClCompile Include="mh_staticmodel.cpp" />
     <ClCompile Include="optimizations\mhoptimize.cpp" />
+    <ClCompile Include="pregenerated\doom_eternal_properties_generated.cpp" />
     <ClCompile Include="rendermodelgui.cpp" />
     <ClCompile Include="scanners\scanners_avx2.cpp" />
     <ClCompile Include="scanners\scanners_avx512.cpp" />
@@ -419,6 +420,7 @@
     <ClInclude Include="mh_memmanip_cmds.hpp" />
     <ClInclude Include="mh_native_api.hpp" />
     <ClInclude Include="mh_staticmodel.hpp" />
+    <ClInclude Include="pregenerated\doom_eternal_properties_generated.hpp" />
     <ClInclude Include="rapiddecl.hpp" />
     <ClInclude Include="resource.hpp" />
     <ClInclude Include="scanners\initial_scangroup.hpp" />

@@ -34,6 +34,12 @@
     <Filter Include="Source Files\optimizations">
       <UniqueIdentifier>{f64397e4-406c-4882-8a14-9bd89cd626cb}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\pregenerated">
+      <UniqueIdentifier>{a69d6faa-1d81-4171-a049-334a7134bae4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\pregenerated">
+      <UniqueIdentifier>{6a6a4a19-4e77-4f69-84df-3480342a49cf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -137,6 +143,9 @@
     </ClCompile>
     <ClCompile Include="mh_kwsearch.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pregenerated\doom_eternal_properties_generated.cpp">
+      <Filter>Source Files\pregenerated</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -277,6 +286,9 @@
     </ClInclude>
     <ClInclude Include="rapiddecl.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="pregenerated\doom_eternal_properties_generated.hpp">
+      <Filter>Header Files\pregenerated</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -752,6 +752,10 @@ static __int64 testdebugtools(void* x) {
 	return call_as<__int64>(g_original_renderthread_run, x);
 }
 void meathook_final_init() {
+	//compute classinfo object super object deltas for quick inheritance traversal
+	idType::compute_classinfo_delta2super();
+	idType::init_prop_rva_table();
+
 	descan::run_gamelib_postinit_scangroups();
 }
 
@@ -1035,7 +1039,12 @@ static void mh_genproptree(idCmdArgs* args) {
 
 	idType::generate_unique_property_key_tree();
 }
+static void mh_dumppropidxinfo(idCmdArgs* args) {
+
+	idType::dump_prop_rvas();
+}
 void meathook_init() {
+	
 	install_gameapi_hooks();
 
 	void** vtbl_render = get_class_vtbl(".?AVidRenderThread@@");
@@ -1102,7 +1111,8 @@ void meathook_init() {
 	idCmd::register_command("mh_kw", mh_kw, "Searches all types, enums, typedefs, their comments, field names, typename, template args for the provided keywords");
 	idCmd::register_command("mh_editor", mh_editor, "Sets up the editor session");
 
-	idCmd::register_command("mh_genpropset", mh_genproptree, "Builds up the set of all unique property names and writes it to a file. for devs only.");
+	idCmd::register_command("mh_genpropset", mh_genproptree, "Regenerated doom_eternal_properties_generated.cpp/hpp for use in mh builds. not for users");
+	idCmd::register_command("mh_dumppropidxinfo", mh_dumppropidxinfo, "Debug command for dumping the corresponding addresses/rvas for property indices");
 	install_memmanip_cmds();
 	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
 	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");

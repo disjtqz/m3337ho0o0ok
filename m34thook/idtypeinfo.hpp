@@ -62,7 +62,13 @@ struct classTypeInfo_t
 	char* name;
 	char* superType;
 	int size;
-	char pad20[4];
+
+	//char pad20[4];
+	//this is padding in the engine originally, but we co-opt it to store the byte delta from the start of this class to
+	//the start of its super class, allowing us to traverse the inheritance chain without having to go through findclassinfo's hashing and searching
+	//this could be made to be fewer bits if i need other stuff in here in the future
+	//also, it could be shifted to the right by 3 to make room for more bits since it should always be 8 byte aligned
+	int m_mh_added_delta2super;
 	classVariableInfo_t* templateParms;
 	classVariableInfo_t* variables;
 	unsigned long long* variableNameHashes;
@@ -75,6 +81,18 @@ struct classTypeInfo_t
 
 
 namespace idType {
+
+	static inline classTypeInfo_t* get_class_superclass(classTypeInfo_t* cl) {
+		intptr_t delta = cl->m_mh_added_delta2super;
+		if (delta) {
+			return mh_lea<classTypeInfo_t>(cl, delta);
+		}
+		else
+		{
+			return nullptr;
+		}
+
+	}
 	MH_NOINLINE
 	classTypeInfo_t* FindClassInfo(const char* cname);
 	MH_NOINLINE
@@ -109,7 +127,7 @@ namespace idType {
 	static 
 	unsigned _impl_get_nested_field_offset_by_name(unsigned offset, classTypeInfo_t* clstype, const char* fld, TRest... restfields) {
 		classVariableInfo_t* located_var = nullptr;
-		for (classTypeInfo_t* clptr = clstype; clptr && !located_var; clptr = FindClassInfo(clptr->superType)) {
+		for (classTypeInfo_t* clptr = clstype; clptr && !located_var; clptr = get_class_superclass(clptr)){//FindClassInfo(clptr->superType)) {
 
 			located_var = try_locate_var_by_name(clptr->variables, fld);
 		}
@@ -145,8 +163,14 @@ namespace idType {
 	const char* get_enum_member_name_for_value(enumTypeInfo_t* enumtype, long long value);
 
 	bool enum_member_is(enumTypeInfo_t* enm, long long value, const char* membername);
+	//dumps the property rva info to the console/clipboard
+	void dump_prop_rvas();
+	void init_prop_rva_table();
+	//set up our added "m_mh_added_delta2super" field on all classinfo objects
+	void compute_classinfo_delta2super();
 
-
+	//get hash that is usable in a class' variableNameHashes
+	uint64_t calculate_field_name_hash(const char* name, size_t length);
 }
 
 template<typename TRet>
@@ -235,3 +259,25 @@ struct mh_typesizecached_t {
 
 	}
 };
+#include <cstdint>
+#include "pregenerated/doom_eternal_properties_generated.hpp"
+
+
+/*
+	rva to the string of the property in doom eternal
+
+	add g_blamdll.base to this to get the actual start of the string
+
+	link time optimization merges all occurrences of unique string in the game's exe into a single copy that all the pointers point to
+	meaning we can refer to our properties via our huge enum by looking them up in this table and adding the rva, and when searching for a field
+	in a classes typeinfo we can compare the pointer instead of doing a strcmp.
+
+	this also means we can represent decls in a more efficient way, using the prop indices (which are shorts and so can quickly be compared in batches of 8/16/32 depending on the arch the user is running on) in a sorted table and the corresponding value
+	at the same index in the value table
+	
+*/
+extern unsigned g_propname_rvas[DE_NUMPROPS];
+/*
+	prehashed property names for use in variableNameHashes
+*/
+extern uint64_t g_propname_hashes[DE_NUMPROPS];

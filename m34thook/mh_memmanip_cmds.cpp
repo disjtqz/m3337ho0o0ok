@@ -313,7 +313,7 @@ void hide_special_cmds(idCmdArgs* args) {
 
 		idCmd::register_command("mh_list_scanres", list_scanned_features, "List the values of all scanned features");
 		idCmd::register_command("mh_list_vtbls", list_vftbls, "List the locations of every vtbl in the engine");
-		idCmd::register_command("disasm_at", disasm_at, "Use udis86 to disassemble an instruction at an address");
+		//idCmd::register_command("disasm_at", disasm_at, "Use udis86 to disassemble an instruction at an address");
 	}
 	else {
 		idLib::Printf("these aren't for you\n");
