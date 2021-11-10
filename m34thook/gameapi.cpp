@@ -88,28 +88,6 @@ long long get_classfield_int(void* obj, const classVariableInfo_t* varinfo) {
 		char* objptr = reinterpret_cast<char*>(obj) + varinfo->offset;
 
 		long long result;
-		if(varinfo->size >= 4) {
-			unsigned size = varinfo->size;
-			__asm__(
-
-				"testl 8, %1\n\t"
-				//"jnz $+1\n\t"
-				".byte 0x74\n\t"
-				".byte 0x01\n\t"
-				"movq (%2), %0\n\t"
-
-				: "=r"(result)
-				: "r"(size), "r"(objptr)
-				:
-			);
-			/*__asm {
-				test dword ptr size, 8
-				jnz $+1
-				movsxd rax, [objptr]
-				mov result, rax
-			}*/
-			return result;
-		}
 
 
 		switch (varinfo->size) {
@@ -118,10 +96,10 @@ long long get_classfield_int(void* obj, const classVariableInfo_t* varinfo) {
 		case 2:
 			return *reinterpret_cast<short*>(objptr);
 
-		/*case 4:
+		case 4:
 			return *reinterpret_cast<int*>(objptr);
 		case 8:
-			return *reinterpret_cast<long long*>(objptr);*/
+			return *reinterpret_cast<long long*>(objptr);
 		}
 		assert(false);
 		return 0;

@@ -313,6 +313,8 @@ void cmd_mh_forcereload(idCmdArgs* args)
 	*mapChangeRequest_t_requested = true;
 }
 
+
+
 std::vector<std::string> gActiveEncounterNames;
 void cmd_active_encounter(idCmdArgs* args)
 {
@@ -1043,6 +1045,167 @@ static void mh_dumppropidxinfo(idCmdArgs* args) {
 
 	idType::dump_prop_rvas();
 }
+
+static void mh_ScriptCmdEnt_console(idCmdArgs* args) {
+
+
+	
+	idEventDef* evt = idEventDefInterfaceLocal::Singleton()->FindEvent(args->argv[1]);
+
+	if (!evt) {
+		
+		idLib::Printf("No event %s\n", args->argv[1]);
+		return;
+	}
+
+
+	void* entity = find_entity(args->argv[2]);
+
+	if (!entity) {
+		idLib::Printf("No entity %s\n", args->argv[2]);
+		return;
+	}
+	unsigned readvaluepos = 3;
+
+	auto getarg = [&readvaluepos, args]() -> const char* {
+
+		if (readvaluepos < args->argc) {
+			return args->argv[readvaluepos++];
+		}
+		else {
+			return "";
+		}
+	};
+	unsigned evargpos = 0;
+	idEventArg evargs[8];
+	unsigned i = 0;
+
+	auto getevarg = [&evargpos, &evargs]() ->idEventArg& {
+		return evargs[evargpos++];
+	};
+	for (; evt->formatspec[i]; ++i) {
+
+		switch (evt->formatspec[i]) {
+		case 'b': 
+			getevarg().make_bool(atoi(getarg()) != 0);
+			break;
+		case 'f':
+			getevarg().make_float(atof(getarg()));
+			break;
+		case 'e':
+			getevarg().make_entity(find_entity(getarg()));
+			break;
+		case 'i': {
+			std::string name;
+			if (!evt->GetArgTypeName(i, &name)) {
+			just_make_it_int:
+				getevarg().make_int(atoi(getarg()));
+				break;
+
+			}
+			else {
+				if (name == "int") {
+
+					//getevarg().make_int(atoi(getarg()));
+					//break;
+					goto just_make_it_int;
+
+				}
+				else {
+					const char* inval = getarg();
+
+
+					long long* newv = idType::get_enum_member_value(name.c_str(), inval);
+
+					int value_to_make = newv ? *newv : atoi(inval);
+
+					getevarg().make_int(value_to_make);
+					break;
+					
+
+					
+					
+					
+
+				}
+			}
+			break;
+		}
+		case 'v': {
+			idVec3 v{(float) atof(getarg()), (float)atof(getarg()), (float)atof(getarg()) };
+
+			getevarg().make_vec3(v);
+			break;
+
+		}
+		case 'd': {
+
+			std::string name;
+			if (!evt->GetArgTypeName(i, &name)) {
+				//impossible!
+			}
+			else {
+				while (name[name.length() - 1] == '*' || name[name.length() - 1] == '&') {
+					name.erase(name.begin() + name.length() - 1);
+				}
+
+				void* reslist = resourcelist_for_classname(name.c_str());
+
+				if (!reslist) {
+					idLib::Printf("Uh oh! couldnt find resourcelist %s while parsing arg %s!\n", name.c_str(), getarg());
+
+					getevarg().make_decl(nullptr);
+					break;
+				}
+				else {
+					const char* current = getarg();
+
+					void* resmember = locate_resourcelist_member_from_idResourceList(reslist,current );
+					if (!resmember) {
+
+						idLib::Printf("oh no, we couldnt find %s in resourcelist %s\n", current, name.c_str());
+						getevarg().make_decl(nullptr);
+						break;
+					}
+					else {
+
+						getevarg().make_decl((struct idDecl*)resmember);
+						break;
+					}
+				}
+			}
+			break;
+		}
+		case 's': {
+
+			getevarg().make_string(getarg());
+			break;
+		}
+
+		case 'a': {
+			idAngles v{ (float)atof(getarg()),(float)atof(getarg()),(float)atof(getarg()) };
+
+			getevarg().make_angles(&v);
+			break;
+		}
+
+		
+
+		default: {
+
+			std::string tname;
+			evt->GetArgTypeName(i, &tname);
+
+			idLib::Printf("Unsupported arg type %s\n", tname.c_str());
+			break;
+		}
+		}
+	}
+
+	mh_ScriptCmdEnt(evt, entity, &evargs[0]);
+
+
+}
 void meathook_init() {
 	
 	install_gameapi_hooks();
@@ -1113,6 +1276,8 @@ void meathook_init() {
 
 	idCmd::register_command("mh_genpropset", mh_genproptree, "Regenerated doom_eternal_properties_generated.cpp/hpp for use in mh builds. not for users");
 	idCmd::register_command("mh_dumppropidxinfo", mh_dumppropidxinfo, "Debug command for dumping the corresponding addresses/rvas for property indices");
+
+	idCmd::register_command("mh_ScriptCmdEnt", mh_ScriptCmdEnt_console, "ai_ScriptCmdEnt resurrected");
 	install_memmanip_cmds();
 	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
 	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");

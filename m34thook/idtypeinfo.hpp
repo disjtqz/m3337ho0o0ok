@@ -42,8 +42,9 @@ struct classVariableInfo_t
 	int offset;
 	int size;
 	int flags;
-	char pad36[4];
-	char* comment;
+	//char pad36[4];
+	int m_mh_added_delta2type; //delta to FindClassInfo(type)
+	char* comment;//i dont think anything in the engine actually uses comment, so i might be able to pack it into a delta and put more data here if i ever need it
 	int (*get)(void* ptr);
 	//offset 56 , size 8
 	void (*set)(void* ptr, int value);
@@ -93,6 +94,17 @@ namespace idType {
 		}
 
 	}
+
+	static inline classTypeInfo_t* get_field_class(classVariableInfo_t* vr) {
+
+		intptr_t delta = vr->m_mh_added_delta2type;
+
+		if (delta) {
+			return mh_lea<classTypeInfo_t>(vr, delta);
+		}
+		else
+			return nullptr;
+	}
 	MH_NOINLINE
 	classTypeInfo_t* FindClassInfo(const char* cname);
 	MH_NOINLINE
@@ -135,7 +147,7 @@ namespace idType {
 		offset += located_var->offset;
 
 		if constexpr (sizeof...(restfields) != 0) {
-			return _impl_get_nested_field_offset_by_name(offset, FindClassInfo(located_var->type), restfields...);
+			return _impl_get_nested_field_offset_by_name(offset, get_field_class(located_var), restfields...);
 		}
 		else {
 			return offset;

@@ -3,7 +3,7 @@
 constexpr unsigned g_niter_per_element = IMPL_VECTOR_WIDTH / 4;
 using ivec_local_t = unsigned __attribute__((ext_vector_type(g_niter_per_element)));
 using bytevec_local_t = unsigned char __attribute__((ext_vector_type(IMPL_VECTOR_WIDTH)));
-
+using u64vec_local_t = uint64_t __attribute__((ext_vector_type(IMPL_VECTOR_WIDTH / sizeof(uint64_t)));
 template<typename T>
 static uint64_t cs_movemask(T val) {
 #if IMPL_VECTOR_WIDTH==64

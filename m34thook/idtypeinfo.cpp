@@ -557,7 +557,7 @@ classVariableInfo_t* idType::try_locate_var_by_name(classVariableInfo_t* from, c
 MH_NOINLINE
 classVariableInfo_t* idType::try_locate_var_by_name_inher(classTypeInfo_t* clstype, const char* field) {
 	classVariableInfo_t* located_var = nullptr;
-	for (classTypeInfo_t* clptr = clstype; clptr && !located_var; clptr = FindClassInfo(clptr->superType)) {
+	for (classTypeInfo_t* clptr = clstype; clptr && !located_var; clptr = get_class_superclass(clptr) ) {
 		located_var = try_locate_var_by_name(clptr->variables, field);
 	}
 	return located_var;
@@ -609,7 +609,7 @@ find_field_end:
 	current_offset += field->offset;
 
 	if (!done_with_fields) {
-		onclass = FindClassInfo(field->type);
+		onclass = get_field_class(field);// FindClassInfo(field->type);
 		MH_UNLIKELY_IF(!onclass) {
 			return -1;
 		}
@@ -963,6 +963,26 @@ void idType::compute_classinfo_delta2super() {
 			else {
 
 				cltype->m_mh_added_delta2super = 0;
+			}
+
+			auto vars = cltype->variables;
+			if (vars) {
+				while (vars->name && vars->name[0]) {
+
+					
+					classTypeInfo_t* cltype_for = call_as<classTypeInfo_t*>(descan::g_idtypeinfo_findclassinfo, typeinfo_tools, vars->type);
+
+
+					if (cltype_for) {
+
+						vars->m_mh_added_delta2type = static_cast<int>(((intptr_t)cltype_for) - ((intptr_t)vars));
+					}
+					else {
+						vars->m_mh_added_delta2type = 0;
+
+					}
+					++vars;
+				}
 			}
 
 		}
