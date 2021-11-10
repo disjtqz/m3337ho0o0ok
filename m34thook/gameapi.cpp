@@ -506,7 +506,7 @@ static cs_uninit_t<idEventArg> g_sink_eventarg_ret{};
 void mh_ScriptCmdEnt_idEntity_void(idEventDef* tdef_name, void* self, idEventArg* args) {
 
 	void* callev = VTBL_MEMBER(idEntity, VTBLOFFS_CALLEVENT)::Get();
-	call_as<void>(callev, &g_sink_eventarg_ret, tdef_name, args);
+	call_as<void>(callev, self, &g_sink_eventarg_ret, tdef_name, args);
 }
 
 
@@ -767,6 +767,28 @@ void set_object_scale(void* ent, idVec3 newscale) {
 idVec3 get_object_scale(void* ent) {
 
 	return *g_new_field_renderscale(ent);
+}
+
+idVec3 get_object_color(void* ent) {
+	
+
+	cs_uninit_t<idEventArg> res;
+
+	mh_ScriptCmdEnt_idEntity(ev_getColor.Get(), ent, nullptr, &res);
+
+
+	return res->value.v_vec3;
+
+}
+
+
+void set_object_color(void* ent, idVec3 newcolor) {
+
+	cs_uninit_array_t<idEventArg, 3> args;
+	args[0].make_float(newcolor.x);
+	args[1].make_float(newcolor.y);
+	args[2].make_float(newcolor.z);
+	mh_ScriptCmdEnt_idEntity_void(ev_setColor.Get(), ent, &args[0]);
 }
 #if 0
 void __fastcall ScriptCmd(__int64 rcx0, idEntity* ent, const idCmdArgs* scriptargs)

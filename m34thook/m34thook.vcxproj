@@ -419,6 +419,7 @@
     <ClInclude Include="mh_memmanip_cmds.hpp" />
     <ClInclude Include="mh_native_api.hpp" />
     <ClInclude Include="mh_staticmodel.hpp" />
+    <ClInclude Include="rapiddecl.hpp" />
     <ClInclude Include="resource.hpp" />
     <ClInclude Include="scanners\initial_scangroup.hpp" />
     <ClInclude Include="scanners\scanners_typeinfo.hpp" />

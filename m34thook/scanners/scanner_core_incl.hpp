@@ -448,7 +448,39 @@ static void descan_run_late_scangroups() {
 	//scan_for_vftbls();
 	scanners_phase2::secondary_scangroup_pass.execute_on_image();
 
-	unsigned levelmapoffs = descan::g_vftbl_offset_getlevelmap;
+	unsigned levelmapoffs = load4_no_cache(&descan::g_vftbl_offset_getlevelmap);
+
+	descan::g_idtypeinfo_findclassinfo = hunt_assumed_func_start_back(descan::g_idtypeinfo_findclassinfo);
+	descan::g_idfilecompressed_getfile = hunt_assumed_func_start_back(descan::g_idfilecompressed_getfile);
+	descan::g__ZN5idStr4IcmpEPKcS1_ =
+		scan_guessed_function_boundaries<scanbehavior_locate_csrel_after<scanner_locate_listofResourceLists_and_idstricmp>>(descan::g_resourcelist_for_classname);
+
+	descan::g_idlib_fatalerror = hunt_assumed_func_start_back(descan::g_idlib_fatalerror);
+	descan::g_idlib_error = hunt_assumed_func_start_back(descan::g_idlib_error);
+	descan::g_idmapfile_write = hunt_assumed_func_start_back(descan::g_idmapfile_write);
+	
+	//g_idMapFile_WriteInternal
+
+	using locate_writeinternal_call = memscanner_t< scanbytes<0x48, 0x8b, 0xd6, 0x48, 0x8d, 0xd>,
+		riprel32_data_equals< 0x43, 0x6F, 0x75, 0x6C, 0x64, 0x6E, 0x27, 0x74, 0x20, 0x6F,
+		0x70, 0x65, 0x6E, 0x20, 0x25, 0x73, 0x00>,
+
+		scanbytes<0xe8>, skip_and_capture_rva<&descan::g_idLib_Warning>,
+		scanbytes<0xEB>, //0x53 in all but whatever
+		skip<1>>;
+
+
+
+	void* end_write = mh_disassembler_t::after_first_return(descan::g_idmapfile_write);
+
+	void* nextcall_is_writeinternal = run_range_scanner<scanbehavior_simple<locate_writeinternal_call>>(descan::g_idmapfile_write, end_write);
+
+
+	descan::g_idMapFile_WriteInternal = mh_disassembler_t::first_call_target(nextcall_is_writeinternal);
+
+
+	vtbl_scan_thread.join();
+	//lol the mapsavereference stuff needs access to the vtables, i had put it before and was confused over why it worked under a debugger but not otherwise
 	if (levelmapoffs) {
 
 		/*
@@ -463,16 +495,6 @@ SCANNED_UINT_FEATURE(g_vftbl_offset_MapRemoveEntity)
 		descan::g_vftbl_offset_MapRemoveEntity = levelmapoffs - 48;
 		extract_extra_functions_from_mapsavereference();
 	}
-	descan::g_idtypeinfo_findclassinfo = hunt_assumed_func_start_back(descan::g_idtypeinfo_findclassinfo);
-	descan::g_idfilecompressed_getfile = hunt_assumed_func_start_back(descan::g_idfilecompressed_getfile);
-	descan::g__ZN5idStr4IcmpEPKcS1_ =
-		scan_guessed_function_boundaries<scanbehavior_locate_csrel_after<scanner_locate_listofResourceLists_and_idstricmp>>(descan::g_resourcelist_for_classname);
-
-	descan::g_idlib_fatalerror = hunt_assumed_func_start_back(descan::g_idlib_fatalerror);
-	descan::g_idlib_error = hunt_assumed_func_start_back(descan::g_idlib_error);
-	descan::g_idmapfile_write = hunt_assumed_func_start_back(descan::g_idmapfile_write);
-	vtbl_scan_thread.join();
-
 	obtain_rendermodelgui_stuff();
 
 	late_scangroup_timer.end("P2 Scanners+Vtbl Threaded");

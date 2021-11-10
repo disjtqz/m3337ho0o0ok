@@ -2117,3 +2117,11 @@ static void nonplayer_entities_within_distance_iterate(idVec3* base_point, float
 void set_object_scale(void* ent, idVec3 newscale);
 
 idVec3 get_object_scale(void* ent);
+
+
+CACHED_EVENTDEF(getColor);
+CACHED_EVENTDEF(setColor);
+
+idVec3 get_object_color(void* ent);
+
+void set_object_color(void* ent, idVec3 newcolor);

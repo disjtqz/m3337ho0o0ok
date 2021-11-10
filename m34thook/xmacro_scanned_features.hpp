@@ -131,3 +131,8 @@ SCANNED_PTR_FEATURE(g_idDecl_SetText)
 
 SCANNED_PTR_FEATURE(g_idDecl_Reparse)
 SCANNED_PTR_FEATURE(g_idMapEntity_SetEntityDef)
+//writeinternal takes an idfile argument to write to, so we can
+//pass in an idfile that just writes to a buffer and parse that. that way we dont have to go to disk and back to get the current mapfiles text
+SCANNED_PTR_FEATURE(g_idMapFile_WriteInternal)
+
+SCANNED_PTR_FEATURE(g_idLib_Warning)

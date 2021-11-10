@@ -970,7 +970,34 @@ static void goofy_op(idCmdArgs* args) {
 
 			set_object_scale(current, scale);
 		}
+		if (randomact & 24) {
+			idVec3 color = get_object_color(current);
 
+			float rdiff = get_rand_float(1.0);
+			float gdiff = get_rand_float(1.0);
+			float bdiff = get_rand_float(1.0);
+
+
+			color.x += rdiff;
+			color.y += gdiff;
+			color.z += bdiff;
+			
+
+			auto clampreal = [](float v) {
+				if (v < 0.0f) {
+					return .0f;
+				}
+				else if (v > 1.0f) {
+					return 1.0f;
+				}
+				return v;
+			};
+
+			color.x = clampreal(color.x);
+			color.y = clampreal(color.y);
+			color.z = clampreal(color.z);
+			set_object_color(current, color);
+		}
 	});
 }
 

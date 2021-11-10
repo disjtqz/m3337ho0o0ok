@@ -24,10 +24,7 @@
 #include "mh_inputsys.hpp"
 #include "mh_mainloop.hpp"
 #include "mh_editor_mode.hpp"
-#include "rapiddecl/rapidjson.h"
-#include "rapiddecl/document.h"
-#include "rapiddecl/prettywriter.h"
-#include "rapiddecl/stringbuffer.h"
+#include "rapiddecl.hpp"
 class mh_editor_local_t;
 
 /*
@@ -38,6 +35,7 @@ class mh_editor_local_t;
 	i did change the source dir name to rapiddecl and the namespace name in the rapidjson include file to rapiddecl though, just in case i actually need json parsing and need to throw
 	rapidjson in here too
 */
+
 namespace decl_parsing {
 
 	/*
@@ -67,6 +65,35 @@ namespace decl_parsing {
 		std::string result = tmp.GetString();
 		return result;
 	}
+
+	template< typename TCurr, typename... Ts>
+
+	
+	MH_SEMIPURE
+	static inline 
+	rapiddecl::Value* nested_get_value1(rapiddecl::Value* MH_NOESCAPE input, TCurr current, Ts... propnames) {
+		dmemb_iter_t iter = input->FindMember(current);
+
+
+		if (iter == input->MemberEnd()) {
+			return nullptr;
+		}
+
+		if constexpr (sizeof...(Ts) == 0) {
+			return &iter->value;
+		}
+		else {
+			return nested_get_value1(&iter->value, propnames...);
+		}
+	}
+	template<typename... Ts>
+	MH_FLATTEN
+	MH_SEMIPURE
+	static inline rapiddecl::Value* nested_get_value(rapiddecl::Value* MH_NOESCAPE input, Ts... propnames) {
+		return nested_get_value1(input, current, propnames...);
+	}
+
+
 
 }
 
@@ -275,7 +302,6 @@ public:
 	}
 	
 };
-using dmemb_iter_t = rapiddecl::Value::MemberIterator;
 
 class entity_decl_t : public entity_iface_t {
 	rapiddecl::Document m_decl;

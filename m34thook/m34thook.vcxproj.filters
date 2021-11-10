@@ -275,5 +275,8 @@
     <ClInclude Include="mh_editor_mode.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="rapiddecl.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

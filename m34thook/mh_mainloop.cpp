@@ -19,18 +19,6 @@
 #include "mh_guirender.hpp"
 
 
-template<typename T>
-static T load8_no_cache(T* ptr) {
-	
-	return (T)(_InterlockedExchangeAdd64((volatile long long*)ptr, 0));
-}
-
-template<typename T>
-static void store8_no_cache(T* ptr, T value) {
-	InterlockedExchange64((volatile long long*)ptr, (long long)(void*)value);
-}
-
-
 
 
 struct alignas(64) frame_callbacks_t {
@@ -45,6 +33,12 @@ struct alignas(64) frame_callbacks_t {
 	//	sh::memops::sfence_if();
 	}
 
+	/*
+		in theory a race condition could happen where another thread is registering a callback just as
+		the main thread is executing all callbacks
+
+		but its like a less than 1 in a trillion chance lol, which i think is acceptable
+	*/
 	unsigned add_callback(mh_mainloop::frame_cb_t cb, void* ud) {
 
 		//doofus, it returns the incremented value so thats why it was segfaulting

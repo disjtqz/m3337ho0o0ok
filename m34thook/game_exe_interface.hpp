@@ -2,6 +2,27 @@
 #include <Windows.h>
 #include <cstddef>
 #include "extern.h"
+template<typename T>
+static T load8_no_cache(T* ptr) {
+
+	return (T)(_InterlockedExchangeAdd64((volatile long long*)ptr, 0));
+}
+
+template<typename T>
+static void store8_no_cache(T* ptr, T value) {
+	InterlockedExchange64((volatile long long*)ptr, (long long)(void*)value);
+}
+
+template<typename T>
+static T load4_no_cache(T* ptr) {
+
+	return (T)(_InterlockedExchangeAdd((volatile long*)ptr, 0));
+}
+
+template<typename T>
+static void store4_no_cache(T* ptr, T value) {
+	InterlockedExchange((volatile long*)ptr, (long )value);
+}
 
 struct alignas(64) blamdll_t {
 #if 0

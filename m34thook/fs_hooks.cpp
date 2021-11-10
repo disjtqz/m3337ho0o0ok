@@ -36,6 +36,47 @@ enum fsOrigin_t {
 	FS_SEEK_SET = 2,
 };
 #if 1
+/*
+	checked this against the generated code and vtbl in the game, it matches up perfectly!
+*/
+class cs_idFile_t {
+public:
+	virtual   ~cs_idFile_t() {}
+	virtual bool  IsIDFile_Memory() = 0;
+	virtual bool  IsIDFile_Permanent() = 0;
+	virtual bool  isIDFile_Verified() = 0;
+	virtual const char* GetFullPath() = 0;
+	virtual const char* GetName() = 0;
+	virtual uint64_t Read(void*, unsigned int len) = 0;
+	virtual uint64_t Write(const void*, unsigned int) = 0;
+	virtual uint64_t ReadOfs(long long offset, void*, unsigned int) = 0;
+	virtual uint64_t WriteOfs(long long offset, const void*, unsigned int) = 0;
+	virtual void* chunky_op(void*, void*, void*) = 0;
+	virtual bool  Lock(unsigned int, fsLock_t) = 0;
+	virtual bool  Unlock(unsigned int) = 0;
+	virtual size_t Length() = 0;
+	virtual void  SetLength(unsigned int newlength) = 0;
+	virtual size_t Tell() = 0;
+	virtual int   SeekEx(long long, fsOrigin_t origin) = 0;
+	virtual size_t Printf(const char*, ...) = 0;
+	virtual size_t VPrintf(const char* fmt, va_list va) = 0;
+	virtual size_t WriteFloatString(const char*, ...) = 0;
+	virtual size_t WriteFloatStringVA(const char* fmt, va_list va) = 0;
+	virtual size_t Timestamp() = 0;
+	virtual bool  IsWritable() = 0;
+	virtual void  Flush() = 0;
+	virtual void  ForceFlush() = 0;
+	virtual size_t GetSectorSize() = 0;
+	virtual int  GetDevice() = 0;
+	virtual bool  IsOSNative() = 0;
+	virtual int  GetFileErrorCode() = 0;
+	virtual void  SetFileError() = 0;
+	virtual size_t ReadString(idStr*) = 0;
+	virtual size_t ReadDebugTag(const char*, const char*, int) = 0;
+	virtual uint64_t WriteDebugTag(const char*, const char*) = 0;
+
+};
+
 struct idFileVftbl
 {
 	void (*dctor)(idFile* thiz, unsigned int);
@@ -78,6 +119,9 @@ struct idFile {
 	idFileVftbl* vftbl;
 };
 #endif
+
+
+
 //#define	USE_FILE_LOCKING
 
 #ifdef USE_FILE_LOCKING
@@ -87,6 +131,309 @@ struct idFile {
 #define		STDIOFN_LOCK(name, ...)		name (__VA_ARGS__)
 #define		EXTIOFN_LOCK(name, ...)		name (__VA_ARGS__)
 #endif
+
+class cs_idfile_override_virt_t : public cs_idFile_t {
+	FILE* m_cfile;
+	const char* m_fname;
+	const char* m_fullpath;
+	bool m_readable;
+	bool m_writable;
+public:
+	virtual ~cs_idfile_override_virt_t() {
+		if (m_cfile) {
+
+			STDIOFN_LOCK(fclose, m_cfile);
+			m_cfile = nullptr;
+			m_fullpath = nullptr;
+			m_fname = nullptr;
+			m_readable = false;
+			m_writable = false;
+		}
+	}
+
+
+
+	virtual const char* GetFullPath() {
+		return this->m_fullpath;
+	}
+
+	virtual const char* GetName() {
+		return this->m_fname;
+	}
+
+	virtual size_t Read( void* buffer, unsigned int len) {
+
+		return STDIOFN_LOCK(fread, buffer, 1, len, this->m_cfile);
+	}
+	virtual size_t Write(const void* buffer, unsigned int len) {
+		return STDIOFN_LOCK(fwrite, buffer, 1, len, this->m_cfile);
+	}
+	virtual size_t ReadOfs(long long offset, void* buffer, unsigned int len) {
+		auto t = this;
+
+		size_t old_pos = _ftelli64(t->m_cfile);
+		_fseeki64(t->m_cfile, offset, SEEK_SET);
+
+
+		size_t elements = fread(buffer, 1, len, this->m_cfile);
+		_fseeki64(t->m_cfile, old_pos, SEEK_SET);
+		return elements;
+
+	}
+	virtual size_t WriteOfs( long long offset, const void* buffer, unsigned int len) {
+		auto t = this;
+
+		size_t old_pos = _ftelli64(t->m_cfile);
+		_fseeki64(t->m_cfile, offset, SEEK_SET);
+
+
+		size_t elements = fwrite(buffer, 1, len, this->m_cfile);
+		_fseeki64(t->m_cfile, old_pos, SEEK_SET);
+		return elements;
+
+	}
+
+	virtual size_t Length() {
+		auto t = this;
+
+		auto oldpos = EXTIOFN_LOCK(_ftelli64, t->m_cfile);
+		EXTIOFN_LOCK(_fseeki64, t->m_cfile, 0, SEEK_END);
+		auto sz = EXTIOFN_LOCK(_ftelli64, t->m_cfile);
+		EXTIOFN_LOCK(_fseeki64, t->m_cfile, oldpos, SEEK_SET);
+		return sz;
+	}
+
+	virtual void SetLength(unsigned newl) {
+
+	}
+
+	virtual size_t Tell() {
+		return EXTIOFN_LOCK(_ftelli64, m_cfile);
+	}
+	virtual int SeekEx(long long offs, fsOrigin_t origin) {
+		unsigned outseekd = 0;
+		auto t = this;
+
+		switch (origin) {
+		case FS_SEEK_CUR:
+			outseekd = SEEK_CUR;
+			break;
+		case FS_SEEK_END:
+			outseekd = SEEK_END;
+			break;
+		case FS_SEEK_SET:
+			outseekd = SEEK_SET;
+			break;
+		}
+		return EXTIOFN_LOCK(_fseeki64, t->m_cfile, offs, outseekd);
+	}
+	virtual size_t Printf(const char* fmt, ...) {
+		va_list ap;
+		va_start(ap, fmt);
+		auto t = this;
+
+		size_t res = vfprintf(t->m_cfile, fmt, ap);
+
+		va_end(ap);
+		return res;
+	}
+	virtual size_t VPrintf(const char* fmt, va_list ap) {
+		auto t = this;
+		return vfprintf(t->m_cfile, fmt, ap);
+	}
+	virtual size_t WriteFloatString( const char*, ...) {
+		return 0;
+	}
+	virtual size_t WriteFloatStringVA( const char* fmt, va_list va) {
+		return 0;
+	}
+	virtual size_t Timestamp() {
+		return 0;
+	}
+	virtual bool IsWritable() {
+		return m_writable;
+	}
+
+	virtual void Flush() {
+		STDIOFN_LOCK(fflush, this->m_cfile);
+	}
+	virtual void  ForceFlush() {
+		Flush();
+	}
+	virtual size_t GetSectorSize() {
+		return 1;
+	}
+	virtual int GetDevice() {
+		return 4;
+	}
+
+	virtual int GetFileErrorCode() {
+		return ferror(m_cfile);
+	}
+
+	virtual void SetFileError() {
+
+	}
+
+	virtual size_t ReadString(idStr* outstr) {
+#if 1
+		char scratchbuffer[4096];
+		unsigned buffpos = 0;
+		auto t = this;
+
+		auto flush_buffer = [&scratchbuffer, &buffpos, outstr]() {
+
+			if (buffpos) {
+				scratchbuffer[buffpos] = 0;
+
+				std::string tmpstr{};
+				tmpstr = outstr->data;
+				tmpstr += scratchbuffer;
+
+
+				//*outstr += scratchbuffer;
+				*outstr = tmpstr.c_str();
+				buffpos = 0;
+
+			}
+		};
+
+
+		auto add_char_to_buffer = [&scratchbuffer, &buffpos, &flush_buffer](unsigned c) {
+			if (!c) {
+				flush_buffer();
+				return false;
+			}
+			else {
+				scratchbuffer[buffpos++] = c;
+				if (buffpos == 4095) {
+					flush_buffer();
+				}
+				return true;
+			}
+
+		};
+		size_t nread = 0;
+		while (true) {
+			if (feof(t->m_cfile)) {
+				flush_buffer();
+				break;
+			}
+			nread++;
+			unsigned c = STDIOFN_LOCK(fgetc, t->m_cfile);
+
+			if (!add_char_to_buffer(c))
+				break;
+
+		}
+
+		return nread;
+#else
+		return doomcall<size_t>(doomoffs::_ZN6idFile10ReadStringER5idStr, thiz, outstr);
+#endif
+	}
+
+	virtual size_t ReadDebugTag( const char* a1, const char* a2, int a3) {
+		return 0;
+	}
+	virtual uint64_t WriteDebugTag(const char* a1, const char* a2) {
+		return 0;
+	}
+	virtual void* chunky_op(void*, void*, void*) {
+		return nullptr;
+	}
+	virtual bool Lock( unsigned vv, fsLock_t fl) {
+#ifdef USE_FILE_LOCKING
+
+		_lock_file(this->m_cfile);
+#endif
+		return true;
+	}
+
+	virtual bool Unlock( unsigned vv) {
+#ifdef USE_FILE_LOCKING
+
+		_unlock_file(this->m_cfile);
+#endif
+		return true;
+	}
+	/*
+		.dctor = deconstructor,
+	.IsIDFile_Memory = return_false,
+	.IsIDFile_Permanent = return_false,
+	.GetFullPath = get_full_path,
+	.GetName = get_name,
+	.Read = do_read,
+	.Write = do_write,
+	.ReadOfs = do_read_offs,
+	.WriteOfs = do_write_offs,
+	.Lock = do_lock,
+	.Unlock = do_unlock,
+	.Length = do_length,
+	.SetLength = do_set_length,
+	.Tell = do_tell,
+	.SeekEx = do_seekex,
+	.Printf = do_Printf,
+	.VPrintf = do_VPrintf,
+	.WriteFloatString = do_WriteFloatString,
+	.WriteFloatStringVA = do_WriteFloatStringVA,
+	.Timestamp = do_Timestamp,
+	.IsWritable = is_writeable,
+	.Flush = do_flush,
+	.ForceFlush = do_flush,
+	.GetSectorSize = do_GetSectorSize,
+	.GetDevice = do_GetDevice,
+	.IsOSNative = return_false,
+	.GetFileErrorCode = do_getFileErrorCode,
+	.SetFileError = do_SetFileError,
+	.ReadString = do_ReadString,
+	.ReadDebugTag = do_ReadDebugTag,
+	.WriteDebugTag = do_WriteDebugTag
+	*/
+
+	virtual bool IsIDFile_Memory() {
+		return false;
+	}
+	virtual bool IsIDFile_Permanent() {
+		return false;
+	}
+
+	virtual bool IsOSNative() {
+		return false;
+	}
+
+	virtual bool isIDFile_Verified() {
+		return false;
+	}
+
+	cs_idfile_override_virt_t(FILE* fp, bool readable, bool writeable, const char* fpath, const char* name) {
+
+
+		this->m_cfile = fp;
+		this->m_readable = readable;
+		this->m_writable = writeable;
+		this->m_fullpath = fpath;
+		this->m_fname = name;
+	}
+
+
+	inline void* operator new (size_t sz) {
+
+		return idMemorySystem_malloc(sz, 52, 0);
+
+	}
+
+	inline void operator delete(void* thz) {
+		idMemorySystem_free(thz);
+	}
+
+	static idFile* create(FILE* fp, bool readable, bool writeable, const char* fpath, const char* name) {
+		cs_idfile_override_virt_t* overr = new cs_idfile_override_virt_t(fp, readable, writeable, fpath, name);
+		return (idFile*)overr;
+	}
+};
+
+
 struct cs_idfile_override_t : public idFile {
 	FILE* m_cfile;
 	const char* m_fname;
@@ -95,7 +442,7 @@ struct cs_idfile_override_t : public idFile {
 	bool m_writable;
 	void destroy() {
 		if (m_cfile) {
-
+			
 			STDIOFN_LOCK(fclose, m_cfile);
 			m_cfile = nullptr;
 			m_fullpath = nullptr;
@@ -124,7 +471,7 @@ struct cs_idfile_override_t : public idFile {
 	}
 
 	static size_t do_read(idFile* thiz, void* buffer, unsigned int len) {
-		
+
 		return STDIOFN_LOCK(fread, buffer, 1, len, reinterpret_cast<cs_idfile_override_t*>(thiz)->m_cfile);
 	}
 	static size_t do_write(idFile* thiz, const void* buffer, unsigned int len) {
@@ -360,6 +707,7 @@ struct cs_idfile_override_t : public idFile {
 
 	};
 	static idFile* create(FILE* fp, bool readable, bool writeable, const char* fpath, const char* name) {
+#if 1
 		cs_idfile_override_t* overr = (cs_idfile_override_t*)idMemorySystem_malloc(sizeof(cs_idfile_override_t), 52, 0);
 		overr->vftbl = &g_override_file_vftbl;
 		overr->m_cfile = fp;
@@ -368,6 +716,9 @@ struct cs_idfile_override_t : public idFile {
 		overr->m_fullpath = fpath;
 		overr->m_fname = name;
 		return overr;
+#else
+		return cs_idfile_override_virt_t::create(fp, readable, writeable, fpath, name);
+#endif
 	}
 };
 
@@ -413,7 +764,7 @@ public:
 		return *this;
 	}
 };
-static pathlogger_t g_print_resulting_path{"override_paths.log"};
+static pathlogger_t g_print_resulting_path{ "override_paths.log" };
 FILE* get_override_for_resource(const char* name, size_t* size_out) {
 	FILE* resfile = nullptr;
 
@@ -460,7 +811,7 @@ FILE* get_override_for_resource(const char* name, size_t* size_out) {
 
 
 #if 0
-	if(sh::string::strstr(name, ".decl")) {
+	if (sh::string::strstr(name, ".decl")) {
 		win32_path_conversion_context_extern_t convctx{};
 		wchar_t tmp_output[MH_FILESYS_PATHBUFFER_LENGTH];
 		filesys::get_ntpath_for(pathbuf, &convctx, tmp_output);
@@ -475,8 +826,8 @@ FILE* get_override_for_resource(const char* name, size_t* size_out) {
 #endif
 
 	//fast pre-test
-	if(!filesys::file_exists(pathbuf)) {
-	return nullptr;
+	if (!filesys::file_exists(pathbuf)) {
+		return nullptr;
 	}
 
 	fopen_s(&resfile, pathbuf, "rb");
@@ -584,7 +935,7 @@ static idFile* idResourceStorageDiskStreamer_GetFile_replacement(idResourceStora
 	FILE* override = nullptr;
 	size_t ressize = 0;
 	const char* fgname = get_name_of_res_at_index(container, resindex);
-	
+
 	if (sh::string::strstr(fgname, ".entities") || sh::string::strstr(fgname, ".decl")) {
 
 	}
@@ -597,7 +948,7 @@ static idFile* idResourceStorageDiskStreamer_GetFile_replacement(idResourceStora
 		//	static idFile* create(FILE* fp, bool readable, bool writeable, const char* fpath, const char* name) {
 
 		container->resourceEntries[resindex].options.compMode = 0;
-		if(!g_checkdatachecksum) {
+		if (!g_checkdatachecksum) {
 			g_checkdatachecksum = idCVar::Find("resourceStorage_checkDataCheckSum");
 
 		}
@@ -615,7 +966,7 @@ static idFile* idResourceStorageDiskStreamer_GetFile_replacement(idResourceStora
 		g_checkdatachecksum->data->valueInteger = 0;
 #endif
 
-		
+
 		return cs_idfile_override_t::create(override, true, false, fgname, fgname);
 	}
 }
@@ -624,10 +975,10 @@ static idFile* idResourceStorageDiskStreamer_GetFile_replacement(idResourceStora
 static bool g_installed_fs_hooks = false;
 
 void hook_idfilesystem() {
-	if(g_installed_fs_hooks)
+	if (g_installed_fs_hooks)
 		return;
 
-	g_installed_fs_hooks =true;
+	g_installed_fs_hooks = true;
 	//wayyyy overallocate. i think the max path for win is below this but also WHO KNOWS WHAT THE FUTURE HOLDS
 
 
@@ -637,10 +988,10 @@ void hook_idfilesystem() {
 	//dont check for error, if this failed we have bigger problems and should have crashed before now
 	unsigned backpos;
 	//zero out the exe filename
-	for( backpos = bufflen - 1; tmpbuffer_filename[backpos] != '\\'; --backpos) {
+	for (backpos = bufflen - 1; tmpbuffer_filename[backpos] != '\\'; --backpos) {
 		tmpbuffer_filename[backpos] = 0;
 	}
-	
+
 	tmpbuffer_filename[backpos] = 0;
 	g_basepath = tmpbuffer_filename;
 	delete[] tmpbuffer_filename;
@@ -700,7 +1051,7 @@ void hook_idfilesystem() {
 	patch_memory(descan::g_resourceStorageDiskStreamer_GetFile, redirector.getSize(), (char*)redirector.getCode());
 
 #else
-	g_original_ds_getfile = detour_with_thunk_for_original(descan::g_resourceStorageDiskStreamer_GetFile,(void*)idResourceStorageDiskStreamer_GetFile_replacement, true );
+	g_original_ds_getfile = detour_with_thunk_for_original(descan::g_resourceStorageDiskStreamer_GetFile, (void*)idResourceStorageDiskStreamer_GetFile_replacement, true);
 #endif
 
 

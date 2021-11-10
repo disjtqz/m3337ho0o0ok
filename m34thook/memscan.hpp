@@ -302,7 +302,10 @@ struct skip_and_capture_rva {
 
 		ptrdiff_t df = *reinterpret_cast<int*>(state.addr);
 
-		*rva_out = (void*)(state.addr + 4 + df);
+		
+		store8_no_cache(rva_out, (void*)(state.addr + 4 + df));
+
+		//*rva_out = (void*)(state.addr + 4 + df);
 
 		state.addr += 4;
 		return true;
@@ -315,8 +318,10 @@ struct skip_and_capture_4byte_value {
 	MH_FORCEINLINE
 		static bool match(scanstate_t& state) {
 
-		*number_out = *reinterpret_cast<unsigned*>(state.addr);
+		//*number_out = *reinterpret_cast<unsigned*>(state.addr);
 
+
+		store4_no_cache(number_out, *reinterpret_cast<unsigned*>(state.addr));
 		state.addr += 4;
 		return true;
 	}
@@ -1149,8 +1154,10 @@ struct block_scangroup_entry_t : public scangroup_listnode_t {
 			/*
 				we're done, remove us from the execution list
 			*/
-			if (m_result_receiver)
-				*m_result_receiver = res;
+			if (m_result_receiver) {
+				store8_no_cache(m_result_receiver, res);
+				//* = res;
+			}
 			if (m_prev) {
 				m_prev->m_next = m_next;
 			}
@@ -1370,6 +1377,7 @@ struct parallel_scangroup_group_t {
 			//thrd = nullptr;
 		//}
 		WaitForMultipleObjects(sizeof...(Ts), &m_threads[0], true, INFINITE);
+		//FlushProcessWriteBuffers();
 
 	}
 
