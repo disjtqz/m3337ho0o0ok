@@ -606,7 +606,7 @@ event_consumed_e mh_editor_local_t::receive_char_event(unsigned gotchar) {
 	return event_consumed_e::UNCONSUMED;
 }
 event_consumed_e mh_editor_local_t::receive_keydown_event(const char* keyname) {
-	if (sh::string::streq(keyname, "MWHEELUP")) {
+	if (sh::string::streq(keyname, "PGUP")) {
 		void* grabent = get_grabbed_entity();
 		if (!grabent)
 			return event_consumed_e::UNCONSUMED;
@@ -623,7 +623,7 @@ event_consumed_e mh_editor_local_t::receive_keydown_event(const char* keyname) {
 		return event_consumed_e::CONSUMED;
 
 	}
-	else if (sh::string::streq(keyname, "MWHEELDOWN")) {
+	else if (sh::string::streq(keyname, "PGDN")) {
 
 		void* grabent = get_grabbed_entity();
 		if (!grabent)

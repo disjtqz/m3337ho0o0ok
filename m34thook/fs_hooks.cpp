@@ -424,7 +424,8 @@ public:
 	}
 
 	inline void operator delete(void* thz) {
-		idMemorySystem_free(thz);
+		//todo: figure out the correct allocator/deallocator for this! overriding delete causes a crash
+		//idMemorySystem_free(thz);
 	}
 
 	static idFile* create(FILE* fp, bool readable, bool writeable, const char* fpath, const char* name) {
@@ -707,7 +708,7 @@ struct cs_idfile_override_t : public idFile {
 
 	};
 	static idFile* create(FILE* fp, bool readable, bool writeable, const char* fpath, const char* name) {
-#if 1
+#if 0
 		cs_idfile_override_t* overr = (cs_idfile_override_t*)idMemorySystem_malloc(sizeof(cs_idfile_override_t), 52, 0);
 		overr->vftbl = &g_override_file_vftbl;
 		overr->m_cfile = fp;
