@@ -1048,23 +1048,23 @@ static void mh_dumppropidxinfo(idCmdArgs* args) {
 
 static void mh_ScriptCmdEnt_console(idCmdArgs* args) {
 
+	void* entity = find_entity(args->argv[1]);
+
+	if (!entity) {
+		idLib::Printf("No entity %s\n", args->argv[1]);
+		return;
+	}
 
 	
-	idEventDef* evt = idEventDefInterfaceLocal::Singleton()->FindEvent(args->argv[1]);
+	idEventDef* evt = idEventDefInterfaceLocal::Singleton()->FindEvent(args->argv[2]);
 
 	if (!evt) {
 		
-		idLib::Printf("No event %s\n", args->argv[1]);
+		idLib::Printf("No event %s\n", args->argv[2]);
 		return;
 	}
 
 
-	void* entity = find_entity(args->argv[2]);
-
-	if (!entity) {
-		idLib::Printf("No entity %s\n", args->argv[2]);
-		return;
-	}
 	unsigned readvaluepos = 3;
 
 	auto getarg = [&readvaluepos, args]() -> const char* {
@@ -1176,6 +1176,12 @@ static void mh_ScriptCmdEnt_console(idCmdArgs* args) {
 			}
 			break;
 		}
+		/*
+			this is the way it is in v1's exe
+		*/
+		case '1':
+		case '2':
+		case '5':
 		case 's': {
 
 			getevarg().make_string(getarg());
