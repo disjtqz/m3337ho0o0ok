@@ -520,6 +520,13 @@ classTypeInfo_t* idType::ClassTypes(unsigned& out_n, unsigned whichsource) {
 	out_n = typegen->numClasses;
 	return classes;
 }
+unsigned idType::NumClassesTotal() {
+	unsigned num1, num2;
+
+	ClassTypes(num1, 0);
+	ClassTypes(num2, 1);
+	return num1 + num2;
+}
 enumTypeInfo_t* idType::EnumTypes(unsigned& out_n, unsigned whichsource) {
 	/*if (g_offset_enums == -1) {
 		g_offset_enums = FindClassField("typeInfoGenerated_t", "enums")->offset;
@@ -876,9 +883,29 @@ void idType::generate_unique_property_key_tree() {
 unsigned g_propname_rvas[DE_NUMPROPS];
 
 uint64_t g_propname_hashes[DE_NUMPROPS];
-void idType::compute_classinfo_delta2super() {
-	void* typeinfo_tools = get_typeinfo_tools();
 
+mh_classtypeextra_t* g_typeextra;
+
+void idType::compute_classinfo_mh_payloads() {
+	void* typeinfo_tools = get_typeinfo_tools();
+	unsigned totalclasses = NumClassesTotal();
+
+
+
+
+	std::map<const char*, de_prop_e> tmp_name2prop;
+
+	for (unsigned i = 0; i < DE_NUMPROPS; ++i) {
+		const char* nam = from_de_rva<const char>(g_propname_rvas[i]);
+		if (!nam)
+			continue;
+		tmp_name2prop[nam] = (de_prop_e)i;
+	}
+
+
+	unsigned required_uint16s = 0;
+
+	
 
 
 
@@ -889,7 +916,105 @@ void idType::compute_classinfo_delta2super() {
 		for (unsigned i = 0; i < nclass; ++i) {
 
 			classTypeInfo_t* cltype = &clss[i];
+			if (!cltype->name) {
+				continue;
+			}
 
+			if (!cltype->variableNameHashes) {
+				cltype->m_mh_added_delta2super = 0;
+			}
+			else {
+				//save the number of fields in here for the next pass
+				cltype->m_mh_added_delta2super = sh::ibulk::find_indexof_u64(cltype->variableNameHashes, 0) ;
+			}
+			required_uint16s += cltype->m_mh_added_delta2super;
+
+			// cltype->metaData = nullptr;
+			
+
+		}
+
+	}
+
+	unsigned u16mem = required_uint16s * sizeof(de_prop_e);
+
+
+	g_typeextra = (mh_classtypeextra_t*)sh::vmem::allocate_rw((totalclasses * sizeof(mh_classtypeextra_t)) + u16mem);
+
+	de_prop_e* current_propalloc_ptr = (de_prop_e*)(&g_typeextra[totalclasses]);
+
+	unsigned current_class = 0;
+
+
+
+	for (unsigned which = 0; which < 2; ++which) {
+		unsigned nclass = 0;
+		classTypeInfo_t* clss = idType::ClassTypes(nclass, which);
+
+		for (unsigned i = 0; i < nclass; ++i) {
+
+			classTypeInfo_t* cltype = &clss[i];
+			if (!cltype->name) {
+				continue;
+			}
+
+
+			mh_classtypeextra_t* current_classextra = &g_typeextra[current_class++];
+
+			if(cltype->metaData) {
+				current_classextra->m_metadata = *cltype->metaData;
+			}
+			else {
+				current_classextra->m_metadata.metaData = "";
+
+			}
+			
+			cltype->metaData = &current_classextra->m_metadata;
+
+			current_classextra->m_num_fields = cltype->m_mh_added_delta2super;
+			if (current_classextra->m_num_fields == 0) {
+				current_classextra->m_offset2fields = ~0u;
+			}
+			else {
+				current_classextra->m_offset2fields = ((uintptr_t)current_propalloc_ptr) - ((uintptr_t)current_classextra);
+				
+				de_prop_e* myprops = current_propalloc_ptr;
+				current_propalloc_ptr += current_classextra->m_num_fields;
+				//populate the property array
+				for (unsigned j = 0; j < current_classextra->m_num_fields; ++j) {
+
+					
+					/*auto uptr = std::lower_bound(&g_propname_rvas[0], &g_propname_rvas[DE_NUMPROPS], cltype->variables[j].name, [](unsigned rva, const char* name) {
+						return strcmp(from_de_rva<const char>(rva), name);
+						});
+						*/
+
+					auto iter = tmp_name2prop.find(cltype->variables[j].name);
+
+					if (iter != tmp_name2prop.end()) {
+						myprops[j] = iter->second;
+					}
+					else {
+						myprops[j] = (de_prop_e)~0u;
+					}
+
+				}
+
+			}
+
+
+		}
+
+	}
+
+	for (unsigned which = 0; which < 2; ++which) {
+		unsigned nclass = 0;
+		classTypeInfo_t* clss = idType::ClassTypes(nclass, which);
+
+		for (unsigned i = 0; i < nclass; ++i) {
+
+			classTypeInfo_t* cltype = &clss[i];
+			//cltype->metaData = nullptr;
 			if (!cltype->name) {
 				continue;
 			}
@@ -1258,4 +1383,33 @@ __int64  cryptstr_thunked(_QWORD* a1, unsigned __int64 a2)
 }
 uint64_t idType::calculate_field_name_hash(const char* name, size_t length) {
 	return cryptstr_thunked((long long*)name, length);
+}
+
+
+classVariableInfo_t* mh_fast_field_get(classTypeInfo_t* cls, de_prop_e propert) {
+	classTypeInfo_t* currsrch = cls;
+
+	do {
+		mh_classtypeextra_t* xtra = (mh_classtypeextra_t*)currsrch->metaData;
+
+		if (!xtra->m_num_fields)
+			return nullptr;
+
+
+		de_prop_e* props = mh_lea<de_prop_e>(xtra, xtra->m_offset2fields);
+
+		unsigned propidx = sh::ibulk::find_first_equal16((unsigned short*)props, xtra->m_num_fields, propert);
+
+
+		if (propidx != ~0u) {
+
+			classVariableInfo_t* var = &currsrch->variables[propidx];
+
+			return var;
+
+		}
+		currsrch = idType::get_class_superclass(currsrch);
+
+	} while (currsrch);
+	return nullptr;
 }

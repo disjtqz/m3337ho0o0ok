@@ -3,6 +3,9 @@
 #include <string>
 //segment for compressed tables embedded in dll
 #pragma section("cmptbl",read,discard)
+#include <cstdint>
+#include "pregenerated/doom_eternal_properties_generated.hpp"
+
 struct enumValueInfo_t {
 	//offset 0 , size 8
 	char* name;
@@ -60,6 +63,22 @@ struct idRenderModel;
 struct idDeclModelAsset;
 
 #pragma pack(push, 1)
+
+
+/*
+	we replace all classes metaData pointers with pointers to the one in here.
+	then we just recast to be able to search for a fields index. when you have the index you can just look it up in variables
+*/
+struct mh_classtypeextra_t {
+	
+	classMetaDataInfo_t m_metadata;
+
+	//
+	unsigned m_num_fields;
+
+	unsigned m_offset2fields; //add to this to get base of field props
+};
+
 struct classTypeInfo_t
 {
 	char* name;
@@ -118,6 +137,8 @@ namespace idType {
 	classVariableInfo_t* FindClassField(const char* cname, const char* fieldname);
 
 	classTypeInfo_t* ClassTypes(unsigned& out_n, unsigned whichsource=0);
+
+	unsigned NumClassesTotal();
 	enumTypeInfo_t* EnumTypes(unsigned& out_n, unsigned whichsource=0);
 	typedefInfo_t* TypedefTypes(unsigned& out_n, unsigned whichsource=0);
 	void do_idlib_dump();
@@ -181,7 +202,7 @@ namespace idType {
 	void dump_prop_rvas();
 	void init_prop_rva_table();
 	//set up our added "m_mh_added_delta2super" field on all classinfo objects
-	void compute_classinfo_delta2super();
+	void compute_classinfo_mh_payloads();
 
 	//get hash that is usable in a class' variableNameHashes
 	uint64_t calculate_field_name_hash(const char* name, size_t length);
@@ -273,8 +294,6 @@ struct mh_typesizecached_t {
 
 	}
 };
-#include <cstdint>
-#include "pregenerated/doom_eternal_properties_generated.hpp"
 
 
 /*
@@ -295,3 +314,9 @@ extern unsigned g_propname_rvas[DE_NUMPROPS];
 	prehashed property names for use in variableNameHashes
 */
 extern uint64_t g_propname_hashes[DE_NUMPROPS];
+
+extern mh_classtypeextra_t* g_typeextra;
+
+
+classVariableInfo_t* mh_fast_field_get(classTypeInfo_t* cls, de_prop_e propert);
+

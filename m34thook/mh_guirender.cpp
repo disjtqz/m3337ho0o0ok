@@ -58,10 +58,14 @@ static void mh_render_doms(idRenderModelGui* guimodel) {
 static void mh_rendergui_callback(idDebugHUD* dbghud, idRenderModelGui* rgui) {
 	//always show debughud
 	//com_debugHUD->data->valueInteger=1;
-	if (!com_debugHUD) {
-		com_debugHUD = idCVar::Find("com_debugHUD");
-	}
-	com_debugHUD->data->valueInteger = 1;
+	/*if (!com_debugHUD) {
+		com_debugHUD = // idCVar::Find("com_debugHUD");
+	}*/
+
+	cvar_data(cvr_com_debugHUD)->valueInteger = 1;
+
+
+	//com_debugHUD->data->valueInteger = 1;
 
 	call_as<void>(g_original_rendergui, dbghud, rgui);
 

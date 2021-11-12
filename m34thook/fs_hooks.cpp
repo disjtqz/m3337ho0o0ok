@@ -845,6 +845,7 @@ static idFile* idResourceStorageDiskStreamer_GetFile_replacement(idResourceStora
 		//	static idFile* create(FILE* fp, bool readable, bool writeable, const char* fpath, const char* name) {
 
 		container->resourceEntries[resindex].options.compMode = 0;
+		//this happens too early to use cvar_data
 		if (!g_checkdatachecksum) {
 			g_checkdatachecksum = idCVar::Find("resourceStorage_checkDataCheckSum");
 

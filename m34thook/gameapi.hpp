@@ -44,7 +44,8 @@ int* get_entity_spawnid_table();
 void** get_entity_table();
 //0-16384
 void* lookup_entity_index(unsigned idx);
-
+//used by noclip, notarget, and entering editor mode 
+void toggle_idplayer_boolean(void* player, const char* property_name, bool use_explicit_value = false, bool explicit_value = false);
 static void* get_gamelocal() {
 
 	return *reinterpret_cast<void**>(descan::g_gamelocal);

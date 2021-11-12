@@ -362,6 +362,12 @@
     <ClCompile Include="mhgui.cpp" />
     <ClCompile Include="mhserver.cpp" />
     <ClCompile Include="mhutil\mh_filesystem.cpp" />
+    <ClCompile Include="mh_cmds_cheats.cpp" />
+    <ClCompile Include="mh_cmds_dump_and_gen.cpp" />
+    <ClCompile Include="mh_cmds_editor.cpp" />
+    <ClCompile Include="mh_cmds_misc_and_dev.cpp" />
+    <ClCompile Include="mh_cmds_queries.cpp" />
+    <ClCompile Include="mh_cmds_spawning.cpp" />
     <ClCompile Include="mh_dev_hooks.cpp" />
     <ClCompile Include="mh_editor_mode.cpp" />
     <ClCompile Include="mh_guirender.cpp" />

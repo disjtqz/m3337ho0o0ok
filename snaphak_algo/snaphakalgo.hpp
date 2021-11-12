@@ -589,11 +589,18 @@ namespace sh::sns {
 #ifndef SHALGO_DISABLE_INTBULK
 namespace sh::ibulk {
 	static inline unsigned find_first_equal32(unsigned* values, unsigned nvalues, unsigned tofind) { return g_shalgo.m_ibulkroutines.m_find_first_equal32(values, nvalues, tofind); }
+	static inline unsigned find_first_equal16(unsigned short* values, unsigned nvalues, unsigned tofind) { return g_shalgo.m_ibulkroutines.m_find_first_equal16(values, nvalues, tofind); }
+
 	static inline unsigned find_first_notequal32(unsigned* values, unsigned nvalues, unsigned tofind) { return g_shalgo.m_ibulkroutines.m_find_first_notequal32(values, nvalues, tofind); }
 	static inline void addscalar_32(unsigned* values, unsigned nvalues, unsigned addend) { return g_shalgo.m_ibulkroutines.m_addscalar_32(values, nvalues, addend); }
 	static inline void subscalar_32(unsigned* values, unsigned nvalues, unsigned addend) { return g_shalgo.m_ibulkroutines.m_subscalar_32(values, nvalues, addend); }
 	static inline void mulscalar_32(unsigned* values, unsigned nvalues, unsigned mult) { return g_shalgo.m_ibulkroutines.m_mulscalar_32(values, nvalues, mult); }
+	//if the value does not exist then you're in for a crash
+	MH_LEAF
+		static inline unsigned find_indexof_u64(unsigned long long* MH_NOESCAPE values, unsigned long long findval) {
 
+		return g_shalgo.m_ibulkroutines.m_indexof_u64(values, findval);
+	}
 }
 #endif
 namespace sh::math {

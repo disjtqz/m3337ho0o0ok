@@ -493,7 +493,34 @@ void mh_ScriptCmdEnt_idEntity(idEventDef* tdef_name, void* self, idEventArg* arg
 
 	call_as<void>(callev, self, out_arg, tdef_name, args);
 }
+/*
+	now handles noclip and notarget
+*/
+void toggle_idplayer_boolean(void* player, const char* property_name, bool use_explicit_value, bool explicit_value) {
 
+	auto headattr = idType::FindClassField("idPlayer", property_name);
+	if (!headattr) {
+		idLib::Printf("Couldn't locate the %s property on idPlayer, tell chrispy.\n", property_name);
+		return;
+	}
+	int field_value;
+
+	if (!use_explicit_value) {
+		field_value = get_classfield_boolean(player, headattr);
+
+		field_value = !field_value;
+	}
+	else {
+		field_value = explicit_value;
+	}
+	if (field_value) {
+		idLib::Printf("Turning %s on.\n", property_name);
+	}
+	else
+		idLib::Printf("Disabling %s\n", property_name);
+	set_classfield_boolean(player, headattr, field_value);
+
+}
 static cs_uninit_t<idEventArg> g_sink_eventarg_ret{};
 
 

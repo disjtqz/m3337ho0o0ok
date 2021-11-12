@@ -51,7 +51,7 @@ static void unpair2u32(unsigned long long paired, unsigned& lo, unsigned& hi) {
 
 #define		MH_SMALLLOOP	_Pragma("clang loop unroll(disable) vectorize(disable)")
 
-#define		SHALGO_DISABLE_INTBULK
+//#define		SHALGO_DISABLE_INTBULK
 #define		SHALGO_DISABLE_BITMAP
 #define		SHALGO_ONE_SEGMENT
 
