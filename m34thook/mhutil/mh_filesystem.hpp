@@ -32,6 +32,9 @@ namespace filesys {
 
 	std::int64_t read_file(cs_fd_t fd, void* buffer, size_t ntoread);
 	std::int64_t write_file(cs_fd_t fd, const void* buffer, size_t size);
+
+
+
 	/*
 		using this is faster than the end-relative or current relative seek operations 
 		with SetFilePointer, because those require an extra syscall (queryinformation) to 

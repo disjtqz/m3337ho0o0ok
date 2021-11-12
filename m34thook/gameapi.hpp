@@ -563,7 +563,7 @@ idEventArg mh_ScriptCmdEntFast(idEventDef* tdef_name, void* self, idEventArg* ar
 //directly calls idEntity::CallEvent from the idEntity vtbl instead of dispatching to self's method
 //can be much faster for classes that have a deep inheritance chain and is safe if the event is only implemented by idEntity
 idEventArg mh_ScriptCmdEnt_idEntity(idEventDef* tdef_name, void* self, idEventArg* args = nullptr);
-
+void mh_ScriptCmdEnt_idEntity(idEventDef* tdef_name, void* self, idEventArg* args, idEventArg* out_arg);
 void mh_ScriptCmdEnt_idEntity_void(idEventDef* tdef_name, void* self, idEventArg* args = nullptr);
 template<typename TYuckyStr>
 struct cached_eventdef_t {

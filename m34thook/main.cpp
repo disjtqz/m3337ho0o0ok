@@ -20,6 +20,32 @@ void mh_error_message(const char* fmt, ...) {
 
 	va_end(ap);
 }
+CS_COLD_CODE
+CS_NOINLINE
+CS_NORETURN
+void cs::_cs_assert_fail_raise(const cs::cs_assert_fail_descr_t* descr) {
+
+	char errbuff[4096] = { 0 };
+
+	strncpy(errbuff, "Assertion failed in function ", sizeof(errbuff));
+	char line_text[32];
+
+	//itoa(descr->line_no, line_text, 10);
+
+	strncat(errbuff, descr->fn_name, sizeof(errbuff));
+	strncat(errbuff, line_text, sizeof(errbuff));
+
+	strncat(errbuff, " in file ", sizeof(errbuff));
+
+	strncat(errbuff, descr->_file_name, sizeof(errbuff));
+
+
+	MessageBoxA(nullptr, errbuff, "M347h00k Assertion Failure", MB_ICONERROR);
+
+	
+
+
+}
 static HMODULE g_real_xinput = nullptr;
 snaphak_algo_t g_shalgo{};
 __declspec(noinline)
@@ -46,7 +72,7 @@ static HMODULE get_real_xinput() {
 
 static void* xinputgetstate_ptr = nullptr;
 static void* xinputsetstate_ptr = nullptr;
-
+  
 extern "C"
 __declspec(dllexport)
 

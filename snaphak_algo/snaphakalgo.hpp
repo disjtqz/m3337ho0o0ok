@@ -598,6 +598,13 @@ namespace sh::ibulk {
 #endif
 namespace sh::math {
 
+	static constexpr double PI = 3.14159265358979323846;
+
+	static constexpr double	M_DEG2RAD = PI / 180.0;
+	static constexpr double	M_RAD2DEG = 180.0 / PI;
+	static constexpr double DEG2RAD(double a) {
+		return (a)*M_DEG2RAD;
+	}
 
 	struct real_t {
 		sh_real_t m_data;
@@ -672,6 +679,16 @@ namespace sh::math {
 		}
 	};
 
+	static void sincos(double d, double& s, double& c) {
+
+		sh::math::real_t dr = real_t::from_double(d);
+		real_t ss, cc;
+
+		dr.sincos(dr, &ss, &cc);
+
+		s = (double)ss;
+		c = (double)cc;
+	}
 	struct realvec3_t {
 		real_t x, y, z;
 
@@ -716,6 +733,8 @@ namespace sh::math {
 			return tmp.x + tmp.y + tmp.z;
 		}
 	};
+
+	
 
 	struct snaphak_rendermatrix_t {
 		real_t m[16];

@@ -25,9 +25,12 @@
 #include "mh_mainloop.hpp"
 #include "mh_editor_mode.hpp"
 #include "rapiddecl.hpp"
-
+#include "fs_hooks.hpp"
+#include <filesystem>
 #define		editor_assert_m(...)
 class mh_editor_local_t;
+
+#define		NEW_EDITOR_GRAB_MODE
 
 /*
 	little bit of background: back when things were a little more primitive, i was mulling over how i wanted to do decl parsing/unparsing. my idea was to just acquire references
@@ -99,8 +102,12 @@ namespace decl_parsing {
 
 }
 
-
-
+//ahahah this fucking works
+//offset to it hasnt changed since v1
+static void update_map_entity(void* entity, bool add) {
+	auto gloc = get_gamelocal();
+	call_virtual<void>(gloc, 0xf8 / 8, entity, add, nullptr);
+}
 
 #define	TRACE_EDITOR(fmt, ...)		idLib::Printf(fmt "\n", __VA_ARGS__)
 class mh_editor_input_handler_t :public mh_input_handler_t {
@@ -132,15 +139,20 @@ struct editor_vec3_t {
 	};
 
 
-	editor_vec3_t() : x(.0), y(.0), z(.0) {}
+	editor_vec3_t() {
+		xmmlo = xmmhi = _mm_setzero_pd();
+	}
 
 
-	editor_vec3_t(const idVec3* v) : x(v->x), y(v->y), z(v->z) {}
+	editor_vec3_t(const idVec3* v)  {
+		*this = v;
+
+	}
 	editor_vec3_t(const idVec3& v) : editor_vec3_t(&v) {}
 	editor_vec3_t(__m128d lowpart, __m128d highpart) : xmmlo(lowpart), xmmhi(highpart) {}
 
 
-	editor_vec3_t(double _x, double _y, double _z) : x(_x), y(_y), z(_z) {}
+	editor_vec3_t(double _x, double _y, double _z) :xmmlo(_mm_setr_pd(_x, _y)), xmmhi(_mm_set_sd(_z)) {}
 	editor_vec3_t(double dval) {
 		xmmlo = _mm_set1_pd(dval);
 		xmmhi = xmmlo;
@@ -148,19 +160,41 @@ struct editor_vec3_t {
 
 	editor_vec3_t& operator = (const idVec3& other) {
 
-		x = other.x;
-		y = other.y;
-		z = other.z;
-		return *this;
+		return *this = &other;
 	}
 
 	editor_vec3_t& operator =(const idVec3* other) {
-		x = other->x;
+		/*x = other->x;
 		y = other->y;
-		z = other->z;
+		z = other->z;*/
+		
+		__m128 tmp = _mm_loadu_ps(&other->x);
+
+		__m128d cvtlo = _mm_cvtps_pd(tmp);
+		__m128d cvthi = _mm_cvtps_pd(_mm_movehl_ps(tmp, tmp));
+
+		xmmlo = cvtlo;
+		xmmhi = cvthi;
 		return *this;
 	}
 
+	void set(double x, double y, double z) {
+		xmmlo = _mm_setr_pd(x, y);
+		xmmhi = _mm_set_sd(z);
+
+	}
+
+	void to_floats(float* out) const {
+
+		__m128 xx = _mm_cvtpd_ps(xmmlo);
+		__m128 xy = _mm_cvtpd_ps(xmmhi);
+
+		out[0] = _mm_cvtss_f32(xx);
+		out[1] = _mm_cvtss_f32(_mm_shuffle_ps(xx, xx, _MM_SHUFFLE(3, 2, 1, 1)));
+		out[2] = _mm_cvtss_f32(xy);
+
+		
+	}
 	editor_vec3_t operator +(editor_vec3_t other)const {
 		return editor_vec3_t(_mm_add_pd(xmmlo, other.xmmlo), _mm_add_pd(xmmhi, other.xmmhi));
 	}
@@ -213,12 +247,78 @@ struct editor_vec3_t {
 	}
 
 	operator idVec3() const {
-		return idVec3{ (float)x, (float)y, (float)z };
+
+		idVec3 res;
+		to_floats(&res.x);
+		return res;
 	}
 
 
 };
+struct editor_mat3_t;
 
+struct editor_angles_t {
+	double pitch;
+	double yaw;
+	double roll;
+	double padding;
+
+	editor_mat3_t to_mat3() const;
+
+	
+};
+
+/*
+idMat3 idAngles::ToMat3() const
+{
+	idMat3 mat;
+	float sr, sp, sy, cr, cp, cy;
+
+
+	idMath::SinCos( DEG2RAD( yaw ), sy, cy );
+	idMath::SinCos( DEG2RAD( pitch ), sp, cp );
+	idMath::SinCos( DEG2RAD( roll ), sr, cr );
+
+	mat.mat[ 0 ].Set( cp * cy, cp * sy, -sp );
+	mat.mat[ 1 ].Set( sr * sp * cy + cr * -sy, sr * sp * sy + cr * cy, sr * cp );
+	mat.mat[ 2 ].Set( cr * sp * cy + -sr * -sy, cr * sp * sy + -sr * cy, cr * cp );
+
+	return mat;
+}
+
+*/
+
+
+struct editor_mat3_t {
+	editor_vec3_t mat[3];
+
+	idMat3 to_id()const;
+};
+idMat3 editor_mat3_t::to_id()const {
+	idMat3 result;
+	for (unsigned i = 0; i < 3; ++i) {
+		mat[i].to_floats(&result.mat[i].x);
+	}
+
+}
+editor_mat3_t editor_angles_t::to_mat3() const {
+	editor_mat3_t mat;
+	double sr, sp, sy, cr, cp, cy;
+	using namespace sh::math;
+
+
+	sincos(DEG2RAD(yaw), sy, cy);
+	sincos(DEG2RAD(pitch), sp, cp);
+	sincos(DEG2RAD(roll), sr, cr);
+
+	mat.mat[0].set(cp * cy, cp * sy, -sp);
+	mat.mat[1].set(sr * sp * cy + cr * -sy, sr * sp * sy + cr * cy, sr * cp);
+	mat.mat[2].set(cr * sp * cy + -sr * -sy, cr * sp * sy + -sr * cy, cr * cp);
+
+	return mat;
+
+
+}
 static mh_new_fieldcached_t < void*, YS("idEntity"), YS("entityDef")>g_entitydef_identity{};
 //static mh_fieldcached_t<void*> g_entitydef_identity;
 
@@ -227,6 +327,45 @@ static mh_new_fieldcached_t<const char*, YS("idDecl"), YS("textSource")> g_iddec
 static mh_new_fieldcached_t<idVec3, YS("idBloatedEntity"), YS("renderModelInfo"), YS("scale")> g_field_renderscale{};
 static mh_new_fieldcached_t<idVec3, YS("idBloatedEntity"), YS("clipModelInfo"), YS("size")> g_clipmodel_size{};
 static mh_new_fieldcached_t<idVec3, YS("idBloatedEntity"), YS("renderModelInfo"), YS("scale")> g_new_field_renderscale{};
+
+
+CACHED_EVENTDEF(getMins);
+CACHED_EVENTDEF(setSpawnPosition);
+CACHED_EVENTDEF(setOrigin);
+static void set_spawn_pos(void* ent, editor_vec3_t pos) {
+	cs_uninit_t<idEventArg> thearg;
+	thearg->make_vec3(pos.operator idVec3());
+	ev_setSpawnPosition(ent, &thearg);
+}
+
+static void editor_set_pos(void* ent, editor_vec3_t pos) {
+	set_spawn_pos(ent, pos);
+	idVec3 tmp = static_cast<idVec3>(pos);
+	set_entity_position(ent, &tmp);
+
+	idEventArg fuknut;
+	fuknut.make_vec3(pos);
+	ev_setOrigin(ent, &fuknut);
+
+}
+static editor_vec3_t get_player_feet_position() {
+
+	void* plyer = get_local_player();
+	if (!plyer)
+		return editor_vec3_t{};
+
+	idVec3 tmppos;
+	get_entity_position(plyer, &tmppos);
+
+	idVec3 mins;
+	cs_uninit_t<idEventArg> result_mins;
+	mh_ScriptCmdEnt_idEntity(ev_getMins.Get(), plyer, nullptr, &result_mins);
+
+	tmppos.z = mins.z;
+
+	return tmppos;
+}
+
 
 
 class entity_iface_t {
@@ -449,12 +588,23 @@ public:
 
 class mh_editor_local_t : public mh_editor_interface_t {
 	std::string m_prevgrab_entity_name;
+	double m_grab_distance;
 	mh_editor_input_handler_t m_input_forwarder;
 	mh_dom_t* m_gui;
 	mh_ui_ele_t* m_current_entity_name_label;
 
 	mh_ui_ele_t* m_entitydef_source;
 	rapiddecl::Document m_current_parsed_entitydef;
+	editor_vec3_t m_grabbed_object_original_pos;
+	editor_vec3_t m_grabbed_object_prior_pos;
+
+	char m_temp_pathbuf[OVERRIDE_PATHBUF_SIZE];
+
+	struct {
+
+		unsigned m_locked_z : 1;
+
+	};
 
 	void bind_entity_to_player(void* entity);
 	bool is_prev_grabbed_entity_valid();
@@ -479,6 +629,9 @@ class mh_editor_local_t : public mh_editor_interface_t {
 
 	void set_entitydef_text(const char* s);
 
+
+	const char* get_current_map_file_output_path();
+	void write_current_map_to_overrides();
 	static void prerun_forwarder(void* ud) {
 		reinterpret_cast<mh_editor_local_t*>(ud)->tick_prerun();
 	}
@@ -507,7 +660,7 @@ public:
 	virtual void init_for_session();
 };
 
-static mh_new_fieldcached_t<void, YS("idPlayer"), YS("focusTracker"), YS("focusPointTrace")> g_idPlayer_focusTracker_focusTrace;
+static mh_new_fieldcached_t<void, YS("idPlayer"), YS("focusTracker"), YS("focusTrace")> g_idPlayer_focusTracker_focusTrace;
 
 static mh_new_fieldcached_t<idVec3, YS("idFocusTrace"), YS("close")> g_focustrace_close;
 
@@ -635,7 +788,31 @@ void mh_editor_local_t::tick_prerun() {
 
 void mh_editor_local_t::tick_postrun() {
 
+#if defined(NEW_EDITOR_GRAB_MODE)
 
+	void* grabbed = get_grabbed_entity();
+	if (grabbed) {
+		editor_vec3_t transldir = get_player_look_direction();
+
+		transldir = transldir * m_grab_distance;
+
+		idVec3 ppos;
+		get_entity_position(get_local_player(), &ppos);
+
+		transldir = transldir + ppos;
+
+		if (m_locked_z) {
+
+			transldir.z = m_grabbed_object_prior_pos.z;
+
+		}
+		m_grabbed_object_prior_pos = transldir;
+
+
+		editor_set_pos(grabbed, transldir);
+
+	}
+#endif
 }
 void mh_editor_local_t::init_for_session() {
 
@@ -701,13 +878,50 @@ event_consumed_e mh_editor_local_t::receive_keydown_event(const char* keyname) {
 		set_entity_clipscale(scale);
 		return event_consumed_e::CONSUMED;
 	}
+	else if (sh::string::streq(keyname, "INS")) {
+
+		void* grabee = get_grabbed_entity();
+		if (!grabee)
+			return event_consumed_e::UNCONSUMED;
+
+		void* edef = get_entitydef();
+
+		if (edef) {
+			void* newe = spawn_entity_from_entitydef(edef);
+
+			if (newe) {
+				idVec3 newpos;
+				get_entity_position(grabee, &newpos);
+				editor_set_pos(newe, newpos);
+				update_map_entity(newe, true);
+				ungrab();
+
+				grab(newe);
+				return event_consumed_e::CONSUMED;
+			}
+
+		}
+	}
+	else if (sh::string::streq(keyname, "Z")) {
+		if (get_grabbed_entity()) {
+			m_locked_z = !m_locked_z;
+			return event_consumed_e::CONSUMED;
+		}
+	}
 	return event_consumed_e::UNCONSUMED;
 
 }
 
 
+static mh_new_fieldcached_t<idStr, YS("idMapFileLocal"), YS("name")> g_mapfile_name;
+
+
 event_consumed_e mh_editor_local_t::receive_keyup_event(const char* keyname) {
-	
+	if (sh::string::streq(keyname, "F3")) {
+
+		write_current_map_to_overrides();
+		return event_consumed_e::CONSUMED;
+	}
 	if (!get_grabbed_entity())
 		return event_consumed_e::UNCONSUMED;
 	if (sh::string::streq(keyname, "F1")) {
@@ -747,18 +961,83 @@ event_consumed_e mh_editor_local_t::receive_keyup_event(const char* keyname) {
 		return event_consumed_e::CONSUMED;
 	}
 
+
 	return event_consumed_e::UNCONSUMED;
+
+}
+void mh_editor_local_t::write_current_map_to_overrides() {
+
+	const char* pth = get_current_map_file_output_path();
+	if (!pth)
+		return;
+	idLib::Printf("Saving map to %s\n", pth);
+
+	
+	call_as<void>(descan::g_idmapfile_write, get_level_map(), pth);
+	namespace fs = std::filesystem;
+
+	
+	fs::path expected = pth;
+	expected = expected.replace_extension(".map");
+
+	fs::path dup = expected;
+
+	dup = dup.replace_extension(".entities");
+
+	std::string exps = expected.generic_string();
+	std::string dups = dup.generic_string();
+
+	idLib::Printf("Moving %s to %s\n", exps.c_str(), dups.c_str());
+
+	fs::rename(expected, dup);
+
+}
+const char* mh_editor_local_t::get_current_map_file_output_path() {
+	void* lvlmap = get_level_map();
+	if (lvlmap) {
+
+		idStr* mapname = g_mapfile_name(lvlmap);
+
+		if (mapname->data) {
+			get_override_path(mapname->data, m_temp_pathbuf);
+			return m_temp_pathbuf;
+		}
+		else
+			return nullptr;
+	}
+	else
+		return nullptr;
 
 }
 void mh_editor_local_t::receive_mouse_move_event(unsigned x, unsigned y) {
 
 }
 void mh_editor_local_t::bind_entity_to_player(void* entity) {
-
+#if !defined(NEW_EDITOR_GRAB_MODE)
 	idEventArg argy;
 	argy.make_entity(get_local_player());
 
 	ev_bind(entity, &argy);
+
+#else
+	ev_unbind(entity);
+	editor_vec3_t eent;
+	editor_vec3_t eplayer;
+	idVec3 entpos;
+	idVec3 ppos;
+
+	get_entity_position(entity, &entpos);
+	get_entity_position(get_local_player(), &ppos);
+
+	eent = entpos;
+	eplayer = ppos;
+	m_grabbed_object_original_pos = eent;
+	m_grabbed_object_prior_pos = eent;
+	m_grab_distance = eent.distance3d(ppos);
+
+
+
+#endif
 }
 bool mh_editor_local_t::is_prev_grabbed_entity_valid() {
 	if (m_prevgrab_entity_name.length()) {
@@ -799,6 +1078,7 @@ void mh_editor_local_t::grab(void* entity) {
 	void* targ = entity;
 	if (!is_valid_entity_for_editing(targ))
 		return;
+
 	bind_entity_to_player(targ);
 	m_prevgrab_entity_name = get_entity_name(targ);
 	m_current_entity_name_label->set_text(m_prevgrab_entity_name.c_str());
@@ -807,19 +1087,49 @@ void mh_editor_local_t::grab(void* entity) {
 void mh_editor_local_t::grab_player_focus() {
 
 	void* ltarg = get_player_look_target();
-	if (!ltarg)
+
+	if (!ltarg || ltarg == get_grabbed_entity()) {
+		ungrab();
 		return;
+	}
+
+
 	grab(ltarg);
 }
 void mh_editor_local_t::ungrab() {
 	void* grb = get_grabbed_entity();
 
 	if (grb) {
+		
+#if !defined(NEW_EDITOR_GRAB_MODE)
 		ev_unbind(grb);
+#else
+
+		//fix up our localoffset from binding
+		idEventArg tmpbind = ev_getBindMaster(grb);
+
+		//ev_unbind(grb);
+		idVec3 pp = m_grabbed_object_prior_pos;
+
+		editor_set_pos(grb, &pp);
+		//set_entity_position(grb, &pp);
+		
+		void* oldmaster = tmpbind.value.er;
+
+		if (oldmaster != nullptr && oldmaster != get_world()) {
+			
+
+		//	ev_bind(grb, &tmpbind);
+		}
+
+		update_map_entity(grb, false);
+#endif
 	}
 	m_prevgrab_entity_name.clear();
 	m_current_entity_name_label->set_text("");
 	m_entitydef_source->set_text("");
+
+	
 }
 
 static mh_editor_local_t g_local_editor{};

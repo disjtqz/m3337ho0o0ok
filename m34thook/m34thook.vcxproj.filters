@@ -147,6 +147,9 @@
     <ClCompile Include="pregenerated\doom_eternal_properties_generated.cpp">
       <Filter>Source Files\pregenerated</Filter>
     </ClCompile>
+    <ClCompile Include="mh_headergen.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_exe_interface.hpp">
@@ -289,6 +292,9 @@
     </ClInclude>
     <ClInclude Include="pregenerated\doom_eternal_properties_generated.hpp">
       <Filter>Header Files\pregenerated</Filter>
+    </ClInclude>
+    <ClInclude Include="mh_headergen.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

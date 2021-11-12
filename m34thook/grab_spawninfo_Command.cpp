@@ -11,6 +11,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstdio>
+#include <snaphakalgo.hpp>
+#if 0
 namespace idMath {
 void SinCos(float a, float& s, float& c)
 {
@@ -22,12 +24,15 @@ void SinCos(float a, float& s, float& c)
 	c = cosf(a);
 
 }
+
 const float	PI				= 3.14159265358979323846f;
 
 const float	M_DEG2RAD		= PI / 180.0f;
 const float	M_RAD2DEG		= 180.0f / PI;
 
 }
+
+#endif
 struct idVec3 {
 	float x, y, z;
 	void Set(float _x, float _y, float _z){
@@ -49,18 +54,18 @@ public:
 	idMat3 ToMat3() const;
 };
 
-#define DEG2RAD(a)				( (a) * idMath::M_DEG2RAD )
+//#define DEG2RAD(a)				( (a) * idMath::M_DEG2RAD )
 
 idMat3 idAngles::ToMat3() const
 {
 	idMat3 mat;
-	float sr, sp, sy, cr, cp, cy;
-
+	double sr, sp, sy, cr, cp, cy;
+	using namespace sh::math;
 	
-
-	idMath::SinCos( DEG2RAD( yaw ), sy, cy );
-	idMath::SinCos( DEG2RAD( pitch ), sp, cp );
-	idMath::SinCos( DEG2RAD( roll ), sr, cr );
+	
+	sincos( DEG2RAD( yaw ), sy, cy );
+	sincos( DEG2RAD( pitch ), sp, cp );
+	sincos( DEG2RAD( roll ),sr, cr );
 
 	mat.mat[ 0 ].Set( cp * cy, cp * sy, -sp );
 	mat.mat[ 1 ].Set( sr * sp * cy + cr * -sy, sr * sp * sy + cr * cy, sr * cp );

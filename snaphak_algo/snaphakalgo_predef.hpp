@@ -8,6 +8,7 @@
 #define		CS_DATA_SEG(name)			__declspec(allocate(name))
 #define		CS_CODE_SEG(name)			__declspec(code_seg(name)) 
 #define		CS_COLD_CODE				CS_CODE_SEG(".cold")
+#define		CS_NORETURN					__declspec(noreturn)
 #if defined(__clang__)
 
 #define		cs_assume_m(...)		if(!(__VA_ARGS__)) __builtin_unreachable()

@@ -224,3 +224,59 @@ struct cs_uninit_array_t {
 		return reinterpret_cast<T*>(&m_storage[0])[idx];
 	}
 };
+namespace cs {
+	struct cs_assert_fail_descr_t {
+		const char* _err_msg;
+		const char* _file_name;
+		const char* fn_name;
+	};
+	CS_COLD_CODE
+	CS_NOINLINE
+	CS_NORETURN
+	void _cs_assert_fail_raise(const cs_assert_fail_descr_t* descr);
+
+}
+namespace cs::_cs_assert_impl {
+
+	template<typename T/*, unsigned line_no*/>
+	struct _cs_assert_fail {
+		static constexpr cs_assert_fail_descr_t _descr{ T::__msg(), T::__file() , T::fn() };
+
+		CS_NOINLINE
+			CS_NORETURN
+			CS_CODE_SEG(".assert_failures")
+			static void raise_failure() {
+			_cs_assert_fail_raise(&_descr);
+		}
+
+	};
+}
+#if 0
+#define cs_assert(...)		\
+	do {\
+		static  const char* __assert_msg = #__VA_ARGS__;\
+		static  const char* __assert_failure_file = __FILE__;\
+		using __failure_handler = cs::_cs_assert_impl::_cs_assert_fail<&__assert_msg,&__assert_failure_file, __LINE__>;\
+		if(!(__VA_ARGS__)) \
+			__failure_handler::raise_failure();\
+	}while(false)
+#else
+#define cs_assert(...)		\
+	do {\
+		static constexpr const char* __funcy = __FUNCTION__;\
+		class _arg_passer {\
+		public:\
+			static constexpr const char* __msg() {\
+				return #__VA_ARGS__; \
+			}\
+			static constexpr const char* __file() {\
+				return __FILE__;\
+			}\
+static constexpr const char* fn(){return __funcy;}\
+		};\
+\
+		using __failure_handler = cs::_cs_assert_impl::_cs_assert_fail<_arg_passer>;\
+		if(!(__VA_ARGS__)) \
+			__failure_handler::raise_failure();\
+	}while(false)
+#endif

@@ -461,6 +461,8 @@ static FILE* g_spawnfile_recording = nullptr;
 MH_NOINLINE
 static bool mh_spawn_impl(const char* declname, idVec3* position) {
 
+	cs_assert(declname != nullptr);
+	cs_assert(position != nullptr);
 	void* our_decl = locate_resourcelist_member("idDeclEntityDef", declname);
 
 	if (!our_decl) {
@@ -1017,7 +1019,7 @@ static void mh_removeAi(idCmdArgs* args) {
 
 	}
 }
-
+//ai_suicideCheck_disable 1
 static void mh_grab(idCmdArgs* args) {
 
 	get_current_editor()->grab_player_focus();
@@ -1030,7 +1032,12 @@ static void mh_kw(idCmdArgs* args) {
 	set_clipboard_data(output.c_str());
 	idLib::Printf("%s", output.c_str());
 }
-
+/*
+	noclip 
+	g_stopTime 1
+	hands_show 0
+	r_skipGuis 1
+*/
 static void mh_editor(idCmdArgs* args) {
 
 	get_current_editor()->init_for_session();

@@ -10,6 +10,9 @@
 #include <algorithm>
 #include "idLib.hpp"
 #include "clipboard_helpers.hpp"
+#include "cmdsystem.hpp"
+
+#include "mh_headergen.hpp"
 #if 0
 static constexpr const char* g_all_entity_names[] = {
 "jakesDevWidget","idWorldspawn","idWorldClipBounds","idWeaponEntity","idWaveShield","idWaterEntity","idVolume_VisualImpairment","idVolume_Trigger","idVolume_TraversalGen","idVolume_ToggleableDamageOverTime","idVolume_TogglePlayerBodyReaction","idVolume_StreamTreeMarkup","idVolume_StealthField","idVolume_StatusEffect","idVolume_Stairs","idVolume_SpaceWarp","idVolume_Siphon","idVolume_SecretHint","idVolume_RuneHint","idVolume_RunCycleHint","idVolume_RevivePlayer","idVolume_PlayerViewEffect","idVolume_PlayerUseProxy","idVolume_PlayerEnvOverride","idVolume_PlayerBodyReaction","idVolume_PlasmaPuddleFX","idVolume_PlasmaPuddle","idVolume_PlacedFlightVolume","idVolume_OliviasGuardFight_DangerZone","idVolume_MatterBallWarp","idVolume_MancubusSteamFX","idVolume_MancubusSteam","idVolume_MancubusFlamethrower","idVolume_LocationCalling","idVolume_LightRigModifier","idVolume_KillDownedInjured","idVolume_InvasionSpawnZone","idVolume_InvasionInhibit","idVolume_Invasion","idVolume_Gravity","idVolume_ForceDormant","idVolume_FlightObstacle","idVolume_Flight","idVolume_EmpField","idVolume_DoomGravity","idVolume_DeployedLaser","idVolume_DemonicPossession","idVolume_DemonicBait","idVolume_DamageOverTime","idVolume_Damage","idVolume_CustomLedgeGrab","idVolume_ControlPointSpawnInfluence","idVolume_Blocking","idVolume","idUtilityCamera","idUmbraVolume","idUmbraVisibilityContributionVolume","idTurret","idTrigger_VoiceCommunication","idTrigger_VisibilityController","idTrigger_TestPlayerState","idTrigger_Teleporter_Fade","idTrigger_Teleporter","idTrigger_TakeDamage","idTrigger_StatDrivenEvent","idTrigger_SonicBoom","idTrigger_Repulsor","idTrigger_RemoveInventoryItems","idTrigger_RemoveEntities","idTrigger_Push","idTrigger_Multiplayer","idTrigger_MovementModifier","idTrigger_ModPlayerVelocity","idTrigger_InvasionAreaExit","idTrigger_InvasionAreaEnter","idTrigger_Hurt","idTrigger_GorillaBar","idTrigger_ForcePlayerBodyReactionOnce","idTrigger_Facing","idTrigger_EnergyField","idTrigger_DynamicHurt","idTrigger_DummyFire","idTrigger_Dormancy","idTrigger_DemonDamageOutModifier","idTrigger_Damage","idTrigger_ChallengeBoundry","idTrigger_BouncePad","idTrigger_AIInteraction","idTriggerToucher","idTrigger","idTrailerCamera","idToucher","idTexlodNodeGenerationArea","idTest_Sector","idTest_MetaData_WebPath","idTest_MetaData_Target","idTest_MetaData_String","idTest_MetaData_SectorYaw","idTest_MetaData_SectorPitch","idTest_MetaData_Plane","idTest_MetaData_MoveableSpheres","idTest_MetaData_Model","idTest_MetaData_Line","idTest_MetaData_FovYaw","idTest_MetaData_FovPitch","idTest_MetaData_Fov","idTest_MetaData_Cylinder2","idTest_MetaData_Cylinder","idTest_MetaData_Circle","idTest_MetaData_Bounds","idTestModel2","idTestEntity","idTeleporterPad","idTeamCapturePoint","idTarget_VisibilityController","idTarget_ViewPos","idTarget_UnlockUltraNightmare","idTarget_TutorialGui","idTarget_Timer","idTarget_Timeline","idTarget_TestPlayerState","idTarget_Teleport","idTarget_SwapNavMesh","idTarget_SwapFaction","idTarget_Subtitle","idTarget_StartSoundShader","idTarget_Spawn_Target","idTarget_Spawn_Parent","idTarget_Spawn","idTarget_SoundDuck","idTarget_Snap_Objective","idTarget_ShowHands","idTarget_ShowGui","idTarget_Show","idTarget_ShakeTrigger","idTarget_SetSpawnSpot","idTarget_SetInEncounterGroup","idTarget_SetGroupCombatStage","idTarget_Secret","idTarget_RemoveSaveGate","idTarget_RemoveItems","idTarget_Remove","idTarget_RandomImpulse","idTarget_Print","idTarget_PodiumSpawn","idTarget_PlayerWhiplash","idTarget_PlayerViewEffect","idTarget_PlayerStatus","idTarget_PlayerStatModifier","idTarget_PlayerModifier","idTarget_PlayerInvulnerability","idTarget_PlayerCheckpoint","idTarget_PlayVoiceOver","idTarget_Ping","idTarget_Perk","idTarget_Path","idTarget_POI","idTarget_Objective_Triggered","idTarget_Objective_Replace","idTarget_Objective_HideEntities","idTarget_Objective_Give","idTarget_Objective_Complete","idTarget_Notification","idTarget_ModifyTraversalClass","idTarget_ModifyGroup","idTarget_Melee","idTarget_MapGroupUnlock","idTarget_MakeActivatable","idTarget_LightController","idTarget_LevelTransition","idTarget_LayerStateChange","idTarget_InventoryCheck","idTarget_Intro","idTarget_InteractionAction","idTarget_HideHands","idTarget_Hide","idTarget_GroupMessage","idTarget_GroupExpression","idTarget_GiveWeaponUpgradePoints","idTarget_GiveItems","idTarget_GeomCacheStreamer","idTarget_GameStateIntSet","idTarget_GameStateIntInc","idTarget_GameChallengeGameOver","idTarget_GUICommand","idTarget_ForceGroupRole","idTarget_ForceDormancy","idTarget_FirstThinkActivate","idTarget_FireWeapon","idTarget_FastTravelUnlock","idTarget_FastTravelInhibit","idTarget_FakeEnemy","idTarget_FadeComplete","idTarget_EquipItem","idTarget_Enemy","idTarget_EndOfCampaign","idTarget_EndInvasion","idTarget_EncounterChallenge","idTarget_EnableTarget","idTarget_EnableGroup","idTarget_EnableAIEvent","idTarget_DynamicChallenge_Start","idTarget_DynamicChallenge_PointTrigger","idTarget_DynamicChallenge_GiveBonus","idTarget_DynamicChallenge_FailChallenge","idTarget_DynamicChallenge_End","idTarget_DummyFire","idTarget_DormancyRadius","idTarget_Disconnect_GoToScreen","idTarget_Disconnect","idTarget_DisableInvasion","idTarget_DisableEscMenu","idTarget_DevLoadoutSwap","idTarget_DemonBountyAiTypes","idTarget_DeactivateStatusEffects","idTarget_Damage","idTarget_Cvar","idTarget_CurrencyCheck","idTarget_Credits","idTarget_Count_Random","idTarget_Count","idTarget_ConditionalAccessor","idTarget_Conditional","idTarget_Command","idTarget_CollisionDamage","idTarget_Codex","idTarget_ClearFakeEnemy","idTarget_ChangeVolume_PlayerEnvOverride","idTarget_ChangeMaterial","idTarget_ChangeColor","idTarget_Break","idTarget_Award_RushAttack","idTarget_Award_Adrenaline","idTarget_ApplyImpulse","idTarget_ApplyExplosionImpulse","idTarget_AnimWebUnpause","idTarget_AnimWebPause","idTarget_AnimWebChangeStateVia","idTarget_AnimWebChangeState","idTarget_AmplitudeTrigger","idTarget_AdaptiveTickToggle","idTarget_ActionScript","idTarget_AIProxy","idTarget_AIGlobalSettings","idTarget_AIEvent","idTargetSpawnGroup","idTarget","idSyncEntity","idSummoningTemplate","idStaticWaterEntity","idStaticVisibilityBlocker","idStaticMultiGuiEntity","idStaticEntity","idSpringCamera","idSplinePath","idSpitfireCannon","idSpectatorCamera","idSpectacleCamera","idSpawnPoint","idSpawnNodeSplines","idSpawnNode","idSpawnArea","idSoundTrigger","idSoundSubtitlesEntity","idSoundSphereEntity","idSoundPrefetchEntity","idSoundEntity","idSoundBoxEntity","idSoundBeamEntity","idSoundAreaEntity","idSlowMotionCamera","idRotatableCamera","idRiftBuildPosition","idRibbon2Emitter","idResurrectionProxy","idRegenArea","idReferenceMap","idPurifyingBeam","idProp_WeaponStatic","idProp_WeaponPickup","idProp_Usable","idProp_Static","idProp_Spawnable","idProp_PlayableDemonCircle","idProp_Pickup","idProp_OnlineCollectible","idProp_Moveable","idProp_HealthPickup","idProp_Explosive","idProp_ElectricArmor","idProp_DemonCircle","idProp_Coop_Billboard","idProp_Coop","idProp_ContinuallyUsed","idProp_BreakableLoot","idProp_Breakable","idProp_ArmorPickup","idProp_AIArmor","idProp2","idProp","idProjectile_SwarmMissile_V2","idProjectile_SwarmMissile","idProjectile_SiphonGrenade","idProjectile_RollingFire","idProjectile_Rocket","idProjectile_MeatHook","idProjectile_Mancubus_Smoke","idProjectile_GrenadeFast","idProjectile_Grenade","idProjectile_EMP","idProjectile_Destroyer","idProjectile_DamageOverTime","idProjectile_CyberdemonSwarmMissile","idProjectile_CacoDemonRocket","idProjectile_BfgBurn","idProjectile_BfgArc","idProjectile_Auger","idProjectile_AIHomingRocket","idProjectileShield","idProjectile","idPoseableEntity","idPortalWorld","idPortalSurface","idPlayerStart","idPlayer","idPieceEmitter","idPhotoModeCamera","idPerceptionVolume","idPathCorner","idParticleEmitter","idOverTheShoulderCamera","idObjective_Relay","idNetworkedParticleEmitter","idNetworkedEntityFx","idNetworkLight","idMusicEntity","idMultiplayerTrigger","idMoverModifier","idMover","idMidnightCutscene","idLowGravityMover","idLogicEntity","idLight","idLensFlare","idJostleSwivel","idJostleSpring","idJostleAnimated","idItemPropSpawner","idInventoryStorage","idInvasionBlocker","idInvasionAreaManager","idInteractionCamera","idInteractable_WorldCache","idInteractable_WeaponModBot","idInteractable_VegaTraining","idInteractable_Tutorial","idInteractable_SonicBoost","idInteractable_SlayerGate_Coop","idInteractable_SlayerGate","idInteractable_Shooter","idInteractable_Rune","idInteractable_Respec","idInteractable_Obstacle","idInteractable_NightmareMarker","idInteractable_Moveable","idInteractable_Minigame","idInteractable_LootDrop","idInteractable_LootCrate","idInteractable_JukeBox","idInteractable_HighlightSelector","idInteractable_GoreNest","idInteractable_GoreBud","idInteractable_GiveItems","idInteractable_EliteGuard_Coop","idInteractable_EliteGuard","idInteractable_Doom","idInteractable_CurrencyExchange","idInteractable_CollectibleViewer","idInteractable_Challenge_Shrine","idInteractable_BatterySocket","idInteractable_Automap","idInteractable","idInfo_UniversalTraversal","idInfo_Trigger_Facing_Target","idInfo_TraversalPoint","idInfo_TraversalChain","idInfo_TraversalBase","idInfo_TeleportDestination","idInfo_SpawnConditionProxy","idInfo_FastTravel","idInfo_DoorTraversalChain","idInfo_BounceDestination","idInfoWaitForButtonAfterLoad","idInfoTraversal_Ultimate","idInfoTraversal_Bot","idInfoTraversalEndPoint","idInfoTraversal","idInfoTexLod","idInfoStandPoint","idInfoSplineChild","idInfoSpawnPoint","idInfoRuler","idInfoRoam","idInfoPlayerHud","idInfoPath","idInfoOrbit","idInfoLookTargetGroup","idInfoLookTarget","idInfoLevelFadeIn","idInfoGoalPosition","idInfoFocus","idInfoFlightVolumeEntrance","idInfoExportHint","idInfoDebugMarker","idInfoCoverExposed","idInfoCover","idInfoCloudShot","idInfoBounds","idInfoAmbient","idInfoAAS","idInfo","idInfluenceSpawnSettings","idIOS_MeteorCrater","idHeightmapVolumeEntity","idGuiEntity_Text","idGuiEntity_Cinematic","idGuiEntity","idGoreEntity","idGladiatorShield","idGeomCacheEntity","idGameChallenge_Shell","idGameChallenge_PVPTutorial","idGameChallenge_PVP","idGameChallenge_CampaignSinglePlayer","idGameChallenge","idFuncSwing","idFuncShadowCaster","idFuncRotate","idFreeDbgCam","idFreeCamera","idFlightVolumeTraversalSpline","idExtraLifeTeleportLocation","idEscapePod","idEnvironmentalDamage_PointManager_Trigger","idEnvironmentalDamage_Point","idEnvironmentalDamage_Hurt_Trigger","idEnvArea","idEntityFxRandom","idEntityFx","idEntityCamera","idEntity","idEngineEntity","idEnergyShell","idEncounterVolume_ValidCover","idEncounterTrigger_RaiseUserFlag","idEncounterTrigger_PreCombat","idEncounterTrigger_OverrideCombatGrouping","idEncounterTrigger_Exit","idEncounterTrigger_Commit","idEncounterTrigger_AmbientAIAudio","idEncounterModifier_SetNextScriptIndex","idEncounterModifier_SetEnabledState","idEncounterModifier_Reset","idEncounterManager","idEncounterGroupMgr","idEncounterAmbientAudio","idElectricBoltEmitter","idEditorModelEntity","idDynamicVisibilityBlocker","idDynamicEntity_Damageable","idDynamicEntity","idDestructibleManager","idDestructible","idDestroyableProp","idDemonPlayer_Summoner","idDemonPlayer_Revenant","idDemonPlayer_Prowler","idDemonPlayer_Pinky","idDemonPlayer_PainElemental","idDemonPlayer_Marauder","idDemonPlayer_Mancubus","idDemonPlayer_Cacodemon","idDemonPlayer_Baron","idDemonPlayer_Archvile","idDemonPlayer_Arachnotron","idDemonPlayerStart","idDemonPlayer","idDecalEntity_Coop","idDecalEntity","idDebrisEntity","idDeathmatchPlayerStart","idDamageableAttachment","idCyberdemonMissileShooter","idCrusher","idCoopStartingInventory","idCombatVolume","idCombatGrouping","idCollisionStreamArea","idCollisionExclusionVolume","idCollectibleEntity","idCinematicCamera","idCaptureFrames","idCampaignInvaderStart","idCameraView","idCamera","idBuildArea","idBreakablePlatform","idBreakable","idBotPathNodeEntity","idBotActionEntity_Usable","idBotActionEntity_Info_RoamGoal","idBotActionEntity_Info_POI","idBotActionEntity_Info","idBotActionEntity","idBossInfo","idBloatedEntity","idBillboard","idBfgBurn","idBasePropSpawner","idBarricade","idBFG_Geyser","idAutomapSectionRevealTrigger","idAutomapMapGroupRevealEntity","idArchvileTemplate","idAnnouncementManager","idAnimated_ThreatSensor","idAnimated_AnimWeb_Samuel","idAnimated_AnimWeb","idAnimatedSimple_Faust","idAnimatedSimple_AnimSys","idAnimatedInteractable","idAnimatedEntity","idAnimatedAttachment_AF","idAnimatedAttachment","idAnimated","idAnimNode","idAnimCamera","idAmbientTriggerModifier_SetAITypes","idAmbientNodeGenerationArea","idAmbientNodeExclusionArea","idAlignedEntity","idActorWorkNode","idActorAmbientFilter","idActor","idActionNode","idAbnormalPlayerMetrics","idAITest_Rotation","idAITest","idAISearchHintGroup","idAISearchHintAuto","idAISearchHintAnimation","idAIMapMarkupEntity","idAIInteraction","idAIHintGroup","idAIHint","idAIDebugCamera","idAIDeathVolume","idAICombatHint_SuppressionFirePoint","idAICombatHint","idAIAASHint","idAI2","idAFEntity_GetUpTest","idAFEntity_Generic","idAFEntity_Dummy","idAFEntity_Corpse","idAASReachability","idAASObstacle"
@@ -754,11 +757,8 @@ long long* idType::get_enum_member_value(const char* ename, const char* mname) {
 	}
 	return nullptr;
 }
-#pragma comment(lib, "cabinet.lib")
-#include "compressapi.h"
 
 
-using strviewset_t = std::set<std::string_view>;
 //shared between header gen code and startup prop ptr locating code
 static strviewset_t get_set_of_prop_names() {
 
@@ -794,52 +794,80 @@ static strviewset_t get_set_of_prop_names() {
 
 }
 
-#define		PROPERTY_KEY_TABLE_COMPRESSION_ALGO		COMPRESS_ALGORITHM_LZMS
+
+
+
+
+
+static strviewset_t generate_cvar_name_set() {
+	strviewset_t res;
+	unsigned num_cvars = 0;
+	idCVar** cvs = idCVar::GetList(num_cvars);
+
+
+	for (unsigned i = 0; i < num_cvars; ++i) {
+		idCVar* current = cvs[i];
+
+		auto data = current->data;
+		res.insert(data->name);
+	}
+	return res;
+
+}
+
+MH_NOINLINE
+void generate_idcvar_tree() {
+
+	strviewset_t cvset = generate_cvar_name_set();
+	std::vector<unsigned char> bbuff = pack_strset(cvset);
+	unsigned total_required_bytes = bbuff.size();
+	std::vector<unsigned char> compout = compress_packet_strset(bbuff);
+
+	std::string header_txt = "#pragma once\nenum de_cvar_e : unsigned short {";
+
+	for (auto&& prop : cvset) {
+
+		header_txt += "cvr_";
+		header_txt += prop;
+		header_txt += ",";
+	}
+	header_txt += "};static constexpr unsigned DE_NUMCVARS = ";
+
+	header_txt += std::to_string(cvset.size());
+
+
+	header_txt += "static constexpr unsigned ALLCVARS_COMPRESSED_SIZE = ";
+	header_txt += std::to_string(compout.size());
+	header_txt += ";static constexpr unsigned ALLCVARS_DECOMPRESSED_SIZE = ";
+	
+	header_txt += std::to_string(compout.size());
+
+	header_txt += ";\n__declspec(allocate(\"cmptbl\")) extern unsigned char ALLCVARS_COMPRESSED_DATA[ALLCVARS_COMPRESSED_SIZE];";
+
+	write_cfile(std::move(header_txt), "doom_eternal_cvars_generated.hpp");
+
+
+	std::string cvartxt = "#include \"doom_eternal_cvars_generated.hpp\"\n";
+
+	cvartxt += "__declspec(allocate(\"cmptbl\")) unsigned char ALLCVARS_COMPRESSED_DATA[ALLCVARS_COMPRESSED_SIZE] = {";
+
+	cvartxt += expand_bytes_to_c_bytearray(compout);
+
+	cvartxt += "};";
+	write_cfile(std::move(cvartxt), "doom_eternal_cvars_generated.cpp");
+}
+
+
 MH_NOINLINE
 void idType::generate_unique_property_key_tree() {
 	strviewset_t allprops = get_set_of_prop_names();
 
-	std::set<char> allusedchars{};
-	unsigned total_required_bytes = 0;
-	for (auto&& chrs : allprops) {
 
-		total_required_bytes += chrs.length() + 1;
-
-		for (auto&& c : chrs) {
-			allusedchars.insert(c);
-
-		}
-	}
+	std::vector<unsigned char> bbuff = pack_strset(allprops);
+	unsigned total_required_bytes = bbuff.size();
 
 
-
-	idLib::Printf("%d unique characters in prop names", allusedchars.size());
-	
-	std::vector<unsigned char> bbuff{};
-	bbuff.resize(total_required_bytes);
-
-
-	unsigned writepos = 0;
-	for (auto&& chrs : allprops) {
-
-		memcpy(&bbuff[writepos], chrs.data(), chrs.length() + 1);
-		writepos += chrs.length() + 1;
-
-	}
-	COMPRESSOR_HANDLE comp;
-	CreateCompressor(PROPERTY_KEY_TABLE_COMPRESSION_ALGO, nullptr, &comp);
-	for (auto&& c : allusedchars) {
-
-		idLib::Printf("%d\n", c);
-	}
-
-
-	std::vector<unsigned char> compout{};
-	compout.resize(total_required_bytes * 2);
-	SIZE_T decompres;
-	Compress(comp, (LPCVOID)bbuff.data(), bbuff.size(), compout.data(), compout.size(), &decompres);
-
-	CloseCompressor(comp);
+	std::vector<unsigned char> compout = compress_packet_strset(bbuff);
 	const char* propkey_type = "unsigned";
 
 	if (allprops.size() < 65536)
@@ -876,60 +904,29 @@ void idType::generate_unique_property_key_tree() {
 	proptxt_result += ";static constexpr unsigned ALLPROPS_COMPRESSED_SIZE = ";
 
 
-	proptxt_result += std::to_string(decompres);
+	proptxt_result += std::to_string(compout.size());
 
 	proptxt_result += ";static constexpr unsigned ALLPROPS_DECOMPRESSED_SIZE = ";
 	proptxt_result += std::to_string(total_required_bytes);
 
 		
-	proptxt_result += ";extern unsigned char ALLPROPS_COMPRESSED_DATA[ALLPROPS_COMPRESSED_SIZE];";
+	proptxt_result += ";\n__declspec(allocate(\"cmptbl\")) extern unsigned char ALLPROPS_COMPRESSED_DATA[ALLPROPS_COMPRESSED_SIZE];";
+	write_cfile(std::move(proptxt_result), "doom_eternal_properties_generated.hpp");
 
-	{
-
-		FILE* outf;
-		fopen_s(&outf, "doom_eternal_properties_generated.hpp", "wb");
-
-
-
-		/*for (auto&& name : allprops) {
-
-			fprintf(outf, "%s\n", name.data());
-		}
-		*/
-
-		fwrite(proptxt_result.data(), proptxt_result.length(), 1, outf);
-		fclose(outf);
-
-
-	}
 
 
 	std::string proptxt_header = "#include \"doom_eternal_properties_generated.hpp\"\n";
 
-	proptxt_header += "unsigned char ALLPROPS_COMPRESSED_DATA[ALLPROPS_COMPRESSED_SIZE] = {";
+	proptxt_header += "__declspec(allocate(\"cmptbl\")) unsigned char ALLPROPS_COMPRESSED_DATA[ALLPROPS_COMPRESSED_SIZE] = {";
 
-	proptxt_header += std::to_string(compout[0]);
-
-	for (unsigned i = 1; i < decompres; ++i) {
-
-		proptxt_header += ",";
-		proptxt_header += std::to_string(compout[i]);
-	}
+	proptxt_header += expand_bytes_to_c_bytearray(compout);
 
 	proptxt_header += "};";
 
 
 
+	write_cfile(std::move(proptxt_header), "doom_eternal_properties_generated.cpp");
 
-
-
-	FILE* outf;
-	fopen_s(&outf, "doom_eternal_properties_generated.cpp", "wb");
-
-
-
-	fwrite(proptxt_header.data(), proptxt_header.length(), 1, outf);
-	fclose(outf);
 
 
 }
@@ -999,33 +996,13 @@ void idType::compute_classinfo_delta2super() {
 void idType::init_prop_rva_table() {
 
 	
-	DECOMPRESSOR_HANDLE decomp;
-	CreateDecompressor(PROPERTY_KEY_TABLE_COMPRESSION_ALGO, nullptr, &decomp);
 
-	char* hugebuffer_decompress = new char[ALLPROPS_DECOMPRESSED_SIZE];
-
-	SIZE_T decompressed_size;
-	Decompress(decomp, ALLPROPS_COMPRESSED_DATA, ALLPROPS_COMPRESSED_SIZE, hugebuffer_decompress, ALLPROPS_DECOMPRESSED_SIZE, &decompressed_size);
-
-
-	CloseDecompressor(decomp);
-	
-	char* consumepos = hugebuffer_decompress;
+	bvec_t hugebuffer_decompress1 = decompress_strset(ALLPROPS_COMPRESSED_DATA, ALLPROPS_COMPRESSED_SIZE, ALLPROPS_DECOMPRESSED_SIZE);
 
 	//all of our data is already sorted so this is kinda a waste
 	//made this use emplace_hint pushing back
-	strviewset_t decompressed_set;
+	strviewset_t decompressed_set = unpack_strset(hugebuffer_decompress1, DE_NUMPROPS);
 
-
-	for (unsigned i = 0; i < DE_NUMPROPS; ++i) {
-
-		std::string_view current = consumepos;
-
-		consumepos += current.length() + 1;
-		decompressed_set.emplace_hint( decompressed_set.end(), std::move(current));
-
-
-	}
 	//todo: do decompress/build of set and get_set_of_prop_names in parallel
 	strviewset_t unpset = get_set_of_prop_names();
 
@@ -1052,7 +1029,6 @@ void idType::init_prop_rva_table() {
 		}
 		current_findpos++;
 	}
-	delete[] hugebuffer_decompress;
 
 }
 

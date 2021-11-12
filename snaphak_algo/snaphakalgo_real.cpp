@@ -167,6 +167,8 @@ static void cs_realsincos(sh_real_t val,  sh_real_t* out_sin, sh_real_t* out_cos
 
 	}
 }
+
+
 REALSEG
 static  
 sh_real_t cs_atan2 (sh_real_t iny, sh_real_t inx) {

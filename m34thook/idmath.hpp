@@ -114,6 +114,10 @@ struct  idDrawVert
 	idVec2 _st;
 	idVec2 _st2;
 };
+
+struct idMat3 {
+	idVec3 mat[3];
+};
 /*
 extern	idColor colorBlack;
 extern	idColor colorWhite;

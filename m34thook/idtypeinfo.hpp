@@ -1,6 +1,8 @@
 #pragma once
 #pragma pack(push, 1)
 #include <string>
+//segment for compressed tables embedded in dll
+#pragma section("cmptbl",read,discard)
 struct enumValueInfo_t {
 	//offset 0 , size 8
 	char* name;

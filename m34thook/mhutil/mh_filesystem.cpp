@@ -4,7 +4,7 @@
 #include <Windows.h>
 #include "win32/ntdll.h"
 #include "snaphakalgo.hpp"
-
+#include <filesystem>
 static_assert(sizeof(_UNICODE_STRING) == WIN32_INTERNAL_SIZEOF_UNICODE_STRING);
 CS_COLD_CODE
 void* vmem_map_file(cs_fd_t handle, void** extra, size_t size, size_t offset) {
@@ -77,6 +77,7 @@ int64_t filesys::file_length(cs_fd_t fd) {
 
 int64_t filesys::read_file(cs_fd_t fd, void* buffer, size_t ntoread) {
 	DWORD nread = 0;
+	
 	ReadFile((HANDLE)fd, buffer, ntoread, &nread, nullptr);
 
 	return nread;
