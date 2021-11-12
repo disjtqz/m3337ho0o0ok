@@ -1,4 +1,5 @@
 #include "mh_headergen.hpp"
+#include <Windows.h>
 #pragma comment(lib, "cabinet.lib")
 #include "compressapi.h"
 #define		PROPERTY_KEY_TABLE_COMPRESSION_ALGO		COMPRESS_ALGORITHM_LZMS

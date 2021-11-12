@@ -1,13 +1,15 @@
 #include "mh_defs.hpp"
 
-#include "cmdsystem.hpp"
 #include "game_exe_interface.hpp"
+#include "cmdsystem.hpp"
+
 //#include "doomoffs.hpp"
 #include "scanner_core.hpp"
 #include "idtypeinfo.hpp"
 #include "gameapi.hpp"
 #include "snaphakalgo.hpp"
 #include "idLib.hpp"
+#include "mh_headergen.hpp"
 void idCmd::register_command(const char* name, cmdcb_t cb, const char* description) {
 	//auto cmdSystem = *doomsym<char**>(doomoffs::cmdSystem);
 
@@ -114,6 +116,108 @@ idCVar** idCVar::GetList(unsigned& out_n) {
 
 
 	return (idCVar**)entries->list;
+
+
+}
+
+
+
+static strviewset_t generate_cvar_name_set() {
+	strviewset_t res;
+	unsigned num_cvars = 0;
+	idCVar** cvs = idCVar::GetList(num_cvars);
+
+
+	for (unsigned i = 0; i < num_cvars; ++i) {
+		idCVar* current = cvs[i];
+
+		auto data = current->data;
+		res.insert(data->name);
+	}
+
+	return res;
+
+}
+
+MH_NOINLINE
+void idCVar::generate_name_table() {
+
+	strviewset_t cvset = generate_cvar_name_set();
+	std::vector<unsigned char> bbuff = pack_strset(cvset);
+	unsigned total_required_bytes = bbuff.size();
+	std::vector<unsigned char> compout = compress_packet_strset(bbuff);
+
+	std::string header_txt = "#pragma once\nenum de_cvar_e : unsigned short {";
+
+	for (auto&& prop : cvset) {
+
+		header_txt += "cvr_";
+		std::string_view tmpprop = prop;
+		while (isspace(tmpprop[0])) {
+			tmpprop = tmpprop.substr(1);
+		}
+		header_txt += tmpprop;
+		header_txt += ",";
+	}
+	header_txt += "};static constexpr unsigned DE_NUMCVARS = ";
+
+	header_txt += std::to_string(cvset.size());
+
+
+	header_txt += ";static constexpr unsigned ALLCVARS_COMPRESSED_SIZE = ";
+	header_txt += std::to_string(compout.size());
+	header_txt += ";static constexpr unsigned ALLCVARS_DECOMPRESSED_SIZE = ";
+
+	header_txt += std::to_string(bbuff.size());
+
+	header_txt += ";\n__declspec(allocate(\"cmptbl\")) extern unsigned char ALLCVARS_COMPRESSED_DATA[ALLCVARS_COMPRESSED_SIZE];";
+
+	write_cfile(std::move(header_txt), "doom_eternal_cvars_generated.hpp");
+
+
+	std::string cvartxt = "#include \"doom_eternal_cvars_generated.hpp\"\n";
+
+	cvartxt += "__declspec(allocate(\"cmptbl\")) unsigned char ALLCVARS_COMPRESSED_DATA[ALLCVARS_COMPRESSED_SIZE] = {";
+
+	cvartxt += expand_bytes_to_c_bytearray(compout);
+
+	cvartxt += "};";
+	write_cfile(std::move(cvartxt), "doom_eternal_cvars_generated.cpp");
+}
+unsigned g_cvardata_rvas[DE_NUMCVARS];
+
+void idCVar::get_cvardata_rvas() {
+	bvec_t hugebuffer_decompress1 = decompress_strset(ALLCVARS_COMPRESSED_DATA, ALLCVARS_COMPRESSED_SIZE, ALLCVARS_DECOMPRESSED_SIZE);
+
+
+	strviewset_t decompressed_set = unpack_strset(hugebuffer_decompress1, DE_NUMCVARS);
+
+	std::map<std::string_view, idCVar::cvarData_t*> cvar_datas;
+	unsigned num_cvars;
+	idCVar** cvs = idCVar::GetList(num_cvars);
+
+
+	for (unsigned i = 0; i < num_cvars; ++i) {
+		idCVar* current = cvs[i];
+
+		auto data = current->data;
+		cvar_datas[data->name] = data;
+	}
+
+	strviewset_t::iterator current_findpos = decompressed_set.begin();
+
+	auto cvardataend = cvar_datas.end();
+	for (unsigned i = 0; i < DE_NUMCVARS; ++i) {
+
+		auto loc = cvar_datas.find(*current_findpos);
+		if (loc == cvardataend) {
+
+			g_cvardata_rvas[i] == 0;
+		}
+		else {
+			g_cvardata_rvas[i] = to_de_rva(loc->second);
+		}
+	}
 
 
 }

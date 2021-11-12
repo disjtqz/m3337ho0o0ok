@@ -757,10 +757,12 @@ static __int64 testdebugtools(void* x) {
 }
 void meathook_final_init() {
 	//compute classinfo object super object deltas for quick inheritance traversal
+	idCVar::get_cvardata_rvas();
 	idType::compute_classinfo_delta2super();
 	idType::init_prop_rva_table();
 
 	descan::run_gamelib_postinit_scangroups();
+
 }
 
 static void meathook_cpuinfo(idCmdArgs* args) {
@@ -1219,6 +1221,11 @@ static void mh_ScriptCmdEnt_console(idCmdArgs* args) {
 
 
 }
+
+static void mh_gencvarset(idCmdArgs* args) {
+
+	idCVar::generate_name_table();
+}
 void meathook_init() {
 	
 	install_gameapi_hooks();
@@ -1288,6 +1295,8 @@ void meathook_init() {
 	idCmd::register_command("mh_editor", mh_editor, "Sets up the editor session");
 
 	idCmd::register_command("mh_genpropset", mh_genproptree, "Regenerated doom_eternal_properties_generated.cpp/hpp for use in mh builds. not for users");
+
+	idCmd::register_command("mh_gencvarset", mh_gencvarset, "Regenerate doom_eternal_cvars_generated.cpp/hpp for mh build");
 	idCmd::register_command("mh_dumppropidxinfo", mh_dumppropidxinfo, "Debug command for dumping the corresponding addresses/rvas for property indices");
 
 	idCmd::register_command("mh_ScriptCmdEnt", mh_ScriptCmdEnt_console, "ai_ScriptCmdEnt resurrected");

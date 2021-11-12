@@ -136,7 +136,27 @@ static inline TRet call_virtual(void* obj, unsigned vtblidx, Ts... args) {
 
 	return call_as<TRet>(method, obj, args...);
 }
+MH_PURE
+static inline char* get_de_base() {
+	return g_blamdll.image_base;
+}
+template<typename T>
+MH_PURE
+static inline unsigned to_de_rva(T* ptr) {
 
+	return static_cast<unsigned>(reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(get_de_base()));
+}
+
+template<typename T>
+MH_PURE
+static inline T* from_de_rva(unsigned v) {
+	MH_UNLIKELY_IF(!v) {
+		return nullptr;
+	}
+	else {
+		return mh_lea<T>(get_de_base(), (uintptr_t)v);
+	}
+}
 struct rtti_obj_locator_t {
 	int unused[3];
 	int typedescr_rva;

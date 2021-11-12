@@ -798,66 +798,6 @@ static strviewset_t get_set_of_prop_names() {
 
 
 
-
-static strviewset_t generate_cvar_name_set() {
-	strviewset_t res;
-	unsigned num_cvars = 0;
-	idCVar** cvs = idCVar::GetList(num_cvars);
-
-
-	for (unsigned i = 0; i < num_cvars; ++i) {
-		idCVar* current = cvs[i];
-
-		auto data = current->data;
-		res.insert(data->name);
-	}
-	return res;
-
-}
-
-MH_NOINLINE
-void generate_idcvar_tree() {
-
-	strviewset_t cvset = generate_cvar_name_set();
-	std::vector<unsigned char> bbuff = pack_strset(cvset);
-	unsigned total_required_bytes = bbuff.size();
-	std::vector<unsigned char> compout = compress_packet_strset(bbuff);
-
-	std::string header_txt = "#pragma once\nenum de_cvar_e : unsigned short {";
-
-	for (auto&& prop : cvset) {
-
-		header_txt += "cvr_";
-		header_txt += prop;
-		header_txt += ",";
-	}
-	header_txt += "};static constexpr unsigned DE_NUMCVARS = ";
-
-	header_txt += std::to_string(cvset.size());
-
-
-	header_txt += "static constexpr unsigned ALLCVARS_COMPRESSED_SIZE = ";
-	header_txt += std::to_string(compout.size());
-	header_txt += ";static constexpr unsigned ALLCVARS_DECOMPRESSED_SIZE = ";
-	
-	header_txt += std::to_string(compout.size());
-
-	header_txt += ";\n__declspec(allocate(\"cmptbl\")) extern unsigned char ALLCVARS_COMPRESSED_DATA[ALLCVARS_COMPRESSED_SIZE];";
-
-	write_cfile(std::move(header_txt), "doom_eternal_cvars_generated.hpp");
-
-
-	std::string cvartxt = "#include \"doom_eternal_cvars_generated.hpp\"\n";
-
-	cvartxt += "__declspec(allocate(\"cmptbl\")) unsigned char ALLCVARS_COMPRESSED_DATA[ALLCVARS_COMPRESSED_SIZE] = {";
-
-	cvartxt += expand_bytes_to_c_bytearray(compout);
-
-	cvartxt += "};";
-	write_cfile(std::move(cvartxt), "doom_eternal_cvars_generated.cpp");
-}
-
-
 MH_NOINLINE
 void idType::generate_unique_property_key_tree() {
 	strviewset_t allprops = get_set_of_prop_names();
@@ -885,6 +825,9 @@ void idType::generate_unique_property_key_tree() {
 	for (auto&& prop : allprops) {
 
 		proptxt_result += "prp_";
+
+
+
 		proptxt_result += prop;
 		proptxt_result += ",";
 	}
@@ -1023,7 +966,7 @@ void idType::init_prop_rva_table() {
 			g_propname_hashes[i] = 0;
 		}
 		else {
-			g_propname_rvas[i] = loc->data() - g_blamdll.image_base;
+			g_propname_rvas[i] = to_de_rva(loc->data());
 			g_propname_hashes[i] = idType::calculate_field_name_hash(loc->data(), loc->length());
 
 		}

@@ -12,6 +12,7 @@ static HMODULE g_reach_module = nullptr;
 
 blamdll_t g_blamdll{};
 
+
 struct patched_memory_t;
 
 static void patch_memory_impl(void* where, char* patch_bytes, unsigned length) {
