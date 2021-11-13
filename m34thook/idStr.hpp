@@ -63,6 +63,9 @@ static const char* blankstr = "";
 struct idAtomicString
 {
 	char* str;
+	void set(const char* s) {
+		call_as<void>(descan::g_atomic_string_set, this, s);
+	}
 };
 template<size_t N, bool canbdynamic = false>
 struct idStrStaticBase

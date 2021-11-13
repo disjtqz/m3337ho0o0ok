@@ -242,8 +242,63 @@ static editor_vec3_t get_player_feet_position() {
 
 	return tmppos;
 }
+#include <set>
+CACHED_EVENTDEF(getModel);
+CACHED_EVENTDEF(setModel);
 
 
+static mh_new_fieldcached_t<idAtomicString, YS("idBloatedEntity"), YS("renderModelInfo"), YS("model")> g_bloatedentity_mdl_name{};
+
+
+static void set_entity_model_name(void* entity, const char* name) {
+	idEventArg mdlnamearg;
+	mdlnamearg.make_string(name);
+	ev_setModel(entity, &mdlnamearg);
+
+	g_bloatedentity_mdl_name(entity)->set(name);
+}
+
+/*
+	cycle the model used for this entity to the next index in the staticmodel list, or the previous
+*/
+static void cycle_staticmodel(void* entity, int delta) {
+
+	const char* mdl = ev_getModel(entity).value.s;
+
+	void* rlist = resourcelist_for_classname("idStaticModel");
+	void* rlistt = idResourceList_to_resourceList_t(rlist);
+	unsigned int numres = resourceList_t_get_length(rlistt);
+
+	unsigned i;
+
+	for (i = 0; i < numres; ++i) {
+		void* rsr = resourceList_t_lookup_index(rlistt, i);
+
+		const char* rsptr = get_resource_name(rsr);
+
+		if (sh::string::streq(rsptr, mdl)) {
+			break;
+		}
+	}
+
+	int deltaposition = i + delta;
+
+	if (deltaposition < 0) {
+		deltaposition += (int)numres;
+	}
+	if (deltaposition == numres) {
+		deltaposition = 0;
+
+	}
+	/**if (i == numres || (i + 1) == numres) {
+		mdlnamearg.make_string(get_resource_name(resourceList_t_lookup_index(rlistt, 0)));
+	}
+	else {
+		mdlnamearg.make_string(get_resource_name(resourceList_t_lookup_index(rlistt, i+1)));
+	}*/
+	set_entity_model_name(entity, get_resource_name(resourceList_t_lookup_index(rlistt, deltaposition)));
+
+}
 
 class entity_iface_t {
 
@@ -871,6 +926,20 @@ event_consumed_e mh_editor_local_t::receive_keydown_event(const char* keyname) {
 		ang.roll += m_angle_increment;
 
 		editor_set_angles(grabee, ang);
+		return event_consumed_e::CONSUMED;
+	}
+	else if (sh::string::streq(keyname, "KP_2")) {
+		void* grabee = get_grabbed_entity();
+		if (!grabee)
+			return event_consumed_e::UNCONSUMED;
+		cycle_staticmodel(grabee, -1);
+		return event_consumed_e::CONSUMED;
+	}
+	else if (sh::string::streq(keyname, "KP_8")) {
+		void* grabee = get_grabbed_entity();
+		if (!grabee)
+			return event_consumed_e::UNCONSUMED;
+		cycle_staticmodel(grabee, 1);
 		return event_consumed_e::CONSUMED;
 	}
 	//increase distance to project object outwards
