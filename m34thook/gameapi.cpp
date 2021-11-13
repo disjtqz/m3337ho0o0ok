@@ -455,7 +455,8 @@ void* spawn_entity_from_entitydef(void* entdef) {
 }
 //for 0 arg events
 idEventArg g_null_eventargs;
-idEventArg mh_ScriptCmdEnt(idEventDef* tdef_name, void* self, idEventArg* args) {
+MH_LEAF
+idEventArg mh_ScriptCmdEnt(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args) {
 
 	if (args == nullptr) {
 		args = &g_null_eventargs;
@@ -468,7 +469,8 @@ idEventArg mh_ScriptCmdEnt(idEventDef* tdef_name, void* self, idEventArg* args) 
 //directly calls vftbl offset +0x30 on entity, which seems to be CallEvent on all versions
 //this does not call the notice event though for the event passed in, unlike processeventargs, so only use
 //for ones with no notice event
-idEventArg mh_ScriptCmdEntFast(idEventDef* tdef_name, void* self, idEventArg* args) {
+MH_LEAF
+idEventArg mh_ScriptCmdEntFast(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args) {
 	if (args == nullptr) {
 		args = &g_null_eventargs;
 	}
@@ -476,19 +478,20 @@ idEventArg mh_ScriptCmdEntFast(idEventDef* tdef_name, void* self, idEventArg* ar
 	call_virtual<void>(self, VTBLOFFS_CALLEVENT, &result, tdef_name, args);
 	return result;
 }
-
-idEventArg mh_ScriptCmdEnt(const char* eventdef_name, void* self, idEventArg* args) {
+MH_LEAF
+idEventArg mh_ScriptCmdEnt(const char* MH_NOESCAPE eventdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args) {
 
 	return mh_ScriptCmdEnt(idEventDefInterfaceLocal::Singleton()->FindEvent(eventdef_name), self, args);
 }
-
-idEventArg mh_ScriptCmdEnt_idEntity(idEventDef* tdef_name, void* self, idEventArg* args ) {
+MH_LEAF
+idEventArg mh_ScriptCmdEnt_idEntity(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args ) {
 	void* callev = VTBL_MEMBER(idEntity, VTBLOFFS_CALLEVENT)::Get();
 	idEventArg result;
 	call_as<void>(callev,self, &result, tdef_name, args);
 	return result;
 }
-void mh_ScriptCmdEnt_idEntity(idEventDef* tdef_name, void* self, idEventArg* args, idEventArg* out_arg) {
+MH_LEAF
+void mh_ScriptCmdEnt_idEntity(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args, idEventArg* MH_NOESCAPE out_arg) {
 	void* callev = VTBL_MEMBER(idEntity, VTBLOFFS_CALLEVENT)::Get();
 
 	call_as<void>(callev, self, out_arg, tdef_name, args);
@@ -523,8 +526,8 @@ void toggle_idplayer_boolean(void* player, const char* property_name, bool use_e
 }
 static cs_uninit_t<idEventArg> g_sink_eventarg_ret{};
 
-
-void mh_ScriptCmdEnt_idEntity_void(idEventDef* tdef_name, void* self, idEventArg* args) {
+MH_LEAF
+void mh_ScriptCmdEnt_idEntity_void(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args) {
 
 	void* callev = VTBL_MEMBER(idEntity, VTBLOFFS_CALLEVENT)::Get();
 	call_as<void>(callev, self, &g_sink_eventarg_ret, tdef_name, args);
@@ -532,12 +535,18 @@ void mh_ScriptCmdEnt_idEntity_void(idEventDef* tdef_name, void* self, idEventArg
 
 
 void set_entity_position(void* entity, idVec3* pos) {
-
+#if 0
 	idEventArg teleargs[2];
 	teleargs[0].make_vec3(pos);
 	idAngles nothin{ .0f, .0f, .0f };
 	teleargs[1].make_angles(&nothin);
 	ev_teleport(entity, teleargs);
+#else
+	idEventArg posa;
+	posa.make_vec3(pos);
+	ev_setWorldOrigin(entity, &posa);
+
+#endif
 }
 
 void get_entity_position(void* entity, idVec3* pos) {

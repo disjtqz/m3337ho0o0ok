@@ -421,6 +421,7 @@
     <ClInclude Include="mhutil\mh_filesystem.hpp" />
     <ClInclude Include="mh_defs.hpp" />
     <ClInclude Include="mh_dev_hooks.hpp" />
+    <ClInclude Include="mh_editor_math.hpp" />
     <ClInclude Include="mh_editor_mode.hpp" />
     <ClInclude Include="mh_headergen.hpp" />
     <ClInclude Include="mh_mainloop.hpp" />

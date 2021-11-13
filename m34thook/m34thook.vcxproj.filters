@@ -320,5 +320,8 @@
     <ClInclude Include="pregenerated\doom_eternal_cvars_generated.hpp">
       <Filter>Header Files\pregenerated</Filter>
     </ClInclude>
+    <ClInclude Include="mh_editor_math.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

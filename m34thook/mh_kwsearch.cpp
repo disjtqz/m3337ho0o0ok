@@ -245,8 +245,7 @@ static DWORD process_eventdefs_kwsearch(void* ud) {
 	unsigned numev = ev->GetNumEvents();
 
 	for (unsigned i = 0; i < numev; ++i) {
-		//eek
-		idEventDef* evdef = ev->FindEvent(ev->GetEventNameForNum(i));
+		idEventDef* evdef = ev->GetEventForNum(i);
 
 
 		if (!evdef)

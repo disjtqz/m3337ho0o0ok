@@ -27,7 +27,10 @@
 #include "rapiddecl.hpp"
 #include "fs_hooks.hpp"
 #include <filesystem>
-#define		editor_assert_m(...)
+
+
+#include "mh_editor_math.hpp"
+#define		editor_assert_m(...)		cs_assert(__VA_ARGS__)
 class mh_editor_local_t;
 
 #define		NEW_EDITOR_GRAB_MODE
@@ -73,10 +76,10 @@ namespace decl_parsing {
 
 	template< typename TCurr, typename... Ts>
 
-	
+
 	MH_SEMIPURE
-	static inline 
-	rapiddecl::Value* nested_get_value1(rapiddecl::Value* MH_NOESCAPE input, TCurr current, Ts... propnames) {
+		static inline
+		rapiddecl::Value* nested_get_value1(rapiddecl::Value* MH_NOESCAPE input, TCurr current, Ts... propnames) {
 		dmemb_iter_t iter = input->FindMember(current);
 
 
@@ -93,8 +96,8 @@ namespace decl_parsing {
 	}
 	template<typename... Ts>
 	MH_FLATTEN
-	MH_SEMIPURE
-	static inline rapiddecl::Value* nested_get_value(rapiddecl::Value* MH_NOESCAPE input, Ts... propnames) {
+		MH_SEMIPURE
+		static inline rapiddecl::Value* nested_get_value(rapiddecl::Value* MH_NOESCAPE input, Ts... propnames) {
 		return nested_get_value1(input, current, propnames...);
 	}
 
@@ -104,6 +107,8 @@ namespace decl_parsing {
 
 //ahahah this fucking works
 //offset to it hasnt changed since v1
+//this is incredible! it actually uses the in-memory values for adding the entity
+//to the map, so we can manipulate them using events and typeinfo queries
 static void update_map_entity(void* entity, bool add) {
 	auto gloc = get_gamelocal();
 	call_virtual<void>(gloc, 0xf8 / 8, entity, add, nullptr);
@@ -126,199 +131,10 @@ public:
 	}
 };
 
-//simple double precision vec3. 
-struct editor_vec3_t {
-	union {
-		struct {
-			double x, y, z;
-		};
-		struct {
-			__m128d xmmlo;
-			__m128d xmmhi;
-		};
-	};
 
 
-	editor_vec3_t() {
-		xmmlo = xmmhi = _mm_setzero_pd();
-	}
 
 
-	editor_vec3_t(const idVec3* v)  {
-		*this = v;
-
-	}
-	editor_vec3_t(const idVec3& v) : editor_vec3_t(&v) {}
-	editor_vec3_t(__m128d lowpart, __m128d highpart) : xmmlo(lowpart), xmmhi(highpart) {}
-
-
-	editor_vec3_t(double _x, double _y, double _z) :xmmlo(_mm_setr_pd(_x, _y)), xmmhi(_mm_set_sd(_z)) {}
-	editor_vec3_t(double dval) {
-		xmmlo = _mm_set1_pd(dval);
-		xmmhi = xmmlo;
-	}
-
-	editor_vec3_t& operator = (const idVec3& other) {
-
-		return *this = &other;
-	}
-
-	editor_vec3_t& operator =(const idVec3* other) {
-		/*x = other->x;
-		y = other->y;
-		z = other->z;*/
-		
-		__m128 tmp = _mm_loadu_ps(&other->x);
-
-		__m128d cvtlo = _mm_cvtps_pd(tmp);
-		__m128d cvthi = _mm_cvtps_pd(_mm_movehl_ps(tmp, tmp));
-
-		xmmlo = cvtlo;
-		xmmhi = cvthi;
-		return *this;
-	}
-
-	void set(double x, double y, double z) {
-		xmmlo = _mm_setr_pd(x, y);
-		xmmhi = _mm_set_sd(z);
-
-	}
-
-	void to_floats(float* out) const {
-
-		__m128 xx = _mm_cvtpd_ps(xmmlo);
-		__m128 xy = _mm_cvtpd_ps(xmmhi);
-
-		out[0] = _mm_cvtss_f32(xx);
-		out[1] = _mm_cvtss_f32(_mm_shuffle_ps(xx, xx, _MM_SHUFFLE(3, 2, 1, 1)));
-		out[2] = _mm_cvtss_f32(xy);
-
-		
-	}
-	editor_vec3_t operator +(editor_vec3_t other)const {
-		return editor_vec3_t(_mm_add_pd(xmmlo, other.xmmlo), _mm_add_pd(xmmhi, other.xmmhi));
-	}
-	editor_vec3_t operator -(editor_vec3_t other) const {
-		return editor_vec3_t(_mm_sub_pd(xmmlo, other.xmmlo), _mm_sub_pd(xmmhi, other.xmmhi));
-	}
-	editor_vec3_t operator *(editor_vec3_t other) const {
-		return editor_vec3_t(_mm_mul_pd(xmmlo, other.xmmlo), _mm_mul_pd(xmmhi, other.xmmhi));
-	}
-	editor_vec3_t operator /(editor_vec3_t other)const  {
-		return editor_vec3_t(_mm_div_pd(xmmlo, other.xmmlo), _mm_div_pd(xmmhi, other.xmmhi));
-	}
-	//helper func for dp sqrt
-	static double do_sqrt(double val) {
-		__m128d dv = _mm_set_sd(val);
-		return _mm_cvtsd_f64(_mm_sqrt_sd(dv, dv));
-
-	}
-
-	editor_vec3_t squared()const {
-		return *this * *this;
-	}
-
-	double hsum() const {
-		return x + y + z;
-	}
-	
-	double distance3d(editor_vec3_t other) const {
-
-		double sum = (*this - other).squared().hsum();
-		return do_sqrt(sum);
-	}
-
-
-	double dot(editor_vec3_t other) const {
-
-		return (*this * other).hsum();
-
-	}
-	
-
-	editor_vec3_t normalized() const {
-
-
-		double sqrlen = dot(*this);
-
-		double sqrtval = do_sqrt(sqrlen);
-		return *this / sqrtval;
-
-	}
-
-	operator idVec3() const {
-
-		idVec3 res;
-		to_floats(&res.x);
-		return res;
-	}
-
-
-};
-struct editor_mat3_t;
-
-struct editor_angles_t {
-	double pitch;
-	double yaw;
-	double roll;
-	double padding;
-
-	editor_mat3_t to_mat3() const;
-
-	
-};
-
-/*
-idMat3 idAngles::ToMat3() const
-{
-	idMat3 mat;
-	float sr, sp, sy, cr, cp, cy;
-
-
-	idMath::SinCos( DEG2RAD( yaw ), sy, cy );
-	idMath::SinCos( DEG2RAD( pitch ), sp, cp );
-	idMath::SinCos( DEG2RAD( roll ), sr, cr );
-
-	mat.mat[ 0 ].Set( cp * cy, cp * sy, -sp );
-	mat.mat[ 1 ].Set( sr * sp * cy + cr * -sy, sr * sp * sy + cr * cy, sr * cp );
-	mat.mat[ 2 ].Set( cr * sp * cy + -sr * -sy, cr * sp * sy + -sr * cy, cr * cp );
-
-	return mat;
-}
-
-*/
-
-
-struct editor_mat3_t {
-	editor_vec3_t mat[3];
-
-	idMat3 to_id()const;
-};
-idMat3 editor_mat3_t::to_id()const {
-	idMat3 result;
-	for (unsigned i = 0; i < 3; ++i) {
-		mat[i].to_floats(&result.mat[i].x);
-	}
-
-}
-editor_mat3_t editor_angles_t::to_mat3() const {
-	editor_mat3_t mat;
-	double sr, sp, sy, cr, cp, cy;
-	using namespace sh::math;
-
-
-	sincos(DEG2RAD(yaw), sy, cy);
-	sincos(DEG2RAD(pitch), sp, cp);
-	sincos(DEG2RAD(roll), sr, cr);
-
-	mat.mat[0].set(cp * cy, cp * sy, -sp);
-	mat.mat[1].set(sr * sp * cy + cr * -sy, sr * sp * sy + cr * cy, sr * cp);
-	mat.mat[2].set(cr * sp * cy + -sr * -sy, cr * sp * sy + -sr * cy, cr * cp);
-
-	return mat;
-
-
-}
 static mh_new_fieldcached_t < void*, YS("idEntity"), YS("entityDef")>g_entitydef_identity{};
 //static mh_fieldcached_t<void*> g_entitydef_identity;
 
@@ -330,8 +146,69 @@ static mh_new_fieldcached_t<idVec3, YS("idBloatedEntity"), YS("renderModelInfo")
 
 
 CACHED_EVENTDEF(getMins);
+CACHED_EVENTDEF(getMaxs);
+
+static editor_bounds_t get_entity_bbox(void* ent) {
+
+	idEventArg result;
+	mh_ScriptCmdEnt_idEntity(ev_getMins.Get(), ent, nullptr, &result);
+	editor_bounds_t bnds;
+
+	bnds.b[0] = result.value.v_vec3;
+	mh_ScriptCmdEnt_idEntity(ev_getMaxs.Get(), ent, nullptr, &result);
+	bnds.b[1] = result.value.v_vec3;
+
+	return bnds;
+}
+
 CACHED_EVENTDEF(setSpawnPosition);
 CACHED_EVENTDEF(setOrigin);
+CACHED_EVENTDEF(getAngles);
+CACHED_EVENTDEF(setAngles);
+
+static editor_angles_t editor_get_angles(void* entity) {
+	editor_assert_m(entity != nullptr);
+
+	idEventArg result = ev_getAngles(entity);
+	//idEventArg result;
+//	mh_ScriptCmdEnt_idEntity(ev_getAngles.Get(), entity, nullptr, &result);
+
+	editor_angles_t res;
+	res = result.value.a_angles;
+
+	return res;
+}
+
+static mh_new_fieldcached_t<idMat3, YS("idEntity"), YS("spawnOrientation")>  g_entity_spawnorientation;
+
+static void editor_set_angles(void* entity, editor_angles_t ang) {
+
+#if 1
+
+	editor_mat3_t mat = ang.to_mat3();
+
+	idMat3 idmat = mat.to_id();
+
+	*g_entity_spawnorientation(entity) = idmat;
+
+	idEventArg onearg[2];
+	onearg[1].make_angles(ang.to_id());
+	idVec3 tmp;
+	get_entity_position(entity, &tmp);
+	onearg[0].make_vec3(tmp);
+	ev_teleport(entity, onearg);
+#else
+	//ev_setAngles(entity, &onearg);
+	idEventArg onearg;
+	onearg.make_angles(ang.to_id());
+
+
+	//mh_ScriptCmdEnt_idEntity_void(ev_setAngles.Get(), entity, &onearg);
+#endif
+
+
+
+}
 static void set_spawn_pos(void* ent, editor_vec3_t pos) {
 	cs_uninit_t<idEventArg> thearg;
 	thearg->make_vec3(pos.operator idVec3());
@@ -411,7 +288,7 @@ public:
 	}
 	virtual void set_entity_clipscale(editor_vec3_t newscale) {
 
-		*g_clipmodel_size(m_ptr) = static_cast<idVec3>( newscale );
+		*g_clipmodel_size(m_ptr) = static_cast<idVec3>(newscale);
 	}
 
 	virtual std::string get_entitydef_text() {
@@ -441,7 +318,7 @@ public:
 	void set_entity(void* en) {
 		m_ptr = (en);
 	}
-	
+
 };
 class decl_t;
 /*
@@ -454,7 +331,7 @@ class decl_t {
 	//decl we inherit from
 	decl_t* m_parent;
 	rapiddecl::Document m_decl;
-	
+
 public:
 	rapiddecl::Document* doc() {
 
@@ -468,7 +345,7 @@ public:
 
 		decl_parsing::parse(m_decl, src);
 
-		
+
 		dmemb_iter_t iter = m_decl.FindMember("inherit");
 		if (iter == m_decl.MemberEnd()) {
 			m_parent = nullptr;
@@ -479,11 +356,11 @@ public:
 
 			const char* inher = iter->value.GetString();
 
-			
+
 			void* parent = locate_resourcelist_member_from_resourceList_t(m_resource_class, inher, true);
 
 			editor_assert_m(parent != nullptr);
-			
+
 			m_parent = new decl_t(parent);
 		}
 	}
@@ -533,7 +410,7 @@ public:
 		r.AddMember("y", v.y, al());
 		r.AddMember("z", v.z, al());
 
-		
+
 	}
 
 
@@ -582,7 +459,7 @@ public:
 
 	}
 
-	
+
 
 };
 
@@ -600,8 +477,13 @@ class mh_editor_local_t : public mh_editor_interface_t {
 
 	char m_temp_pathbuf[OVERRIDE_PATHBUF_SIZE];
 
+	//the value by which entities scale down/up each time the scale keys are used
+	double m_current_size_increment;
+	//amount each time with uparrow/downarrow we adjust the offset of the grabbed object
+	double m_object_distance_increment;
+	double m_angle_increment;
 	struct {
-
+		unsigned m_initialized : 1;
 		unsigned m_locked_z : 1;
 
 	};
@@ -646,17 +528,34 @@ class mh_editor_local_t : public mh_editor_interface_t {
 	editor_vec3_t get_player_look_direction();
 	//normal of the surface that the line trace from the player hit
 	editor_vec3_t get_player_look_hit_normal();
-
+	//gets a point along the ray the players look direction casts
+	editor_vec3_t get_point_in_player_direction(double distance);
 public:
+	mh_editor_local_t() {
+		m_grab_distance = 10.0;
+		m_prevgrab_entity_name = "";
+		m_current_size_increment = 0.1;
+		m_object_distance_increment = 0.1;
+		m_initialized = 0;
+		m_locked_z = 0;
+		m_angle_increment = 0.5;
+	}
 	virtual void grab(void* entity);
 	virtual void grab_player_focus();
 	virtual void ungrab();
+	virtual void set_angle_increment(double val) {
+		m_angle_increment = val;
+	}
+	virtual void editor_spawn_entitydef(void* entitydef);
 	event_consumed_e receive_char_event(unsigned gotchar);
 	event_consumed_e receive_keydown_event(const char* keyname);
 	event_consumed_e receive_keyup_event(const char* keyname);
 	void receive_mouse_move_event(unsigned x, unsigned y);
+	virtual bool is_initialized_for_sess() {
 
-	
+		return m_initialized;
+	}
+
 	virtual void init_for_session();
 };
 
@@ -687,10 +586,10 @@ editor_vec3_t mh_editor_local_t::get_player_look_hit_normal() {
 }
 //returns idMapEntityLocal corresponding to grabbed entity
 void* mh_editor_local_t::get_mapentity() {
-	void* res =call_virtual<void*>(get_gamelocal(), descan::g_vftbl_offset_MapFindEntity_idEntity / 8, get_gamelocal(), get_grabbed_entity());
+	void* res = call_virtual<void*>(get_gamelocal(), descan::g_vftbl_offset_MapFindEntity_idEntity / 8, get_gamelocal(), get_grabbed_entity());
 
 	TRACE_EDITOR("get_mapentity returned %p", res);
-	
+
 	return res;
 
 }
@@ -779,27 +678,26 @@ void mh_editor_local_t::init_dom() {
 	mh_mainloop::add_preframe_callback(mh_editor_local_t::prerun_forwarder, (void*)this);
 
 	mh_mainloop::add_postframe_callback(mh_editor_local_t::postrun_forwarder, (void*)this);
-	
-}
 
+}
+editor_vec3_t mh_editor_local_t::get_point_in_player_direction(double distance) {
+	editor_vec3_t transldir = get_player_look_direction();
+
+	transldir = transldir * distance;
+	idVec3 ppos;
+	get_entity_position(get_local_player(), &ppos);
+
+	transldir = transldir + ppos;
+	return transldir;
+
+}
 void mh_editor_local_t::tick_prerun() {
-
-}
-
-void mh_editor_local_t::tick_postrun() {
-
 #if defined(NEW_EDITOR_GRAB_MODE)
 
 	void* grabbed = get_grabbed_entity();
 	if (grabbed) {
-		editor_vec3_t transldir = get_player_look_direction();
 
-		transldir = transldir * m_grab_distance;
-
-		idVec3 ppos;
-		get_entity_position(get_local_player(), &ppos);
-
-		transldir = transldir + ppos;
+		editor_vec3_t transldir = get_point_in_player_direction(m_grab_distance);
 
 		if (m_locked_z) {
 
@@ -814,12 +712,17 @@ void mh_editor_local_t::tick_postrun() {
 	}
 #endif
 }
-void mh_editor_local_t::init_for_session() {
 
+void mh_editor_local_t::tick_postrun() {
+
+
+}
+void mh_editor_local_t::init_for_session() {
+	m_initialized = 1;
 	m_input_forwarder.set_editor(this);
 
 	m_prevgrab_entity_name.clear();
-	
+
 	init_dom();
 
 
@@ -851,12 +754,13 @@ event_consumed_e mh_editor_local_t::receive_keydown_event(const char* keyname) {
 
 		idVec3 scale = get_entity_scale();
 
-		scale.x += 0.1;
-		scale.y += 0.1;
-		scale.z += 0.1;
+		scale.x += m_current_size_increment;
+		scale.y += m_current_size_increment;
+		scale.z += m_current_size_increment;
 
 		set_entity_scale(scale);
 		set_entity_clipscale(scale);
+
 		return event_consumed_e::CONSUMED;
 
 	}
@@ -869,9 +773,9 @@ event_consumed_e mh_editor_local_t::receive_keydown_event(const char* keyname) {
 
 		idVec3 scale = get_entity_scale();
 
-		scale.x -= 0.1;
-		scale.y -= 0.1;
-		scale.z -= 0.1;
+		scale.x -= m_current_size_increment;
+		scale.y -= m_current_size_increment;
+		scale.z -= m_current_size_increment;
 
 
 		set_entity_scale(scale);
@@ -901,6 +805,94 @@ event_consumed_e mh_editor_local_t::receive_keydown_event(const char* keyname) {
 			}
 
 		}
+	}
+	else if (sh::string::streq(keyname, "KP_1")) {
+		void* grabee = get_grabbed_entity();
+		if (!grabee)
+			return event_consumed_e::UNCONSUMED;
+
+		editor_angles_t ang = editor_get_angles(grabee);
+		ang.yaw -= m_angle_increment;
+
+		editor_set_angles(grabee, ang);
+		return event_consumed_e::CONSUMED;
+	}
+	else if (sh::string::streq(keyname, "KP_3")) {
+		void* grabee = get_grabbed_entity();
+		if (!grabee)
+			return event_consumed_e::UNCONSUMED;
+
+		editor_angles_t ang = editor_get_angles(grabee);
+		ang.yaw += m_angle_increment;
+
+		editor_set_angles(grabee, ang);
+		return event_consumed_e::CONSUMED;
+	}
+
+	else if (sh::string::streq(keyname, "KP_4")) {
+		void* grabee = get_grabbed_entity();
+		if (!grabee)
+			return event_consumed_e::UNCONSUMED;
+
+		editor_angles_t ang = editor_get_angles(grabee);
+		ang.pitch -= m_angle_increment;
+
+		editor_set_angles(grabee, ang);
+		return event_consumed_e::CONSUMED;
+	}
+	else if (sh::string::streq(keyname, "KP_6")) {
+		void* grabee = get_grabbed_entity();
+		if (!grabee)
+			return event_consumed_e::UNCONSUMED;
+
+		editor_angles_t ang = editor_get_angles(grabee);
+		ang.pitch += m_angle_increment;
+
+		editor_set_angles(grabee, ang);
+		return event_consumed_e::CONSUMED;
+	}
+	else if (sh::string::streq(keyname, "KP_7")) {
+		void* grabee = get_grabbed_entity();
+		if (!grabee)
+			return event_consumed_e::UNCONSUMED;
+
+		editor_angles_t ang = editor_get_angles(grabee);
+		ang.roll -= m_angle_increment;
+
+		editor_set_angles(grabee, ang);
+		return event_consumed_e::CONSUMED;
+	}
+	else if (sh::string::streq(keyname, "KP_9")) {
+		void* grabee = get_grabbed_entity();
+		if (!grabee)
+			return event_consumed_e::UNCONSUMED;
+
+		editor_angles_t ang = editor_get_angles(grabee);
+		ang.roll += m_angle_increment;
+
+		editor_set_angles(grabee, ang);
+		return event_consumed_e::CONSUMED;
+	}
+	//increase distance to project object outwards
+	else if (sh::string::streq(keyname, "UPARROW")) {
+
+		if (!this->is_prev_grabbed_entity_valid())
+			return event_consumed_e::UNCONSUMED;
+
+		m_grab_distance += m_object_distance_increment;
+
+		return event_consumed_e::CONSUMED;
+	}
+	else if (sh::string::streq(keyname, "DOWNARROW")) {
+		if (!this->is_prev_grabbed_entity_valid())
+			return event_consumed_e::UNCONSUMED;
+
+		m_grab_distance -= m_object_distance_increment;
+
+		if (m_grab_distance < 0)
+			m_grab_distance = 0;
+
+		return event_consumed_e::CONSUMED;
 	}
 	else if (sh::string::streq(keyname, "Z")) {
 		if (get_grabbed_entity()) {
@@ -972,11 +964,11 @@ void mh_editor_local_t::write_current_map_to_overrides() {
 		return;
 	idLib::Printf("Saving map to %s\n", pth);
 
-	
+
 	call_as<void>(descan::g_idmapfile_write, get_level_map(), pth);
 	namespace fs = std::filesystem;
 
-	
+
 	fs::path expected = pth;
 	expected = expected.replace_extension(".map");
 
@@ -1083,7 +1075,26 @@ void mh_editor_local_t::grab(void* entity) {
 	m_prevgrab_entity_name = get_entity_name(targ);
 	m_current_entity_name_label->set_text(m_prevgrab_entity_name.c_str());
 }
+void mh_editor_local_t::editor_spawn_entitydef(void* entitydef) {
 
+	cs_assert(entitydef != nullptr);
+	if (is_prev_grabbed_entity_valid()) {
+		ungrab();
+	}
+
+	void* newe = spawn_entity_from_entitydef(entitydef);
+
+	if (!newe) {
+		TRACE_EDITOR("Failed to spawn entitydef!\n");
+		return;
+	}
+
+	editor_vec3_t grabdist = this->get_point_in_player_direction(m_grab_distance);
+
+	editor_set_pos(newe, grabdist);
+	update_map_entity(newe, true);
+	grab(newe);
+}
 void mh_editor_local_t::grab_player_focus() {
 
 	void* ltarg = get_player_look_target();
@@ -1100,7 +1111,7 @@ void mh_editor_local_t::ungrab() {
 	void* grb = get_grabbed_entity();
 
 	if (grb) {
-		
+
 #if !defined(NEW_EDITOR_GRAB_MODE)
 		ev_unbind(grb);
 #else
@@ -1113,23 +1124,23 @@ void mh_editor_local_t::ungrab() {
 
 		editor_set_pos(grb, &pp);
 		//set_entity_position(grb, &pp);
-		
+
 		void* oldmaster = tmpbind.value.er;
 
 		if (oldmaster != nullptr && oldmaster != get_world()) {
-			
 
-		//	ev_bind(grb, &tmpbind);
+
+			//	ev_bind(grb, &tmpbind);
 		}
 
 		update_map_entity(grb, false);
 #endif
 	}
-	m_prevgrab_entity_name.clear();
+	m_prevgrab_entity_name = "";
 	m_current_entity_name_label->set_text("");
 	m_entitydef_source->set_text("");
 
-	
+
 }
 
 static mh_editor_local_t g_local_editor{};

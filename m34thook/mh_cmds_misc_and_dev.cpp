@@ -84,10 +84,40 @@ static void image_fill(idCmdArgs* args) {
 
 
 }
+/*
+	trying to figure out what fspec char '8' does
+*/
+static void locate_eventdef_type(idCmdArgs* args) {
+
+	if (args->argc < 2)
+		return;
+
+	unsigned srchchar = args->argv[1][0];
+
+	auto evif = idEventDefInterfaceLocal::Singleton();
+
+	unsigned evcount = evif->GetNumEvents();
+
+	for (unsigned i = 0; i < evcount; ++i) {
+		idEventDef* even = evif->GetEventForNum(i);
+
+		const char* fspec = even->formatspec;
+
+		for (unsigned i = 0; fspec[i]; ++i) {
+			if (fspec[i] == srchchar) {
+				idLib::Printf("Got a hit for char, arg in event %s\n", even->name);
+			}
+		}
+
+		if (even->returnType == srchchar) {
+			idLib::Printf("Got a hit for char, rettype for event %s\n", even->name);
+		}
+	}
+}
 void install_miscndev_cmds() {
 
 	idCmd::register_command("mh_cpuinfo", meathook_cpuinfo, "takes no args, dumps info about your cpu for dev purposes");
 	idCmd::register_command("image_fill", image_fill, "test");
 	idCmd::register_command("mh_optimize", cmd_optimize, "Patches the engine to make stuff run faster. do not use online, might result in slightly different floating point results (probably not though)");
-
+	idCmd::register_command("mh_locate_fspec_char_uses", locate_eventdef_type, "<char> Finds all usages of a provided char in event formatspecs/rettypes");
 }

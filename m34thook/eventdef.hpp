@@ -32,6 +32,8 @@ struct idEventDefInterfaceLocal {
 		return vftbl->_ZNK24idEventDefInterfaceLocal18GetEventNameForNumEi(this, evtnum);
 	}
 
+
+
 	unsigned GetNumEventArgs(unsigned evtnum) {
 		return vftbl->_ZNK24idEventDefInterfaceLocal15GetNumEventArgsEi(this, evtnum);
 	}
@@ -47,7 +49,10 @@ struct idEventDefInterfaceLocal {
 
 		return (idEventDef*) vftbl->_ZNK24idEventDefInterfaceLocal9FindEventEPKc(this, (long long)name);
 	}
-
+	idEventDef* GetEventForNum(unsigned idx) {
+		//ewww 
+		return FindEvent(GetEventNameForNum(idx));
+	}
 	static idEventDefInterfaceLocal* Singleton();
 };
 

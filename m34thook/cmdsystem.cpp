@@ -221,3 +221,9 @@ void idCVar::get_cvardata_rvas() {
 
 
 }
+
+MH_NOINLINE
+void idCVar::cvarData_t::call_onchange_functions() {
+	for (auto i = this->onChange; i; i = i->next)
+		i->callback->Call();
+}

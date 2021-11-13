@@ -1,7 +1,9 @@
 #pragma once
 
 #include "idmath.hpp"
-
+//eventarg '8' requires destruction and whatnot, but actually
+//according to queries by mh_locate_fspec_char_uses it does not occcur in any formatspec or return value
+#define		MH_EVENTARG_8_IS_IMPOSSIBLE
 #define	WORLD_ENTITY_IDX		16382
 #define	LAST_PLAYER_IDX			12
 
@@ -380,7 +382,7 @@ union idEventArg_unnamed_type_value
 	float f;
 	float v[3];
 	idVec3 v_vec3;
-
+	idAngles a_angles;
 	float q[4];
 	float c[4];
 	uint64_t i_64;//doesnt actually exist in game code, is for decompiled stuff
@@ -399,10 +401,11 @@ struct __declspec(align(8)) idEventArg
 	char pad[7];
 	idEventArg_unnamed_type_value value;
 
-	void __fastcall Copy(
+	void Copy(
 
 		const idEventArg* other)
 	{
+#if !defined(MH_EVENTARG_8_IS_IMPOSSIBLE)
 		int type; // eax
 		const char* s; // rcx
 		const char* v6; // rcx
@@ -464,7 +467,12 @@ struct __declspec(align(8)) idEventArg
 		default:
 			return;
 		}
+#else
+		this->type = other->type;
+		this->value = other->value;
+#endif
 	}
+#if !defined(MH_EVENTARG_8_IS_IMPOSSIBLE)
 	~idEventArg()
 	{
 		const char* s; // rcx
@@ -486,7 +494,7 @@ struct __declspec(align(8)) idEventArg
 			this->type = 0;
 		}
 	}
-
+#endif
 	idEventArg() : type(0) {
 
 	}
@@ -538,11 +546,12 @@ struct __declspec(align(8)) idEventArg
 
 
 		type = 'a';
-		value.v[0] = aa->yaw;
-		value.v[1] = aa->pitch;
-		value.v[2] = aa->roll;
-	}
+		value.a_angles = *aa;
 
+	}
+	void make_angles(idAngles aa) {
+		make_angles(&aa);
+	}
 	void make_decl(struct idDecl* d) {
 		this->type = 'd';
 		this->value.d = d;
@@ -555,17 +564,22 @@ struct __declspec(align(8)) idEventArg
 //to iterate through all of the eventdefs on the evdef interface and generate boilerplate code that A: at startup grabs all the eventdef pointers
 //into global variables and then B: generates boilerplate c++ code with the proper types to call all of the eventdefs
 //also using the typeinfo api and declinfo stuff you can reimplement the ai_scriptcmdent command but thats an exercise for the reader
-idEventArg mh_ScriptCmdEnt(idEventDef* tdef_name, void* self, idEventArg* args = nullptr);
 
-idEventArg mh_ScriptCmdEnt(const char* eventdef_name, void* self, idEventArg* args = nullptr);
+MH_LEAF
+idEventArg mh_ScriptCmdEnt(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args = nullptr);
+MH_LEAF
+idEventArg mh_ScriptCmdEnt(const char* MH_NOESCAPE eventdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args = nullptr);
 
-
-idEventArg mh_ScriptCmdEntFast(idEventDef* tdef_name, void* self, idEventArg* args = nullptr);
+MH_LEAF
+idEventArg mh_ScriptCmdEntFast(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args = nullptr);
 //directly calls idEntity::CallEvent from the idEntity vtbl instead of dispatching to self's method
 //can be much faster for classes that have a deep inheritance chain and is safe if the event is only implemented by idEntity
-idEventArg mh_ScriptCmdEnt_idEntity(idEventDef* tdef_name, void* self, idEventArg* args = nullptr);
-void mh_ScriptCmdEnt_idEntity(idEventDef* tdef_name, void* self, idEventArg* args, idEventArg* out_arg);
-void mh_ScriptCmdEnt_idEntity_void(idEventDef* tdef_name, void* self, idEventArg* args = nullptr);
+MH_LEAF
+idEventArg mh_ScriptCmdEnt_idEntity(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args = nullptr);
+MH_LEAF
+void mh_ScriptCmdEnt_idEntity(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args, idEventArg* MH_NOESCAPE out_arg);
+MH_LEAF
+void mh_ScriptCmdEnt_idEntity_void(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args = nullptr);
 template<typename TYuckyStr>
 struct cached_eventdef_t {
 	static inline idEventDef* m_def;

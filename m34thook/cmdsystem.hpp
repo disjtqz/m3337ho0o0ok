@@ -25,7 +25,12 @@ namespace idCmd {
 
 struct __declspec(align(8)) idCVar
 {
-	using cvarCallback_t = void;
+	struct cvarCallback_t
+	{
+		struct idCallback* callback;
+		idCVar::cvarCallback_t* next;
+	};
+
 
 	struct __declspec(align(8)) cvarData_t
 	{
@@ -45,6 +50,8 @@ struct __declspec(align(8)) idCVar
 		char** valueStrings;
 		void* valueCompletion;
 		idCVar::cvarCallback_t* onChange;
+		MH_NOINLINE
+		void call_onchange_functions();
 	};
 
 	idCVar::cvarData_t* data;
@@ -60,6 +67,7 @@ struct __declspec(align(8)) idCVar
 	static void generate_name_table();
 
 	static void get_cvardata_rvas();
+
 };
 
 #include "pregenerated/doom_eternal_cvars_generated.hpp"
@@ -75,3 +83,13 @@ static idCVar::cvarData_t* cvar_data(de_cvar_e cv) {
 	return from_de_rva<idCVar::cvarData_t>(g_cvardata_rvas[cv]);
 }
 
+
+
+MH_PURE
+static void set_cvar_integer(de_cvar_e cv, int value) {
+	auto cvd = cvar_data(cv);
+	cvd->flags |= 0x40000; // CVAR_MODIFIED
+	cvd->valueInteger = value;
+	cvd->valueFloat = value;
+	cvd->call_onchange_functions();
+}

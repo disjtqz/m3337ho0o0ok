@@ -43,3 +43,11 @@ struct idListVoid
 	unsigned __int8 memTag;
 	unsigned __int8 listStatic;
 };
+
+
+class idCallback {
+public:
+	virtual ~idCallback() {}
+	virtual void Call() = 0;
+	virtual idCallback* Clone() = 0;
+};

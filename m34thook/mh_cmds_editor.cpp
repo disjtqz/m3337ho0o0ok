@@ -131,12 +131,23 @@ static void mh_reload_decl(idCmdArgs* args) {
 
 }
 
+static mh_editor_interface_t* get_editor_ensure_init() {
+	if (!get_current_editor())
+		return nullptr;
+	if (!get_current_editor()->is_initialized_for_sess()) {
+		get_current_editor()->init_for_session();
 
+	}
+	return get_current_editor();
+}
 
 
 //ai_suicideCheck_disable 1
 static void mh_grab(idCmdArgs* args) {
 
+	auto ed = get_editor_ensure_init();
+	if (!ed)
+		return;
 	get_current_editor()->grab_player_focus();
 
 }
@@ -147,14 +158,33 @@ static void mh_grab(idCmdArgs* args) {
 	g_stopTime 1
 	hands_show 0
 	r_skipGuis 1
+	g_doom5Melee_enable 0 
 */
 //ai_suicideCheck_disable 1 to prevent ai from dying in out of bounds situations
 static void mh_editor(idCmdArgs* args) {
-	cvar_data(cvr_hands_show)->valueInteger = 0;
-	cvar_data(cvr_g_showHud)->valueInteger = 0;
+
+	set_cvar_integer(cvr_hands_show, 0);
+	set_cvar_integer(cvr_g_showHud, 0);
 	toggle_idplayer_boolean(get_local_player(), "noClip", true, true);
 	get_current_editor()->init_for_session();
 
+}
+
+static void mh_editor_spawn(idCmdArgs* args) {
+
+	if (args->argc < 2)
+		return;
+
+	void* edef = locate_resourcelist_member("idDeclEntityDef", args->argv[1]);
+	if (!edef) {
+		idLib::Printf("No entitydef %s\n", args->argv[1]);
+		return;
+	}
+
+	auto ed = get_editor_ensure_init();
+	if (!ed)
+		return;
+	ed->editor_spawn_entitydef(edef);
 }
 
 void cmd_mh_forcereload(idCmdArgs* args)
@@ -171,7 +201,30 @@ void cmd_mh_forcereload(idCmdArgs* args)
 	bool* mapChangeRequest_t_requested = ((bool*)((char*)descan::g_idgamesystemlocal + MapChangeRequest->offset + Requested->offset));
 	*mapChangeRequest_t_requested = true;
 }
+void cmd_mh_spmap(idCmdArgs* args) {
 
+	if (args->argc < 2) {
+		return;
+	}
+
+	char sprintbuff[1024];
+	sprintf(sprintbuff, "map maps/game/sp/%s/%s", args->argv[1], args->argv[1]);
+
+	idCmd::execute_command_text(sprintbuff);
+
+
+}
+
+void cmd_set_angle_incr(idCmdArgs* args) {
+
+	if (args->argc < 2)
+		return;
+
+	auto ed = get_editor_ensure_init();
+	if (!ed)
+		return;
+	ed->set_angle_increment(atof(args->argv[1]));
+}
 void install_editor_cmds() {
 
 	idCmd::register_command("mh_spawninfo", cmd_mh_spawninfo, "Copy your current position and orientation, formatted as spawnPosition and spawnOrientation to the clipboard");
@@ -183,5 +236,7 @@ void install_editor_cmds() {
 
 	idCmd::register_command("mh_grab", mh_grab, "Grab an object");
 	idCmd::register_command("mh_editor", mh_editor, "Sets up the editor session");
-
+	idCmd::register_command("mh_editor_spawn", mh_editor_spawn, "Spawns an entity, saving it to the map and grabbing it for manipulation");
+	idCmd::register_command("mh_spmap", cmd_mh_spmap, "<map name> shortcut for map maps/game/sp/<map name>/<map name>");
+	idCmd::register_command("mh_angleincr", cmd_set_angle_incr, "<double> amount to inc/dec by with angle editing");
 }
