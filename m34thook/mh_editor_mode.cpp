@@ -289,16 +289,59 @@ static void cycle_staticmodel(void* entity, int delta) {
 }
 
 class edited_entity_t {
-	void* m_ent;
+	
+	mh_entityref_t m_ent;
 
 public:
-	virtual void set_model(const char* name) {
-		set_entity_model_name(m_ent, name);
+	virtual void* self() {
+		return m_ent.get();
 	}
+	virtual void set_model(const char* name) {
+		void* ent = self();
+		if(ent)
+			set_entity_model_name(ent, name);
+	}
+	virtual void cycle_rendermodel(int direction) {
+		void* ent = self();
+		if (ent) {
+			cycle_staticmodel(ent, direction);
+		}
+	}
+	virtual void set_position(editor_vec3_t pos) {
+		void* ent = self();
+		if (ent) {
+			editor_set_pos(ent, pos);
+		}
+	}
+	virtual void set_angles(editor_angles_t ang) {
+		void* ent = self();
+		if (ent) {
+			editor_set_angles(ent, ang);
+		}
+	}
+	//updates entity in mapfile
+	virtual void update_map() {
+
+		void* ent = self();
+		if (ent) {
+			update_map_entity(ent, false);
+		}
+	}
+	virtual void add_to_map() {
+
+		void* ent = self();
+		if (ent) {
+			update_map_entity(ent, true);
+		}
+	}
+
+
 };
 
 class mh_editor_local_t : public mh_editor_interface_t {
-	std::string m_prevgrab_entity_name;
+	//std::string m_prevgrab_entity_name;
+
+	mh_entityref_t m_grabbed_entity;
 	double m_grab_distance;
 	mh_editor_input_handler_t m_input_forwarder;
 	mh_dom_t* m_gui;
@@ -367,7 +410,7 @@ class mh_editor_local_t : public mh_editor_interface_t {
 public:
 	mh_editor_local_t() {
 		m_grab_distance = 10.0;
-		m_prevgrab_entity_name = "";
+		m_grabbed_entity.clear();
 		m_current_size_increment = 0.1;
 		m_object_distance_increment = 0.1;
 		m_initialized = 0;
@@ -555,7 +598,7 @@ void mh_editor_local_t::init_for_session() {
 	m_initialized = 1;
 	m_input_forwarder.set_editor(this);
 
-	m_prevgrab_entity_name.clear();
+	m_grabbed_entity.clear();
 
 	init_dom();
 
@@ -879,11 +922,7 @@ void mh_editor_local_t::bind_entity_to_player(void* entity) {
 #endif
 }
 bool mh_editor_local_t::is_prev_grabbed_entity_valid() {
-	if (m_prevgrab_entity_name.length()) {
-		void* ubent = find_entity(m_prevgrab_entity_name.c_str());
-		return ubent != nullptr;
-	}
-	return false;
+	return m_grabbed_entity.get() != nullptr;
 }
 
 bool mh_editor_local_t::is_valid_entity_for_editing(void* entity) {
@@ -900,8 +939,8 @@ void* mh_editor_local_t::get_grabbed_entity() {
 	if (!is_prev_grabbed_entity_valid())
 		return nullptr;
 	else {
-
-		return find_entity(m_prevgrab_entity_name.c_str());
+		return m_grabbed_entity.get();
+		//return find_entity(m_prevgrab_entity_name.c_str());
 	}
 
 }
@@ -919,8 +958,8 @@ void mh_editor_local_t::grab(void* entity) {
 		return;
 
 	bind_entity_to_player(targ);
-	m_prevgrab_entity_name = get_entity_name(targ);
-	m_current_entity_name_label->set_text(m_prevgrab_entity_name.c_str());
+	m_grabbed_entity = targ;
+	m_current_entity_name_label->set_text(get_entity_name(entity));
 }
 void mh_editor_local_t::editor_spawn_entitydef(void* entitydef) {
 
@@ -983,7 +1022,8 @@ void mh_editor_local_t::ungrab() {
 		update_map_entity(grb, false);
 #endif
 	}
-	m_prevgrab_entity_name = "";
+	//m_prevgrab_entity_name = "";
+	m_grabbed_entity.clear();
 	m_current_entity_name_label->set_text("");
 	m_entitydef_source->set_text("");
 

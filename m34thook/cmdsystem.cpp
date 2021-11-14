@@ -10,6 +10,7 @@
 #include "snaphakalgo.hpp"
 #include "idLib.hpp"
 #include "mh_headergen.hpp"
+#include "idStr.hpp"
 void idCmd::register_command(const char* name, cmdcb_t cb, const char* description) {
 	//auto cmdSystem = *doomsym<char**>(doomoffs::cmdSystem);
 
@@ -84,24 +85,56 @@ idCVar* idCVar::Find(const char* name) {
 static mh_fieldcached_t<const char*> g_idCommandLink_cmdName{};
 static mh_fieldcached_t<void*> g_idCommandLink_function{};
 static mh_fieldcached_t<void*> g_idCommandLink_next{};
+enum cmdFlags_t
+{
+	CMD_NOCHEAT = 0x2,
+	CMD_EXPOSE = 0x4,
+	CMD_SHIPPINGDISABLED = 0x8,
+};
+
+//from v1
+struct idAutoComplete;
+struct __declspec(align(8)) used_for_commands_t
+{
+	const char* name;
+	void(__fastcall* function)(const idCmdArgs*);
+	void(__fastcall* autocomplete)(idAutoComplete*);
+	const char* description;
+	int flags; //cmdFlags_t
+};
+struct __declspec(align(8)) idCmdSystem_buffer
+{
+	idListVoid all_cmds;
+	idListVoid nocheat_cmds;
+	int framewait;
+	idStrStatic<65536> buffer1;
+	idStrStatic<65536> buffer2;
+};
+
 void* idCmd::find_command_by_name(const char* name) {
 
 	auto cmdsystem = cmdSystem_get();
 
-	idListVoid* cmds_lists = cmdsystem->vftbl->GetCommands(cmdsystem);
+
+	idCmdSystem_buffer* cmdinfo = *mh_lea<idCmdSystem_buffer*>(cmdsystem, 16);
+
 
 
 	//while (cmds) {
 
+	idListVoid* cmds_lists = &cmdinfo->all_cmds;
+
+
 	for(unsigned i = 0; i < cmds_lists->num; ++i) {
-		void* cmds = reinterpret_cast<void*>(cmds_lists->list[i]);
+		used_for_commands_t* cmds = reinterpret_cast<used_for_commands_t*>(cmds_lists->list[i]);
+
+
 		const char* cmdname = *g_idCommandLink_cmdName(cmds, "idCommandLink", "cmdName");
 
-		if (sh::string::streq(cmdname, name)) {
-			return *g_idCommandLink_function(cmds, "idCommandLink", "function");
+		if (sh::string::streq(cmds->name, name)) {
+			return cmds->function;
 		}
 
-		//cmds = *g_idCommandLink_next(cmds, "idCommandLink", "next");
 	}
 	return nullptr;
 }
