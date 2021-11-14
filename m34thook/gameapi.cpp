@@ -116,6 +116,11 @@ bool get_classfield_boolean(void* obj, const char* clazs, const char* field) {
 const char* get_entity_name(void* obj) {
 	return reinterpret_cast<idStr*>(reinterpret_cast<char*>(obj) + idType::FindClassField("idEntity", "name")->offset)->data;
 }
+static mh_new_fieldcached_t<int, YS("idManagedClass"), YS("objectNumber")> g_idmanagedclass_objectnumber;
+
+int get_entity_spawnid(void* ent) {
+	return *g_idmanagedclass_objectnumber(ent);
+}
 static char* g_engine_t = nullptr;
 MH_NOINLINE
 char* get_engine() {

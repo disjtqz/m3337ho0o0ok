@@ -29,6 +29,7 @@ const char* get_entity_name(void* obj);
 
 void* get_material(const char* name);
 
+int get_entity_spawnid(void* obj);
 //warning: returns idResourceList, not resourceList_t!
 void* resourcelist_for_classname(const char* clsname);
 //warning:returns resourceList_t, not idResourceList
@@ -2147,3 +2148,55 @@ CACHED_EVENTDEF(setColor);
 idVec3 get_object_color(void* ent);
 
 void set_object_color(void* ent, idVec3 newcolor);
+
+struct mh_entityref_t {
+	int m_spawnid;
+	void* m_entity;
+
+public:
+
+	void set_from_entity(void* entity) {
+		m_spawnid = get_entity_spawnid(entity);
+		m_entity = entity;
+	}
+	void clear() {
+		m_spawnid = -1;
+		m_entity = nullptr;
+	}
+	void set_to_world() {
+		m_spawnid = WORLD_ENTITY_IDX;
+		m_entity = get_world();
+		MH_UNLIKELY_IF (!m_entity) {
+			clear();
+		}
+	}
+
+	mh_entityref_t()  {
+		clear();
+	}
+
+	mh_entityref_t(void* ent) {
+		set_from_entity(ent);
+	}
+	MH_LEAF
+	void* get() {
+
+		MH_UNLIKELY_IF(m_spawnid ==-1 || !m_entity) {
+			return nullptr;
+		}
+		MH_UNLIKELY_IF(m_spawnid == WORLD_ENTITY_IDX) {
+			return nullptr;
+		}
+		void* entfor = lookup_entity_index(m_spawnid);
+
+		MH_UNLIKELY_IF (entfor != m_entity) {
+			clear();
+			return nullptr;
+
+		}
+
+		return entfor;
+	}
+
+
+};

@@ -184,7 +184,6 @@ static mh_new_fieldcached_t<idMat3, YS("idEntity"), YS("spawnOrientation")>  g_e
 
 static void editor_set_angles(void* entity, editor_angles_t ang) {
 
-#if 1
 
 	editor_mat3_t mat = ang.to_mat3();
 
@@ -198,14 +197,6 @@ static void editor_set_angles(void* entity, editor_angles_t ang) {
 	get_entity_position(entity, &tmp);
 	onearg[0].make_vec3(tmp);
 	ev_teleport(entity, onearg);
-#else
-	//ev_setAngles(entity, &onearg);
-	idEventArg onearg;
-	onearg.make_angles(ang.to_id());
-
-
-	//mh_ScriptCmdEnt_idEntity_void(ev_setAngles.Get(), entity, &onearg);
-#endif
 
 
 
@@ -258,6 +249,8 @@ static void set_entity_model_name(void* entity, const char* name) {
 	g_bloatedentity_mdl_name(entity)->set(name);
 }
 
+
+
 /*
 	cycle the model used for this entity to the next index in the staticmodel list, or the previous
 */
@@ -290,16 +283,19 @@ static void cycle_staticmodel(void* entity, int delta) {
 		deltaposition = 0;
 
 	}
-	/**if (i == numres || (i + 1) == numres) {
-		mdlnamearg.make_string(get_resource_name(resourceList_t_lookup_index(rlistt, 0)));
-	}
-	else {
-		mdlnamearg.make_string(get_resource_name(resourceList_t_lookup_index(rlistt, i+1)));
-	}*/
+
 	set_entity_model_name(entity, get_resource_name(resourceList_t_lookup_index(rlistt, deltaposition)));
 
 }
 
+class edited_entity_t {
+	void* m_ent;
+
+public:
+	virtual void set_model(const char* name) {
+		set_entity_model_name(m_ent, name);
+	}
+};
 
 class mh_editor_local_t : public mh_editor_interface_t {
 	std::string m_prevgrab_entity_name;

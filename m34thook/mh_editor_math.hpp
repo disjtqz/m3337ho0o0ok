@@ -296,7 +296,11 @@ struct editor_vec3_t {
 	}
 };
 struct editor_mat3_t;
-
+enum class angle_component_e : unsigned {
+	PITCH,
+	YAW,
+	ROLL
+};
 struct editor_angles_t {
 	union {
 		struct {
@@ -329,6 +333,19 @@ struct editor_angles_t {
 	}
 	editor_angles_t(double p, double y, double r) : xmmlo(_mm_setr_pd(p, y)), xmmhi(_mm_set_sd(r)) {
 
+	}
+
+	double* get_component_ptr(angle_component_e cmp) {
+		switch (cmp) {
+		case angle_component_e::PITCH:
+			return &pitch;
+		case angle_component_e::YAW:
+			return &yaw;
+		case angle_component_e::ROLL:
+			return &roll;
+		}
+
+		cs_assume_m(false);
 	}
 
 	idAngles to_id() const {
