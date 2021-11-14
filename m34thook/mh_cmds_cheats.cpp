@@ -283,26 +283,19 @@ static void mh_removeAi(idCmdArgs* args) {
 
 	}
 }
-static void mh_ScriptCmdEnt_console(idCmdArgs* args) {
-
-	void* entity = find_entity(args->argv[1]);
-
-	if (!entity) {
-		idLib::Printf("No entity %s\n", args->argv[1]);
-		return;
-	}
+static void ScriptCmd(void* entity, idCmdArgs* args, unsigned startidx) {
 
 
-	idEventDef* evt = idEventDefInterfaceLocal::Singleton()->FindEvent(args->argv[2]);
+	idEventDef* evt = idEventDefInterfaceLocal::Singleton()->FindEvent(args->argv[startidx+1]);
 
 	if (!evt) {
 
-		idLib::Printf("No event %s\n", args->argv[2]);
+		idLib::Printf("No event %s\n", args->argv[startidx+1]);
 		return;
 	}
 
 
-	unsigned readvaluepos = 3;
+	unsigned readvaluepos = startidx+2;
 
 	auto getarg = [&readvaluepos, args]() -> const char* {
 
@@ -432,7 +425,9 @@ static void mh_ScriptCmdEnt_console(idCmdArgs* args) {
 			break;
 		}
 
-
+		case '4': {//idMD6Anim, i think we skip?
+			break;
+		}
 
 		default: {
 
@@ -445,18 +440,89 @@ static void mh_ScriptCmdEnt_console(idCmdArgs* args) {
 		}
 	}
 
-	mh_ScriptCmdEnt(evt, entity, &evargs[0]);
+	idEventArg result = mh_ScriptCmdEnt(evt, entity, &evargs[0]);
 
+	std::string returnval;
+
+	switch (result.type) {
+	case '1':
+	case '2':
+	case '5':
+	case 's': {
+		returnval = result.value.s;
+		break;
+	}
+	case 'b':
+	case 'i': {
+		//too lazy to do enum name lookups right now
+		returnval = std::to_string(result.value.i);
+		break;
+	}
+	case 'f': {
+		returnval = std::to_string(result.value.f);
+		break;
+	}
+	case 'e': {
+		auto ent = result.value.er;
+
+		if (ent) {
+			returnval = get_entity_name(ent);
+		}
+		else {
+			returnval = "NULL";
+		}
+		break;
+	}
+	case 'a':
+	case 'v': {
+		idVec3 vv = result.value.v_vec3;
+
+		returnval = std::to_string(vv.x) + " " + std::to_string(vv.y) + " " + std::to_string(vv.z);
+		break;
+	}
+	default: //retuning void? dont copy result to clipboard
+		return;
+	}
+
+	set_clipboard_data(returnval.c_str());
 
 }
 
+static void mh_ScriptCmdEnt_console(idCmdArgs* args) {
+
+	void* entity = find_entity(args->argv[1]);
+
+	if (!entity) {
+		idLib::Printf("No entity %s\n", args->argv[1]);
+		return;
+	}
+	ScriptCmd(entity, args, 1);
+}
+
+
+static void mh_ScriptCmd(idCmdArgs* args) {
+
+	if (true) {
+		idLib::Printf("Sorry, this dont work rn it crashes sometimes because of some shit with the debugentity use scriptcmdent instead.\n");
+		return;
+	}
+	void* entity = get_debug_target();
+	if (!entity) {
+		idLib::Printf("No debug target selected\n");
+		return;
+	}
+	ScriptCmd(entity, args, 0);
+
+}
 
 void install_cheat_cmds() {
 
 	idCmd::register_command("mh_killAi", mh_killai, "Kills all living ai");
 	idCmd::register_command("mh_removeAi", mh_removeAi, "Removes all living ai");
 	idCmd::register_command("mh_randomact", goofy_op, "<distance> <scalar> uses scalar + random values to randomly change the color, scale, and velocity of all entities within distance from player");
-	idCmd::register_command("mh_ScriptCmdEnt", mh_ScriptCmdEnt_console, "ai_ScriptCmdEnt resurrected");
+	idCmd::register_command("mh_ScriptCmdEnt", mh_ScriptCmdEnt_console, "<entity> <event> <args> ai_ScriptCmdEnt resurrected, now copies the results of the eventcall to your clipboard for chaining commands together");
+	idCmd::register_command("mh_ScriptCmd", mh_ScriptCmd, "<event> <args> ai_ScriptCmd resurrected, now copies the results of the eventcall to your clipboard for chaining commands together");
+
 	idCmd::register_command("noclip", cmd_noclip, "Toggle noclip");
 
 	idCmd::register_command("notarget", cmd_notarget, "Toggle notarget");

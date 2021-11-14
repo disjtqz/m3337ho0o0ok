@@ -1166,9 +1166,9 @@ bool is_entity_of_class(void* ent, const char* cname) {
 CACHED_EVENTDEF(getDebugTarget);
 
 CACHED_EVENTDEF(setDebugTarget);
-
+//wtf it returns int sometimes, but that doesnt seem to be anywhere in v1. must be new in v6
 void* get_debug_target() {
-
+	//return lookup_entity_index(ev_getDebugTarget(get_world()).value.i);
 	return ev_getDebugTarget(get_world()).value.er;
 }
 void set_debug_target(void* newtarget) {

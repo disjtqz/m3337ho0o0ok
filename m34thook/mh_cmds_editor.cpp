@@ -157,7 +157,7 @@ static void mh_grab(idCmdArgs* args) {
 	noclip
 	g_stopTime 1
 	hands_show 0
-	r_skipGuis 1
+	g_showHud 0
 	g_doom5Melee_enable 0 
 */
 //ai_suicideCheck_disable 1 to prevent ai from dying in out of bounds situations
@@ -225,6 +225,15 @@ void cmd_set_angle_incr(idCmdArgs* args) {
 		return;
 	ed->set_angle_increment(atof(args->argv[1]));
 }
+
+void cmd_editor_keys(idCmdArgs* args) {
+
+	idLib::Printf("Editor keys - Uparrow = increment grab dist, Downarrow = decrement grab dist, PGUP - increase ent size, PGDN - decrease ent size,\n"
+		"INS - duplicate grabbed entity, KP1 / KP3 - manipulate entity roll, KP4 / KP6 - manipulate entity pitch, KP7 / KP8 - manipulate entity yaw,\n"
+		"Z = lock Z axis of current selection. KP8/KP2 = cycle entity rendermodel\n"
+		"F3 - Save all changes back to the map in overrides."
+	);
+}
 void install_editor_cmds() {
 
 	idCmd::register_command("mh_spawninfo", cmd_mh_spawninfo, "Copy your current position and orientation, formatted as spawnPosition and spawnOrientation to the clipboard");
@@ -239,4 +248,5 @@ void install_editor_cmds() {
 	idCmd::register_command("mh_editor_spawn", mh_editor_spawn, "Spawns an entity, saving it to the map and grabbing it for manipulation");
 	idCmd::register_command("mh_spmap", cmd_mh_spmap, "<map name> shortcut for map maps/game/sp/<map name>/<map name>");
 	idCmd::register_command("mh_angleincr", cmd_set_angle_incr, "<double> amount to inc/dec by with angle editing");
+	idCmd::register_command("mh_editor_keys", cmd_editor_keys, "tells you editor stuff");
 }

@@ -30,6 +30,7 @@
 
 
 #include "mh_editor_math.hpp"
+
 #define		editor_assert_m(...)		cs_assert(__VA_ARGS__)
 class mh_editor_local_t;
 
@@ -242,7 +243,6 @@ static editor_vec3_t get_player_feet_position() {
 
 	return tmppos;
 }
-#include <set>
 CACHED_EVENTDEF(getModel);
 CACHED_EVENTDEF(setModel);
 
@@ -300,223 +300,6 @@ static void cycle_staticmodel(void* entity, int delta) {
 
 }
 
-class entity_iface_t {
-
-public:
-	virtual editor_vec3_t get_entity_scale() = 0;
-	virtual void set_entity_scale(editor_vec3_t newscale) = 0;
-
-	virtual editor_vec3_t get_entity_clipscale() = 0;
-	virtual void set_entity_clipscale(editor_vec3_t newscale) = 0;
-
-	virtual std::string get_entitydef_text() = 0;
-
-
-	virtual editor_vec3_t get_entity_position() = 0;
-
-	virtual void set_entity_position(editor_vec3_t pos) = 0;
-};
-
-//entity at runtime
-class entity_rt_t : public entity_iface_t {
-	void* m_ptr;
-public:
-	virtual editor_vec3_t get_entity_scale() {
-		return *g_new_field_renderscale(m_ptr);
-	}
-	virtual void set_entity_scale(editor_vec3_t newscale) {
-
-		cs_uninit_array_t<idEventArg, 6> args{};
-		//or use setRenderModelScale, but iirc that doesnt work as well as lerp
-		args[0].make_float(newscale.x);
-		args[1].make_float(newscale.y);
-		args[2].make_float(newscale.z);
-		args[3].make_int(0);
-		args[4].make_int(0);
-		args[5].make_int(0);
-		ev_lerpRenderScale(m_ptr, &args[0]);
-	}
-
-	virtual editor_vec3_t get_entity_clipscale() {
-		return *g_clipmodel_size(m_ptr);
-
-	}
-	virtual void set_entity_clipscale(editor_vec3_t newscale) {
-
-		*g_clipmodel_size(m_ptr) = static_cast<idVec3>(newscale);
-	}
-
-	virtual std::string get_entitydef_text() {
-		void* edef_grabbed = *g_entitydef_identity(m_ptr);
-		if (!edef_grabbed)
-			return "";
-
-		const char* src = *g_iddecl_textsource(edef_grabbed);
-
-		return src;
-	}
-
-
-	virtual editor_vec3_t get_entity_position() {
-		return mh_ScriptCmdEnt_idEntity(ev_getWorldOrigin.Get(), m_ptr).value.v_vec3;
-	}
-
-	virtual void set_entity_position(editor_vec3_t pos) {
-
-		cs_uninit_t<idEventArg> arg;
-		arg->make_vec3(pos);
-
-		mh_ScriptCmdEntFast(ev_setWorldOrigin.Get(), m_ptr, &arg);
-	}
-	entity_rt_t() : m_ptr(nullptr) {}
-
-	void set_entity(void* en) {
-		m_ptr = (en);
-	}
-
-};
-class decl_t;
-/*
-	decl with inheritance chain parsed too
-*/
-class decl_t {
-	//resourceList_t this decl belongs to
-	void* m_resource_class;
-
-	//decl we inherit from
-	decl_t* m_parent;
-	rapiddecl::Document m_decl;
-
-public:
-	rapiddecl::Document* doc() {
-
-		return &m_decl;
-	}
-
-	decl_t() : m_resource_class(nullptr), m_parent(nullptr), m_decl() {}
-
-	void setup(void* resclass, const char* src) {
-		m_resource_class = resclass;
-
-		decl_parsing::parse(m_decl, src);
-
-
-		dmemb_iter_t iter = m_decl.FindMember("inherit");
-		if (iter == m_decl.MemberEnd()) {
-			m_parent = nullptr;
-			return;
-		}
-		else {
-			editor_assert_m(iter->value.IsString());
-
-			const char* inher = iter->value.GetString();
-
-
-			void* parent = locate_resourcelist_member_from_resourceList_t(m_resource_class, inher, true);
-
-			editor_assert_m(parent != nullptr);
-
-			m_parent = new decl_t(parent);
-		}
-	}
-
-	decl_t(void* resource_class, const char* src) : decl_t() {
-		setup(resource_class, src);
-
-	}
-
-	decl_t(void* idDeclPtr) : decl_t(resourcelist_for_resource(idDeclPtr), *g_iddecl_textsource(idDeclPtr)) {}
-
-
-
-
-
-};
-
-
-class entity_decl_t : public entity_iface_t {
-	rapiddecl::Document m_decl;
-	rapiddecl::Value* m_edit;//cached edit
-
-public:
-
-
-	static double get_value_or_z(rapiddecl::Value* v, const char* name) {
-		if (!v->HasMember(name))
-			return .0;
-
-		return v->FindMember(name)->value.GetDouble();
-
-	}
-	editor_vec3_t get_vec3_from_value(rapiddecl::Value* v) {
-
-		return editor_vec3_t{ get_value_or_z(v, "x"), get_value_or_z(v, "y"), get_value_or_z(v, "z") };
-
-	}
-
-	auto& al() {
-		return m_decl.GetAllocator();
-	}
-
-	void create_value_from_vec3(rapiddecl::Value& r, editor_vec3_t v) {
-		r.SetObject();
-
-		r.AddMember("x", v.x, al());
-		r.AddMember("y", v.y, al());
-		r.AddMember("z", v.z, al());
-
-
-	}
-
-
-	rapiddecl::Value* edit() {
-		return m_edit;
-
-	}
-	virtual editor_vec3_t get_entity_scale() {
-
-		auto ed = edit();
-
-		dmemb_iter_t iter = ed->FindMember("renderModelInfo");
-		if (iter == ed->MemberEnd())
-			return editor_vec3_t{ 1.0 };
-
-		dmemb_iter_t scaleiter = iter->value.FindMember("scale");
-
-		if (scaleiter == iter->value.MemberEnd()) {
-			return editor_vec3_t{ 1.0 };
-		}
-
-		return get_vec3_from_value(&scaleiter->value);
-	}
-	virtual void set_entity_scale(editor_vec3_t newscale) {
-
-	}
-
-	virtual editor_vec3_t get_entity_clipscale() {
-
-	}
-	virtual void set_entity_clipscale(editor_vec3_t newscale) {
-
-	}
-
-	virtual std::string get_entitydef_text() {
-
-	}
-
-
-	virtual editor_vec3_t get_entity_position() {
-
-		return get_vec3_from_value(&m_decl.FindMember("edit")->value.FindMember("spawnPosition")->value);
-	}
-
-	virtual void set_entity_position(editor_vec3_t pos) {
-
-	}
-
-
-
-};
 
 class mh_editor_local_t : public mh_editor_interface_t {
 	std::string m_prevgrab_entity_name;
@@ -723,7 +506,7 @@ void mh_editor_local_t::init_dom() {
 
 	mh_input::install_input_handler(&m_input_forwarder);
 	m_gui = mh_gui::new_named_dom("editor_gui");
-	m_current_entity_name_label = m_gui->alloc_e2d("current_selected_ent_name", 0.80, 0.10, 0.20, 0.10);
+	m_current_entity_name_label = m_gui->alloc_e2d("current_selected_ent_name", 0.65, 0.10, 0.20, 0.10);
 	m_current_entity_name_label->init_text("", 1.0, colorCyan);
 
 	m_entitydef_source = m_gui->alloc_e2d("entitydef_source", 0.1, 0.1, 0.8, 0.8);
@@ -1036,7 +819,6 @@ void mh_editor_local_t::write_current_map_to_overrides() {
 
 	call_as<void>(descan::g_idmapfile_write, get_level_map(), pth);
 	namespace fs = std::filesystem;
-
 
 	fs::path expected = pth;
 	expected = expected.replace_extension(".map");
