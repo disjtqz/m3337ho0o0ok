@@ -80,7 +80,11 @@ extern unsigned g_cvardata_rvas[DE_NUMCVARS];
 MH_PURE
 static idCVar::cvarData_t* cvar_data(de_cvar_e cv) {
 
-	return from_de_rva<idCVar::cvarData_t>(g_cvardata_rvas[cv]);
+	unsigned rv = g_cvardata_rvas[cv];
+
+
+
+	return from_de_rva<idCVar::cvarData_t>(rv);
 }
 
 

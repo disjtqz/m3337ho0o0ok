@@ -22,6 +22,7 @@
 #include "mh_guirender.hpp"
 #include "mh_editor_mode.hpp"
 #include <string>
+#include "mh_staticmodel.hpp"
 extern void cmd_optimize(idCmdArgs* args);
 void test_persistent_text(idCmdArgs* args) {
 
@@ -114,10 +115,112 @@ static void locate_eventdef_type(idCmdArgs* args) {
 		}
 	}
 }
+
+static void mh_dump_bmodel(idCmdArgs* args) {
+	if (args->argc < 4)
+		return;
+
+	void* smodel = locate_resourcelist_member("idStaticModel", args->argv[1]);
+	if (!smodel) {
+		idLib::Printf("Couldn't find %s\n", args->argv[1]);
+		return;
+	}
+
+	call_as<void>(descan::g_idStaticModel_WriteStaticBModel, smodel, args->argv[2], 0, args->argv[3][0] != '0');
+
+}
+#include "objfiles/objloader.h"
+
+static constexpr __int64 VertexSizeFromMask(unsigned int a1)
+{
+	return (a1 & 4)
+		+ ((a1 >> 2) & 4)
+		+ ((a1 >> 2) & 8)
+		+ ((a1 >> 1) & 4)
+		+ ((a1 >> 4) & 4)
+		+ ((a1 >> 9) & 4)
+		+ ((a1 >> 7) & 8)
+		+ ((a1 >> 15) & 4)
+		+ ((a1 >> 12) & 8)
+		+ (HIWORD(a1) & 4)
+		+ ((a1 >> 13) & 8)
+		+ ((a1 >> 17) & 4)
+		+ ((a1 & 1) != 0 ? 0xC : 0)
+		+ ((a1 & 0x100000) != 0 ? 3 : 0)
+		+ ((a1 & 0x200000) != 0 ? 3 : 0)
+		+ ((a1 & 0x400000) != 0 ? 6 : 0)
+		+ ((a1 & 0x800000) != 0 ? 6 : 0)
+		+ ((a1 & 0x1000) != 0 ? 0xC : 0)
+		+ 4 * (a1 & 2);
+}
+
+
+static constexpr unsigned default_size = VertexSizeFromMask(0x1801F);
+static void mh_test_genbmodel(idCmdArgs* args) {
+
+	auto sm = idStaticModelPtr::CreateNew();
+	idDrawVert* resvert = nullptr;
+	unsigned short* residx = nullptr;
+
+	sp::ObjLoader obj;
+	obj.load(args->argv[1]);
+	unsigned numverts = obj.getVertCount();
+	unsigned numind = obj.getIndexCount();
+
+#if 1
+	sm.Setup_Singlesurface_hack(numverts, numind, &resvert, &residx);
+
+	memset(resvert, 0, sizeof(idDrawVert) * numverts);
+	memset(residx, 0, sizeof(residx[0]) * numind);
+	
+	const unsigned int* idxs = obj.getFaces();
+
+	for (unsigned i = 0; i < numind; ++i) {
+		residx[i] = idxs[i] ;
+	}
+
+
+	for (unsigned i = 0; i < numverts; ++i) {
+		idDrawVert& vrt = resvert[i];
+		idVec3 norm = *(const idVec3*)(&obj.getNormals()[i * 3]);
+
+		vrt.normal[0] = norm.x;
+		vrt.normal[1] = norm.y;
+		vrt.normal[2] = norm.z;
+
+		
+	/*	const float* st = &obj.getTexCoords(0)[i * 2];
+
+		vrt._st.x = st[0];
+		vrt._st.y = st[1];*/
+
+
+		idVec3 pos = ((const idVec3*)obj.getPositions())[i];
+
+		vrt.pos = pos;
+
+
+	}
+
+#else
+	call_as<void>(descan::g_idStaticModel_MakeTexturedCube, sm.m_ptr, 10.0f, 10.0f);
+#endif
+	sm.make_standard_tris();
+	sm.Finalize_geo();
+
+	sm.Write("shitty_tri_model.bmodel");
+
+
+
+
+}
 void install_miscndev_cmds() {
 
 	idCmd::register_command("mh_cpuinfo", meathook_cpuinfo, "takes no args, dumps info about your cpu for dev purposes");
 	idCmd::register_command("image_fill", image_fill, "test");
 	idCmd::register_command("mh_optimize", cmd_optimize, "Patches the engine to make stuff run faster. do not use online, might result in slightly different floating point results (probably not though)");
 	idCmd::register_command("mh_locate_fspec_char_uses", locate_eventdef_type, "<char> Finds all usages of a provided char in event formatspecs/rettypes");
+	idCmd::register_command("mh_dump_bmodel", mh_dump_bmodel, "<name> <output path> <skip_compression> Finds a staticmodel and then executes writestaticbmodel to the provided path");
+
+	idCmd::register_command("mh_test_genbmodel", mh_test_genbmodel, "<obj path> <output path> generate bmodel from .obj");
 }

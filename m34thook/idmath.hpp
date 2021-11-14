@@ -103,17 +103,16 @@ struct  idAngles
 
 struct  idDrawVert
 {
-	idVec3 xyz;
-	idVec2 color;
-	char normal[4];
-	char tangent[4];
-	char _color2[4];
-	idVec2 _tangent;
-	char materials[4];
-	char unused[4];
-	idVec2 _st;
-	idVec2 _st2;
+	idVec3 pos;
+	idVec2 lightmapUV;
+	unsigned __int8 normal[4];
+	unsigned __int8 tangent[4];
+	unsigned __int8 color[4];
+	idVec2 materialUV;
+	unsigned __int16 materials[2];
+	unsigned __int16 unused[2];
 };
+
 
 struct idMat3 {
 	idVec3 mat[3];

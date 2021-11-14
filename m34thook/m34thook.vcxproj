@@ -148,12 +148,12 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLRelease|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>D:\Program Files (x86)\Steam\steamapps\common\DOOMEternal</OutDir>
+    <OutDir>Q:\DOOMEternal_dev_version</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>D:\Program Files (x86)\Steam\steamapps\common\DOOMEternal</OutDir>
+    <OutDir>Q:\DOOMEternal_dev_version</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
@@ -378,6 +378,7 @@
     <ClCompile Include="mh_memmanip_cmds.cpp" />
     <ClCompile Include="mh_native_api.cpp" />
     <ClCompile Include="mh_staticmodel.cpp" />
+    <ClCompile Include="objfiles\objloader.cpp" />
     <ClCompile Include="optimizations\mhoptimize.cpp" />
     <ClCompile Include="pregenerated\doom_eternal_cvars_generated.cpp" />
     <ClCompile Include="pregenerated\doom_eternal_properties_generated.cpp" />
@@ -430,6 +431,7 @@
     <ClInclude Include="mh_memmanip_cmds.hpp" />
     <ClInclude Include="mh_native_api.hpp" />
     <ClInclude Include="mh_staticmodel.hpp" />
+    <ClInclude Include="objfiles\objloader.h" />
     <ClInclude Include="pregenerated\doom_eternal_cvars_generated.hpp" />
     <ClInclude Include="pregenerated\doom_eternal_properties_generated.hpp" />
     <ClInclude Include="rapiddecl.hpp" />

@@ -23,3 +23,7 @@ static inline void* idNew(size_t nbytes) {
 
 	return call_as<void*>(descan::g_doom_operator_new, nbytes, 0);
 }
+
+static inline void idDelete(void* vp) {
+	call_as<void>(descan::g_doom_operator_delete, vp);
+}

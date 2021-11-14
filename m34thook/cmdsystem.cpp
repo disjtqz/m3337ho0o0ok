@@ -250,6 +250,7 @@ void idCVar::get_cvardata_rvas() {
 		else {
 			g_cvardata_rvas[i] = to_de_rva(loc->second);
 		}
+		++current_findpos;
 	}
 
 

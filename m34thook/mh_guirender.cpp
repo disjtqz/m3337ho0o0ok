@@ -62,6 +62,10 @@ static void mh_rendergui_callback(idDebugHUD* dbghud, idRenderModelGui* rgui) {
 		com_debugHUD = // idCVar::Find("com_debugHUD");
 	}*/
 
+	if (!cvar_data(cvr_com_debugHUD)) {
+		return; //we're on v1, and running before the rvas have been populated
+
+	}
 	cvar_data(cvr_com_debugHUD)->valueInteger = 1;
 
 
