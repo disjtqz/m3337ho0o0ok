@@ -84,7 +84,7 @@ void idStaticModelPtr::Setup_Singlesurface_hack(unsigned num_verts, unsigned num
 	void* current_surf = surfptr->list;
 
 	
-	*g_model_material(current_surf) = locate_resourcelist_member("idMaterial2", "_default");
+	*g_model_material(current_surf) = locate_resourcelist_member("idMaterial2", "_blue");
 	
 	*g_model_geometry(current_surf) = tri;
 	*g_model_geometryIsReference(current_surf) = 0;
@@ -131,4 +131,6 @@ void idStaticModelPtr::make_standard_tris() {
 	void* current_idtriangles = *g_model_geometry(surfptr2->list);
 
 	*g_model_geometry(surfptr2->list) = call_as<void*>((void*)0x14087C000, current_idtriangles);
+	//boundsfromvertscan
+	call_as<void>((void*)0x0140586DA0, current_idtriangles);
 }

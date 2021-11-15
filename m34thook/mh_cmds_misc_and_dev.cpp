@@ -189,10 +189,10 @@ static void mh_test_genbmodel(idCmdArgs* args) {
 		vrt.normal[2] = norm.z;
 
 		
-	/*	const float* st = &obj.getTexCoords(0)[i * 2];
+	const float* st = &obj.getTexCoords(0)[i * 2];
 
-		vrt._st.x = st[0];
-		vrt._st.y = st[1];*/
+		vrt.materialUV.x = st[0];
+		vrt.materialUV.y = st[1];
 
 
 		idVec3 pos = ((const idVec3*)obj.getPositions())[i];
@@ -208,7 +208,7 @@ static void mh_test_genbmodel(idCmdArgs* args) {
 	sm.make_standard_tris();
 	sm.Finalize_geo();
 
-	sm.Write("shitty_tri_model.bmodel");
+	sm.Write(args->argv[2],true);
 
 
 
