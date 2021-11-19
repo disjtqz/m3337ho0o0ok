@@ -8,8 +8,8 @@ void hook_idfilesystem();
 
 FILE* get_override_for_resource(const char* name, size_t* size_out);
 
-
-void get_override_path(const char* override_relative, char (&buf)[OVERRIDE_PATHBUF_SIZE]);
+//returns length of final string
+unsigned get_override_path(const char* override_relative, char (&buf)[OVERRIDE_PATHBUF_SIZE]);
 struct idFile;
 enum fsLock_t {
 	FS_LOCK_SHARED = 0,

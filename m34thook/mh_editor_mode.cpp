@@ -337,6 +337,178 @@ public:
 
 
 };
+#define		INFOCACHE_ARRAY_LENGTH		16384
+#define		INFO_ALIGN		alignas(64)
+struct mh_entity_infocache_t {
+	unsigned m_numents_intable;
+	//for an index in our arrays, the actual id for the entity
+	INFO_ALIGN
+	unsigned short m_index2entid[INFOCACHE_ARRAY_LENGTH];
+
+	//the entity that was recorded as being at this position in the list when we generated this cache
+	//is here so we can check later in the frame whether an entity is still valid
+	INFO_ALIGN
+	void* m_entforindex_cached[INFOCACHE_ARRAY_LENGTH];
+
+	//recording x, y, z for each entity, scattered to soa format
+	INFO_ALIGN
+	double m_x_positions[INFOCACHE_ARRAY_LENGTH];
+	INFO_ALIGN
+	double m_y_positions[INFOCACHE_ARRAY_LENGTH];
+	INFO_ALIGN
+	double m_z_positions[INFOCACHE_ARRAY_LENGTH];
+
+	INFO_ALIGN
+	double m_bbminx[INFOCACHE_ARRAY_LENGTH];
+	INFO_ALIGN
+	double m_bbminy[INFOCACHE_ARRAY_LENGTH];
+	INFO_ALIGN
+	double m_bbminz[INFOCACHE_ARRAY_LENGTH];
+
+	INFO_ALIGN
+	double m_bbmaxx[INFOCACHE_ARRAY_LENGTH];
+	INFO_ALIGN
+	double m_bbmaxy[INFOCACHE_ARRAY_LENGTH];
+	INFO_ALIGN
+	double m_bbmaxz[INFOCACHE_ARRAY_LENGTH];
+
+
+
+	//distance from player to any given entity
+	INFO_ALIGN
+	double m_playerdist2[INFOCACHE_ARRAY_LENGTH];
+
+	INFO_ALIGN
+	double m_playerdir2_x[INFOCACHE_ARRAY_LENGTH]; //direction from player pos to object
+
+	INFO_ALIGN
+	double m_playerdir2_y[INFOCACHE_ARRAY_LENGTH];
+
+	INFO_ALIGN
+	double m_playerdir2_z[INFOCACHE_ARRAY_LENGTH];
+
+
+	INFO_ALIGN
+	double m_ang_pitch[INFOCACHE_ARRAY_LENGTH];
+	INFO_ALIGN
+	double m_ang_yaw[INFOCACHE_ARRAY_LENGTH];
+
+	INFO_ALIGN
+	double m_ang_roll[INFOCACHE_ARRAY_LENGTH];
+
+
+
+	idEventDef* m_getorigin;
+
+	idEventDef* m_getmins;
+	idEventDef* m_getmaxs;
+	idEventDef* m_getangles;
+	void** m_game_entity_table;
+	void* m_identity_callevent;
+	idEventArg m_args_sink[8];
+
+	idEventArg m_retval;
+
+	void init_cached_ptrs() {
+		m_game_entity_table = get_entity_table();
+
+
+		m_getorigin = ev_getWorldOrigin.Get();
+
+		m_getmins = ev_getMins.Get();
+		m_getmaxs = ev_getMaxs.Get();
+		m_getangles = ev_getAngles.Get();
+
+		m_identity_callevent = get_identity_callevent_impl();
+	}
+
+
+	void evcall(idEventDef* which, void* self) {
+		call_as<void>(m_identity_callevent, self, &m_retval, which, m_args_sink);
+	}
+	void gather_base_information() {
+
+		
+		m_numents_intable = 0;
+
+		void* player0 = get_local_player();
+
+		evcall(m_getorigin, player0);
+		
+		editor_vec3_t player_pos = m_retval.value.v_vec3;
+
+
+
+		for (unsigned i = 0; i < WORLD_ENTITY_IDX; ++i) {
+
+			void* eent = m_game_entity_table[i];
+
+			if (!eent)
+				continue;
+
+			else {
+				unsigned pos = m_numents_intable;
+				m_numents_intable++;
+				m_index2entid[pos] = i;
+
+				m_entforindex_cached[pos] = eent;
+				
+				
+				evcall(m_getorigin, eent);
+
+				editor_vec3_t orv = m_retval.value.v_vec3;
+
+				m_x_positions[pos] = orv.x;
+				m_y_positions[pos] = orv.y;
+				m_z_positions[pos] = orv.z;
+
+
+			
+				evcall(m_getmins, eent);
+
+				orv = m_retval.value.v_vec3;
+				m_bbminx[pos] = orv.x;
+				m_bbminy[pos] = orv.y;
+				m_bbminz[pos] = orv.z;
+
+				evcall(m_getmaxs, eent);
+
+				orv = m_retval.value.v_vec3;
+				m_bbmaxx[pos] = orv.x;
+				m_bbmaxy[pos] = orv.y;
+				m_bbmaxz[pos] = orv.z;
+
+				evcall(m_getangles, eent);
+
+				editor_angles_t aang = m_retval.value.a_angles;
+				m_ang_pitch[pos] = aang.pitch;
+				m_ang_roll[pos] = aang.roll;
+				m_ang_yaw[pos] = aang.yaw;
+
+
+			}
+		}
+
+		editor_vec3_soa_t ppos_soa = player_pos;
+		for (unsigned i = 0; i < WORLD_ENTITY_IDX; i += 2) {
+
+			editor_vec3_soa_t current;
+			current.load(i, m_x_positions, m_y_positions, m_z_positions);
+
+			__m128d dists = ppos_soa.distance3d(current);
+
+			_mm_storeu_pd(m_playerdist2 + i, dists);
+
+
+			editor_vec3_soa_t dirs = (ppos_soa - current).normalized();
+
+			dirs.store(i, m_playerdir2_x, m_playerdir2_y, m_playerdir2_z);
+
+		}
+
+	}
+
+};
 
 class mh_editor_local_t : public mh_editor_interface_t {
 	//std::string m_prevgrab_entity_name;
@@ -454,7 +626,7 @@ editor_vec3_t mh_editor_local_t::get_player_look_direction() {
 	editor_vec3_t playerpos = tmp_playerpos;
 
 
-	return (endpoint - playerpos).normalized();
+	return (endpoint - playerpos).precise_normalized();
 }
 
 editor_vec3_t mh_editor_local_t::get_player_look_hit_normal() {
@@ -807,6 +979,8 @@ event_consumed_e mh_editor_local_t::receive_keyup_event(const char* keyname) {
 	}
 	if (!get_grabbed_entity())
 		return event_consumed_e::UNCONSUMED;
+
+#if 0
 	if (sh::string::streq(keyname, "F1")) {
 
 		const char* txt = get_entitydef_text();
@@ -823,7 +997,9 @@ event_consumed_e mh_editor_local_t::receive_keyup_event(const char* keyname) {
 		}
 	}
 
-	else if (sh::string::streq(keyname, "F2")) {
+	else 
+#endif
+		if (sh::string::streq(keyname, "F2")) {
 		void* edef_grabbed = *g_entitydef_identity(get_grabbed_entity());
 		if (!edef_grabbed) {
 
@@ -857,6 +1033,8 @@ void mh_editor_local_t::write_current_map_to_overrides() {
 
 
 	call_as<void>(descan::g_idmapfile_write, get_level_map(), pth);
+
+#if 0
 	namespace fs = std::filesystem;
 
 	fs::path expected = pth;
@@ -872,7 +1050,7 @@ void mh_editor_local_t::write_current_map_to_overrides() {
 	idLib::Printf("Moving %s to %s\n", exps.c_str(), dups.c_str());
 
 	fs::rename(expected, dup);
-
+#endif
 }
 const char* mh_editor_local_t::get_current_map_file_output_path() {
 	void* lvlmap = get_level_map();
@@ -881,7 +1059,10 @@ const char* mh_editor_local_t::get_current_map_file_output_path() {
 		idStr* mapname = g_mapfile_name(lvlmap);
 
 		if (mapname->data) {
-			get_override_path(mapname->data, m_temp_pathbuf);
+			unsigned override_end = get_override_path(mapname->data, m_temp_pathbuf);
+
+			strcpy(&m_temp_pathbuf[override_end], ".entities");
+
 			return m_temp_pathbuf;
 		}
 		else

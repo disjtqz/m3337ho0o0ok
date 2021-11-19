@@ -25,4 +25,7 @@ struct snaphak_realroutines_t {
 
 	void (*m_sincos)(sh_real_t value, sh_real_t* out_sin, sh_real_t* out_cos);
 	sh_real_t (*m_atan2)(sh_real_t iny, sh_real_t inx);
+
+	double (*m_precise_normalize)(double* v3);
+	double (*m_precise_distance3d)(double* vx, double* vy);
 };

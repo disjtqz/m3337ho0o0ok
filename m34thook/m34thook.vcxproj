@@ -276,7 +276,7 @@
       <PreprocessorDefinitions>MH_ETERNAL_V6;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AdditionalIncludeDirectories>$(SolutionDir)/snaphak_algo;$(SolutionDir)/RPCInterface;$(SolutionDir)/udis86test;$(SolutionDir)/m34thook</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
@@ -288,9 +288,11 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
-      <AdditionalOptions>-flto=full -msse4.1 -msse4.2 -Wl,-plugin-opt=-save-temps %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-flto=full -msse4.1 -msse4.2 -msse3 -Wl,-plugin-opt=-save-temps %(AdditionalOptions)</AdditionalOptions>
       <AssemblerOutput>All</AssemblerOutput>
       <AssemblerListingLocation>Q:\DOOMEternal_dev_version\asmout.asm</AssemblerListingLocation>
+      <GuardEHContMetadata>
+      </GuardEHContMetadata>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -322,7 +324,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <StringPooling>false</StringPooling>
       <BufferSecurityCheck>true</BufferSecurityCheck>
-      <AdditionalOptions>-msse4.1 -msse4.2 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-msse4.1 -msse4.2 -msse3 %(AdditionalOptions)</AdditionalOptions>
       <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
@@ -362,6 +364,7 @@
     <ClCompile Include="mhgui.cpp" />
     <ClCompile Include="mhserver.cpp" />
     <ClCompile Include="mhutil\mh_filesystem.cpp" />
+    <ClCompile Include="mhutil\mh_structures.cpp" />
     <ClCompile Include="mh_cmds_cheats.cpp" />
     <ClCompile Include="mh_cmds_dump_and_gen.cpp" />
     <ClCompile Include="mh_cmds_editor.cpp" />
@@ -420,6 +423,7 @@
     <ClInclude Include="memscan.hpp" />
     <ClInclude Include="mhgui.hpp" />
     <ClInclude Include="mhutil\mh_filesystem.hpp" />
+    <ClInclude Include="mhutil\mh_structures.hpp" />
     <ClInclude Include="mh_defs.hpp" />
     <ClInclude Include="mh_dev_hooks.hpp" />
     <ClInclude Include="mh_editor_math.hpp" />
@@ -450,6 +454,7 @@
     <ClInclude Include="xbyak\xbyak_util.h" />
     <ClInclude Include="xmacro_mh_config.hpp" />
     <ClInclude Include="xmacro_scanned_features.hpp" />
+    <ClInclude Include="xmacro_vec3_base.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

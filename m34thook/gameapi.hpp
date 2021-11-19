@@ -7,13 +7,16 @@
 #define	WORLD_ENTITY_IDX		16382
 #define	LAST_PLAYER_IDX			12
 
-#define	VTBLOFFS_CALLEVENT		0x30
+#define	VTBLOFFS_CALLEVENT			0x30
+#define	VTBLOFFS_IDCLASS_GETTYPE	0x16
 void* find_entity(const char* name);
 /*
 	iterate over all entities with a given classname
 	returns null when done
 */
 void* find_next_entity_with_class(const char* classname, void* entity_iterator = nullptr);
+
+void* locate_challenge_entity();
 void* get_local_player();
 void* get_level_map();
 
@@ -48,7 +51,7 @@ void** get_entity_table();
 //0-16384
 void* lookup_entity_index(unsigned idx);
 //used by noclip, notarget, and entering editor mode 
-void toggle_idplayer_boolean(void* player, const char* property_name, bool use_explicit_value = false, bool explicit_value = false);
+bool toggle_idplayer_boolean(void* player, const char* property_name, bool use_explicit_value = false, bool explicit_value = false, bool silent = false);
 static void* get_gamelocal() {
 
 	return *reinterpret_cast<void**>(descan::g_gamelocal);
@@ -581,6 +584,9 @@ MH_LEAF
 void mh_ScriptCmdEnt_idEntity(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args, idEventArg* MH_NOESCAPE out_arg);
 MH_LEAF
 void mh_ScriptCmdEnt_idEntity_void(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args = nullptr);
+
+
+void* get_identity_callevent_impl();
 template<typename TYuckyStr>
 struct cached_eventdef_t {
 	static inline idEventDef* m_def;

@@ -73,13 +73,7 @@ void cmd_mh_query_type(idCmdArgs* args) {
 }
 
 void cmd_mh_printentitydef(idCmdArgs* args) {
-#if 0
-	if (args->argc < 2) {
-		idLib::Printf("Not enough args.\n");
-		return;
-	}
 
-#else
 	void* ent = nullptr;
 
 	if (args->argc < 2) {
@@ -91,7 +85,6 @@ void cmd_mh_printentitydef(idCmdArgs* args) {
 
 		ent = find_entity(args->argv[1]);
 	}
-#endif
 	if (!ent) {
 		idLib::Printf("Couldn't find entity %s.\n", args->argv[1]);
 		return;
@@ -124,50 +117,7 @@ void cmd_mh_printentitydef(idCmdArgs* args) {
 std::vector<std::string> gActiveEncounterNames;
 void cmd_active_encounter(idCmdArgs* args)
 {
-#ifndef MH_ETERNAL_V6
-	// Following chain: idGameSystemLocal->idSaveGameSerializer->idSerializeFunctor<idMetrics>->idMetrics->idPlayerMetrics[0]
-	long long* idSaveGameSerializer = ((long long*)((char*)descan::g_idgamesystemlocal + 0xB0));
-	long long* idSerializerFunctor = (long long*)(*(idSaveGameSerializer));
-	long long* idMetrics = (long long*)(*(idSerializerFunctor + 0x59)); // 0x2C8
-	long long* idPlayerMetrics = (long long*)(*(idMetrics + 1)); // 0x8
-	long long* EncounterArray = (long long*)(*(idPlayerMetrics + 5)); // 0x28
-	long long* Encounter = (long long*)(*(EncounterArray));
 
-	long long EncounterListSize = *(Encounter - 1) - (4 * 0x8); // This seems to work but looks a bit fragile.
-	long long* EncounterManager = Encounter + 1; // Skip first encounter which always points to an instance of idGameChallenge_CampaignSinglePlayer.
-	size_t Index = 1;
-	while ((long long)Index < (EncounterListSize / 8)) {
-		// Active
-		if (EncounterManager == 0) {
-			break;
-		}
-
-		long long* Encounter = ((long long*)(*EncounterManager));
-		if (Encounter == nullptr) {
-			break;
-		}
-
-		int Active = *((int*)(Encounter + 0xC5)); // 0x628 -- Fragile offset for determining if an encounter is active.
-		if (Active != 0) {
-			char* Name = (char*)*(Encounter + 0x9); // 0x48 -- Encounter manager pointer to name string.
-			if (strcmp("player1", Name) == 0) {
-				break;
-			}
-
-			char String[MAX_PATH];
-			sprintf_s(String, "Active name %s\n", Name);
-			OutputDebugStringA(String);
-			idLib::Printf(String);
-
-			// Name
-			gActiveEncounterNames.push_back(Name);
-		}
-		EncounterManager++;
-		Index += 1;
-	}
-
-
-#else
 	for (void* encounter = find_next_entity_with_class("idEncounterManager"); encounter; encounter = find_next_entity_with_class("idEncounterManager", encounter)) {
 
 		if (get_classfield_int(encounter, "idBloatedEntity", "thinkFlags")) {//Active != 0) {
@@ -183,7 +133,6 @@ void cmd_active_encounter(idCmdArgs* args)
 			gActiveEncounterNames.push_back(name);
 		}
 	}
-#endif
 }
 
 std::string gCurrentCheckpointName;
@@ -313,6 +262,35 @@ static void mh_kw(idCmdArgs* args) {
 	idLib::Printf("%s", output.c_str());
 }
 
+static void mh_list_identity_subclasses(idCmdArgs* args) {
+
+
+	auto vv = idType::get_entity_inheritors();
+	std::string result = "Entity subclasses:\n";
+
+	for (auto&& memb : *vv) {
+
+		auto typ = from_de_rva<idTypeInfo>(memb);
+
+
+		if (args->argc > 1) {
+
+			if (!~sh::string::find_string_insens(typ->classname, args->argv[1])) {
+				continue;
+			}
+		}
+		result += "\t";
+		result += typ->classname;
+
+		result += "\n";
+
+	}
+
+	idLib::Printf("%s\n", result.c_str());
+	set_clipboard_data(result.c_str());
+
+}
+
 void install_query_cmds() {
 	idCmd::register_command("mh_printentitydef", cmd_mh_printentitydef, "Print the entitydef of the entity with the provided name to the console");
 	idCmd::register_command("mh_active_encounter", cmd_active_encounter, "Get the list of active encounter managers");
@@ -320,6 +298,6 @@ void install_query_cmds() {
 	idCmd::register_command("mh_type", cmd_mh_query_type, "Dump fields for provided class");
 	idCmd::register_command("mh_list_resource_lists", mh_list_resource_lists, "lists all resource lists by classname/typename, copying the result to the clipboard (the clipboard might not be helpful here)");
 	idCmd::register_command("mh_list_resources_of_class", mh_list_resourcelist_contents, "<resourcelist classname> lists all resources in a given list, copying result to clipboard");
-	idCmd::register_command("mh_kw", mh_kw, "Searches all types, enums, typedefs, their comments, field names, typename, template args for the provided keywords");
-
+	idCmd::register_command("mh_kw", mh_kw, "Searches all types, enums, typedefs, their comments, field names, typename, template args,eventdefs,vtbl names, cvar names, cvar descriptions for the provided keywords");
+	idCmd::register_command("mh_list_entity_types", mh_list_identity_subclasses, "<filter> lists the names of all subclasses of idEntity with optional filter");
 }

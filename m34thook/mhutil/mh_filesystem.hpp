@@ -49,4 +49,8 @@ namespace filesys {
 	bool file_exists(const char* filename);
 
 	bool get_ntpath_for(const char* path, win32_path_conversion_context_extern_t* conversion_temp, wchar_t* output);
+
+
+	bool move_file(const char* from, const char* to);
+
 }

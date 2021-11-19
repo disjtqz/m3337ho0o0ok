@@ -4,6 +4,10 @@
 
 #include <intrin.h>
 #include <array>
+
+#define     DISABLE_MH_NATIVE_API   
+
+#define     MH_DISABLE_ALL_DEV_STUFF
 #define		MH_FORCEINLINE		__forceinline
 #define		MH_CODE_SEG(name)	__declspec(code_seg(name)) 
 
@@ -280,3 +284,276 @@ static constexpr const char* fn(){return __funcy;}\
 			__failure_handler::raise_failure();\
 	}while(false)
 #endif
+
+
+/*
+    convince the compiler that the function is pure or super pure even if it actually isnt. useful in some scenarios when a function is affected by changes in the global state,
+    but only under certain conditions that are currently known to not be true
+*/
+template<typename TRet, typename... TArgs>
+MH_PURE
+static TRet call_as_super_pure(MH_NOESCAPE TRet(*func)(TArgs...), TArgs... args) {
+    return func(args...);
+}
+
+template<typename TRet, typename... TArgs>
+MH_SEMIPURE
+static TRet call_as_pure(MH_NOESCAPE TRet(*func)(TArgs...), TArgs... args) {
+    return func(args...);
+}
+template<typename T>
+concept is_domain_ptr_t = requires(T a) {
+    { a.extract_displ() } -> std::same_as<uint32_t>;
+};
+
+template<typename T>
+static inline bool checknull_for_jrcxz(T value) {
+    if constexpr (is_domain_ptr_t<T>) {
+        return value == T::make_from_u32(0);
+
+    }
+    else {
+        return value == static_cast<T>(0);
+
+    }
+
+}
+static constexpr unsigned X86_CF = 0x0100,
+X86_PF = 0x0004 << 8,
+X86_ZF = 0x0040 << 8,
+X86_SF = 0x0080 << 8,
+X86_NONE = 0;
+
+#if defined(__clang__)
+
+template<typename T>
+MH_PURE
+static inline
+bool cs_x86_jrcxz_impl(T vv) {
+    asm goto (
+        "jrcxz %l1"
+        :
+    : "c" (vv)
+        :
+        : iszero);
+
+    return 0;
+
+iszero:
+    return 1;
+}
+template<typename T>
+MH_PURE
+static inline bool cs_x86_jrcxz(T vv) {
+
+    if (__builtin_constant_p(checknull_for_jrcxz<T>(vv))) {
+        return checknull_for_jrcxz<T>(vv);
+
+
+    }
+    else {
+        bool result = cs_x86_jrcxz_impl(vv);
+
+        if (result != checknull_for_jrcxz<T>(vv))
+            __builtin_unreachable();
+
+        return result;
+    }
+}
+
+static inline bool cs_x86_loop(unsigned long long& vv) {
+    const unsigned long long orig_value = vv;
+    //bool result = cs_x86_loop_impl(vv);
+
+
+    bool result = false;
+
+    register unsigned long long valinput asm("rcx") = orig_value;
+
+
+    asm goto (
+        "loop %l1"
+        :"+r" (valinput)
+        :
+        :
+        : iszero);
+
+    // result = 0;
+    goto gotresult;
+iszero:
+    result = true;
+
+gotresult:
+    unsigned long long localres = valinput;
+
+
+    /*
+    * this assume causes some bad codegen (moves to rcx and back from rcx repeatedly :/
+
+
+    if (localres != (orig_value - 1) || result != (localres == 0))
+         __builtin_unreachable();*/
+
+    vv = localres;
+    return result;
+
+}
+
+MH_PURE
+static inline unsigned sahf_cpzs_switch(unsigned flagsval) {
+
+
+    __asm__ goto(
+        "sahf\n\t"
+        "jb %l1\n\t"
+        "jp %l2\n\t"
+        "jz %l3\n\t"
+        "js %l4\n\t"
+        :
+    : "a"(flagsval)
+        : "cc"
+        : cf_set, pf_set, zf_set, sf_set
+        );
+
+    return X86_NONE;
+cf_set:
+    return X86_CF;
+pf_set:
+    return X86_PF;
+zf_set:
+    return X86_ZF;
+sf_set:
+    return X86_SF;
+}
+MH_PURE
+static inline unsigned sahf_cpz_switch(unsigned flagsval) {
+
+
+    __asm__ goto(
+        "sahf\n\t"
+        "jb %l1\n\t"
+        "jp %l2\n\t"
+        "jz %l3\n\t"
+        :
+    : "a"(flagsval)
+        : "cc"
+        : cf_set, pf_set, zf_set
+        );
+
+    return X86_NONE;
+cf_set:
+    return X86_CF;
+pf_set:
+    return X86_PF;
+zf_set:
+    return X86_ZF;
+}
+MH_PURE
+static inline unsigned sahf_cp_switch(unsigned flagsval) {
+
+
+    __asm__ goto(
+        "sahf\n\t"
+        "jb %l1\n\t"
+        "jp %l2\n\t"
+        :
+    : "a"(flagsval)
+        : "cc"
+        : cf_set, pf_set
+        );
+
+    return X86_NONE;
+cf_set:
+    return X86_CF;
+pf_set:
+    return X86_PF;
+
+}
+#else
+
+template<typename T>
+MH_PURE
+static inline bool cs_x86_jrcxz(T vv) {
+
+    return checknull_for_jrcxz<T>(vv);
+
+}
+static inline unsigned sahf_cpzs_switch(unsigned flagsval) {
+
+    if (flagsval & X86_CF)
+        goto cf_set;
+    if (flagsval & X86_PF)
+        goto pf_set;
+    if (flagsval & X86_ZF)
+        goto zf_set;
+    if (flagsval & X86_SF)
+        goto sf_set;
+
+    return X86_NONE;
+cf_set:
+    return X86_CF;
+pf_set:
+    return X86_PF;
+zf_set:
+    return X86_ZF;
+sf_set:
+    return X86_SF;
+}
+static inline unsigned sahf_cpz_switch(unsigned flagsval) {
+
+    if (flagsval & X86_CF)
+        goto cf_set;
+    if (flagsval & X86_PF)
+        goto pf_set;
+    if (flagsval & X86_ZF)
+        goto zf_set;
+
+    return X86_NONE;
+cf_set:
+    return X86_CF;
+pf_set:
+    return X86_PF;
+zf_set:
+    return X86_ZF;
+}
+static inline unsigned sahf_cp_switch(unsigned flagsval) {
+
+    if (flagsval & X86_CF)
+        goto cf_set;
+    if (flagsval & X86_PF)
+        goto pf_set;
+
+    return X86_NONE;
+cf_set:
+    return X86_CF;
+pf_set:
+    return X86_PF;
+
+}
+static inline bool cs_x86_loop(unsigned long long& vv) {
+
+    bool result = false;
+
+
+    if (--vv == 0)
+        goto iszero;
+    goto gotresult;
+iszero:
+    result = true;
+
+gotresult:
+
+
+    return result;
+
+}
+
+#endif
+template<typename T>
+MH_PURE
+static inline bool cs_x86_jrcxnz(T vv) {
+
+    return !cs_x86_jrcxz<T>(vv);
+
+}
+#define     CS_DECLARE_GETSET(propname, type, getter, setter)   __declspec(property(get = getter, put = setter)) type propname

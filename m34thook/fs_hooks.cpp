@@ -676,7 +676,7 @@ static pathlogger_t g_print_resulting_path{ "override_paths.log" };
 
 
 
-void get_override_path(const char* name, char(&pathbuf)[OVERRIDE_PATHBUF_SIZE]) {
+unsigned get_override_path(const char* name, char(&pathbuf)[OVERRIDE_PATHBUF_SIZE]) {
 
 
 	unsigned pathbuf_fixup_search_start = 0;
@@ -696,8 +696,8 @@ void get_override_path(const char* name, char(&pathbuf)[OVERRIDE_PATHBUF_SIZE]) 
 	if (sh::string::strstr(name, ".entities") != 0) {
 		gLastLoadedEntities = name;
 	}
-
-	for (unsigned i = pathbuf_fixup_search_start; pathbuf[i]; ++i) {
+	unsigned i;
+	for (i = pathbuf_fixup_search_start; pathbuf[i]; ++i) {
 		if (pathbuf[i] == '/')
 			pathbuf[i] = '\\';
 
@@ -706,6 +706,7 @@ void get_override_path(const char* name, char(&pathbuf)[OVERRIDE_PATHBUF_SIZE]) 
 			break;
 		}
 	}
+	return i;
 
 }
 FILE* get_override_for_resource(const char* name, size_t* size_out) {

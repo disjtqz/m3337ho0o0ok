@@ -44,11 +44,8 @@ void cmd_noclip(idCmdArgs* args) {
 		idLib::Printf("You don't exist ya dumb fuck. Wait until you spawn.\n");
 		return;
 	}
-#if !defined(MH_ETERNAL_V6)
-	reinterpret_cast<void (*)(uintptr_t, void*)>(descan::g_noclip_func)(0, player);
-#else
+
 	toggle_idplayer_boolean(player, "noClip");
-#endif
 }
 
 
@@ -58,27 +55,7 @@ void cmd_notarget(idCmdArgs* args) {
 		idLib::Printf("No player1 instance available.\n");
 		return;
 	}
-
-#if !defined(MH_ETERNAL_V6)
-	auto headattr = idType::FindClassField("idPlayer", "noTarget");
-	if (!headattr) {
-		idLib::Printf("Couldn't locate the noTarget property on idPlayer, tell chrispy.\n");
-		return;
-	}
-
-	int notarget_value = headattr->get(player);
-
-	notarget_value = !notarget_value;
-	if (notarget_value) {
-		idLib::Printf("Turning notarget on.\n");
-	}
-	else
-		idLib::Printf("Disabling notarget\n");
-
-	headattr->set(player, notarget_value);
-#else
 	toggle_idplayer_boolean(player, "noTarget");
-#endif
 }
 static bool return_1() {
 
@@ -515,6 +492,36 @@ static void mh_ScriptCmd(idCmdArgs* args) {
 
 }
 
+/*
+	default godmode command sends idClientGameMsg_PlayerCommand_God to the server, allowing easy cheating in mp
+	our version just sets the godmode flag on the local player, which still works in sp but will have no effect in mp
+	so players will just assume id patched out godmode in mp... which they havent done lol. they did patch out the remoteconsole shit but left godmode in :/
+
+	should probably handle the player index arg for godmode so that doesnt give us away
+*/
+static void sneakybeaky_godmode(idCmdArgs* args) {
+	void* player = get_local_player();
+	if (!player)
+		return;
+	//pass silent = true so we can manually print the original godmode format string
+	bool new_value = toggle_idplayer_boolean(player, "godMode", false, false, true);
+	//this must match godmodes original format string so nobody suspects it was swapped
+	const char* mode = "OFF";
+	if (new_value) {
+		mode = "ON";
+	}
+	idLib::Printf("godmode %s for player %d\n", mode, 0);
+	//the swap worked, already tested
+//	idLib::Printf("new godmode\n");
+}
+void cheats_postinit() {
+	/*
+		oh come on man, i made it so clear in the comments that this wasnt something i wanted everyone to know and somehow its the first thing you pick out to tell everyone??
+		this kind of stuff is most effective in obscurity. 
+	*/
+	idCmd::swap_command_impl("God", sneakybeaky_godmode);
+
+}
 void install_cheat_cmds() {
 
 	idCmd::register_command("mh_killAi", mh_killai, "Kills all living ai");

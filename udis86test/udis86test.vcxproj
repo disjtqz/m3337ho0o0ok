@@ -263,8 +263,10 @@
       <ExceptionHandling>false</ExceptionHandling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <AdditionalOptions>-flto=full -mpopcnt -mlzcnt -msse4.2 -msse4.1 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>-flto=full -mpopcnt -mlzcnt -msse4.2 -msse4.1 -msse3 %(AdditionalOptions)</AdditionalOptions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <GuardEHContMetadata>
+      </GuardEHContMetadata>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

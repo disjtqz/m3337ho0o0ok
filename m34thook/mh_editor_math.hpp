@@ -1,6 +1,18 @@
 #pragma once
 
 
+//from trial and error, this seems to be the limit for positions. tested by teleporting here on xyz and firing grenades. grenades went off into the world in most directions, but towards advancing coordinates
+//the projectiles freeze in limbo, flying forever
+#define			MH_EDGE_OF_REALITY		2047
+#define			FLOAT_SMALLEST_NON_DENORM		1.1754944e-38
+/*
+	all math is double precision and sse1/sse2 compatible
+
+	could probably benefit from also using sse3 (_mm_hadd_pd , _mm_movedup_pd,_mm_addsub_pd,_mm_hsub_pd)
+	well, eternal does require SSE4.1, but some people use the intel insn emulator to play on older hardware
+	so id rather keep things pre sse4.1 for them
+
+*/
 static void two_doublevecs_to_3floats(__m128d xmmlo, __m128d xmmhi, float* outputs) {
 	__m128 xx = _mm_cvtpd_ps(xmmlo);
 	__m128 xy = _mm_cvtpd_ps(xmmhi);
@@ -30,45 +42,71 @@ static inline __m128d blend_xmmd(__m128d mask, __m128d taken_if_zero, __m128d ta
 }
 //simple double precision vec3. 
 
+static double scalar_sqrt(double val) {
+	__m128d dv = _mm_set_sd(val);
+	return _mm_cvtsd_f64(_mm_sqrt_sd(dv, dv));
+}
+
+static __m128d vector_sqrt(__m128d vals) {
+	return _mm_sqrt_pd(vals);
+}
+static double newt_step(double y, double x2) {
+	return y * (1.5 - (x2 * y * y));   
+}
+static __m128d newt_step(__m128d y, __m128d x2) {
+
+	__m128d innerexpr = _mm_mul_pd(x2, _mm_mul_pd(y, y));
+
+	return _mm_mul_pd(y, _mm_sub_pd(_mm_set1_pd(1.5), innerexpr));
+
+}
+static double scalar_rsqrt(double val) {
+	double x2 = val / 2.0;
+
+	double y = scalar_sqrt(val);
+
+	y = 1.0 / y;
+
+	y = newt_step(y, x2);
+	return y;
+}
+
+static __m128d vector_rsqrt(__m128d vals) {
+
+	__m128d x2 = _mm_div_pd(vals, _mm_set1_pd(2.0));
+
+	__m128d y = vector_sqrt(vals);
+
+	y = _mm_div_pd(_mm_set1_pd(1.0), y);
+
+	y = newt_step(y, x2);
+	return y;
+
+
+}
 
 
 struct editor_vec3_t {
-	union {
-		struct {
-			double x, y, z;
-		};
-		struct {
-			__m128d xmmlo;
-			__m128d xmmhi;
-		};
-	};
+#define editor_vec3_base_t		editor_vec3_t
 
 
-	editor_vec3_t() {
-		xmmlo = xmmhi = _mm_setzero_pd();
-	}
-
-
-	editor_vec3_t(const idVec3* v) {
+	editor_vec3_base_t(const idVec3* v) {
 		*this = v;
 
 	}
-	editor_vec3_t(const idVec3& v) : editor_vec3_t(&v) {}
-	editor_vec3_t(__m128d lowpart, __m128d highpart) : xmmlo(lowpart), xmmhi(highpart) {}
+	editor_vec3_base_t(const idVec3& v) : editor_vec3_base_t(&v) {}
+	
 
 
-	editor_vec3_t(double _x, double _y, double _z) :xmmlo(_mm_setr_pd(_x, _y)), xmmhi(_mm_set_sd(_z)) {}
-	editor_vec3_t(double dval) {
-		xmmlo = _mm_set1_pd(dval);
-		xmmhi = xmmlo;
-	}
+	editor_vec3_base_t(double _x, double _y, double _z) :xmmlo(_mm_setr_pd(_x, _y)), xmmhi(_mm_set_sd(_z)) {}
 
-	editor_vec3_t& operator = (const idVec3& other) {
+
+	editor_vec3_base_t& operator = (const idVec3& other) {
 
 		return *this = &other;
 	}
 
-	editor_vec3_t& operator =(const idVec3* other) {
+	editor_vec3_base_t& operator =(const idVec3* other) {
 		float3_to_two_doublevecs(&other->x, xmmlo, xmmhi);
 		return *this;
 	}
@@ -78,35 +116,16 @@ struct editor_vec3_t {
 		xmmhi = _mm_set_sd(z);
 
 	}
+#include "xmacro_vec3_base.hpp"
 
+#undef editor_vec3_base_t
 	void to_floats(float* out) const {
 		two_doublevecs_to_3floats(xmmlo, xmmhi, out);
 
 
 
 	}
-	editor_vec3_t operator +(editor_vec3_t other)const {
-		return editor_vec3_t(_mm_add_pd(xmmlo, other.xmmlo), _mm_add_pd(xmmhi, other.xmmhi));
-	}
-	editor_vec3_t operator -(editor_vec3_t other) const {
-		return editor_vec3_t(_mm_sub_pd(xmmlo, other.xmmlo), _mm_sub_pd(xmmhi, other.xmmhi));
-	}
-	editor_vec3_t operator *(editor_vec3_t other) const {
-		return editor_vec3_t(_mm_mul_pd(xmmlo, other.xmmlo), _mm_mul_pd(xmmhi, other.xmmhi));
-	}
-	editor_vec3_t operator /(editor_vec3_t other)const {
-		return editor_vec3_t(_mm_div_pd(xmmlo, other.xmmlo), _mm_div_pd(xmmhi, other.xmmhi));
-	}
-	//helper func for dp sqrt
-	static double do_sqrt(double val) {
-		__m128d dv = _mm_set_sd(val);
-		return _mm_cvtsd_f64(_mm_sqrt_sd(dv, dv));
 
-	}
-
-	editor_vec3_t squared()const {
-		return *this * *this;
-	}
 
 	double hsum() const {
 
@@ -130,14 +149,29 @@ struct editor_vec3_t {
 
 	}
 
+	std::string to_string() const {
 
-	editor_vec3_t normalized() const {
+		return std::to_string(get_x()) + " " + std::to_string(get_y()) + " " + std::to_string(get_z());
 
+	}
 
+	double normalize() {
 		double sqrlen = dot(*this);
 
-		double sqrtval = do_sqrt(sqrlen);
-		return *this / sqrtval;
+		/*double sqrtval = do_sqrt(sqrlen);
+		return *this / sqrtval;*/
+
+		double rsqr = scalar_rsqrt(sqrlen);
+
+		*this = *this * rsqr;
+		return rsqr * sqrlen;
+
+	}
+	editor_vec3_t normalized() const {
+
+		editor_vec3_t b = *this;
+		b.normalize();
+		return b;
 
 	}
 
@@ -153,21 +187,6 @@ struct editor_vec3_t {
 		to_floats(&res.x);
 		return res;
 	}
-	//names are chosen so as to not conflict with stupid min/max macros everyone still fucking define in the global scope
-	editor_vec3_t minimum(editor_vec3_t other) const {
-		__m128d vlo = _mm_min_pd(xmmlo, other.xmmlo);
-		__m128d vhi = _mm_min_pd(xmmhi, other.xmmhi);
-
-		return editor_vec3_t{ vlo, vhi };
-	}
-
-
-	editor_vec3_t maximum(editor_vec3_t other) const {
-		__m128d vlo = _mm_max_pd(xmmlo, other.xmmlo);
-		__m128d vhi = _mm_max_pd(xmmhi, other.xmmhi);
-
-		return editor_vec3_t{ vlo, vhi };
-	}
 
 	editor_vec3_t reorder_YZX() const {
 		editor_vec3_t result;
@@ -181,6 +200,7 @@ struct editor_vec3_t {
 		__m128d highpart = _mm_unpackhi_pd(xmmlo, xmmlo);
 		return editor_vec3_t{ lowpart, highpart };
 	}
+
 	/*
 		broadcast one element to the 3 values and set value 4 to zero
 	*/
@@ -235,6 +255,8 @@ struct editor_vec3_t {
 		return editor_vec3_t{ r1, xmmhi };
 	}
 
+
+
 	editor_vec3_t cross(editor_vec3_t b) const {
 
 		editor_vec3_t p1 = this->reorder_YZX() * b.reorder_ZXY();
@@ -244,57 +266,182 @@ struct editor_vec3_t {
 		return p1 - p2;
 	}
 
-	editor_vec3_t operator <(editor_vec3_t other) const {
-		return editor_vec3_t{ _mm_cmplt_pd(xmmlo, other.xmmlo), _mm_cmplt_pd(xmmhi, other.xmmhi) };
-	}
-	editor_vec3_t operator >(editor_vec3_t other) const {
-		return editor_vec3_t{ _mm_cmpgt_pd(xmmlo, other.xmmlo), _mm_cmpgt_pd(xmmhi, other.xmmhi) };
-	}
-	editor_vec3_t operator <=(editor_vec3_t other) const {
-		
-		return editor_vec3_t{ _mm_cmple_pd(xmmlo, other.xmmlo), _mm_cmple_pd(xmmhi, other.xmmhi) };
-	}
-	editor_vec3_t operator >=(editor_vec3_t other) const {
-		return editor_vec3_t{ _mm_cmpge_pd(xmmlo, other.xmmlo), _mm_cmpge_pd(xmmhi, other.xmmhi) };
-	}
-	editor_vec3_t operator ==(editor_vec3_t other) const {
-		return editor_vec3_t{ _mm_cmpeq_pd(xmmlo, other.xmmlo), _mm_cmpeq_pd(xmmhi, other.xmmhi) };
-	}
 
-	editor_vec3_t operator !=(editor_vec3_t other) const {
-		return editor_vec3_t{ _mm_cmpneq_pd(xmmlo, other.xmmlo), _mm_cmpneq_pd(xmmhi, other.xmmhi) };
-	}
-
-	editor_vec3_t operator |(editor_vec3_t other) const {
-		return editor_vec3_t{ _mm_or_pd(xmmlo, other.xmmlo), _mm_or_pd(xmmhi, other.xmmhi) };
-	}
-	editor_vec3_t operator ^(editor_vec3_t other) const {
-		return editor_vec3_t{ _mm_xor_pd(xmmlo, other.xmmlo), _mm_xor_pd(xmmhi, other.xmmhi) };
-	}
-	editor_vec3_t operator &(editor_vec3_t other) const {
-		return editor_vec3_t{ _mm_and_pd(xmmlo, other.xmmlo), _mm_and_pd(xmmhi, other.xmmhi) };
-	}
 
 	static editor_vec3_t from_u64s(uint64_t x, uint64_t y, uint64_t z) {
 		return editor_vec3_t{ _mm_castsi128_pd(_mm_setr_epi64(_mm_cvtsi64_m64(x), _mm_cvtsi64_m64(y))), _mm_castsi128_pd(_mm_setr_epi64(_mm_cvtsi64_m64(z), _mm_cvtsi64_m64(0ULL))) };
 	}
-	/*
-		create from a uint64 broadcasted to every element
-		Z will also be set to value, unlike from_u64s
-	*/
-	static editor_vec3_t from_bcast_u64(uint64_t value) {
-		__m128d result = _mm_castsi128_pd(_mm_set1_epi64x(value));
-		return editor_vec3_t{ result, result };
+
+	editor_vec3_t precise_normalized()const {
+
+		double m_valtemp[3];
+		m_valtemp[0] = get_x();
+		m_valtemp[1] = get_y();
+		m_valtemp[2] = get_z();
+
+		sh::math::precise_normalize3d(m_valtemp);
+		return editor_vec3_t{ m_valtemp[0], m_valtemp[1], m_valtemp[2] };
 	}
 
-	editor_vec3_t absolute_value() const {
-		return *this & from_bcast_u64(~(1ULL << 63));
+
+
+};
+
+
+struct editor_normal_t {
+#define editor_vec3_base_t	editor_normal_t
+
+#include "xmacro_vec3_base.hpp"
+
+#undef editor_vec3_base_t
+
+	editor_normal_t(editor_vec3_t v) {
+
+		double vnorm = v.normalize();
+		xmmlo = v.xmmlo;
+		xmmhi = _mm_unpacklo_pd(v.xmmhi, _mm_set_sd(vnorm));
 	}
-	//using this as a mask, take elements from taken_if_set where we have the mask set, and from taken_if_zero where not set
-	editor_vec3_t select(editor_vec3_t taken_if_zero, editor_vec3_t taken_if_set) const {
-		return editor_vec3_t{ blend_xmmd(xmmlo, taken_if_zero.xmmlo, taken_if_set.xmmhi), blend_xmmd(xmmhi, taken_if_zero.xmmhi, taken_if_set.xmmhi) };
+	
+
+	/*
+		returns a value ranging from 0 to 1 that represents how equal the two vectors
+		probably pretty slo
+
+		
+	*/
+	double fuzz(editor_normal_t other) {
+
+
+		editor_normal_t addend{ _mm_set1_pd(1.0), _mm_set_sd(1.0) };
+
+		//change range from -1.0 to 1.0 into 0.0 to 2.0
+		editor_normal_t tposrange = *this + addend;
+		editor_normal_t oposrange = other + addend;
+
+		editor_normal_t ubound = tposrange.maximum(oposrange);
+		editor_normal_t lbound = tposrange.minimum(oposrange);
+		editor_normal_t presum = lbound / ubound;
+
+		
+		__m128d presumd = _mm_add_pd(presum.xmmlo, presum.xmmhi);
+
+		__m128d totalsum = _mm_add_sd(_mm_unpackhi_pd(presumd, presumd), presumd);
+		//average of 4 components fuzzed
+		return _mm_cvtsd_f64(totalsum) / 4.0;
+
 	}
 };
+
+//a single soa iter 
+class editor_vec3_soa_t {
+	__m128d m_xvalues;
+	__m128d m_yvalues;
+	__m128d m_zvalues;
+
+	template<typename TCallable>
+	editor_vec3_soa_t _binary_op(TCallable&& cb, editor_vec3_soa_t vsoa) const {
+
+		editor_vec3_soa_t result;
+		result.m_xvalues = cb(m_xvalues, vsoa.m_xvalues);
+		result.m_yvalues = cb(m_yvalues, vsoa.m_yvalues);
+		result.m_zvalues = cb(m_zvalues, vsoa.m_zvalues);
+		return result;
+	}
+
+public:
+	editor_vec3_soa_t() : m_xvalues(_mm_setzero_pd()), m_yvalues(_mm_setzero_pd()), m_zvalues(_mm_setzero_pd()) {}
+	//broadcast components from vec3 to both doubles of each component vector
+	editor_vec3_soa_t(editor_vec3_t v) : editor_vec3_soa_t() {
+
+		m_xvalues = v.bcast_x().xmmlo;
+
+		m_yvalues = v.bcast_y().xmmlo;
+		m_zvalues = v.bcast_z().xmmlo;
+
+	}
+
+	
+
+#define	BINOPER_FROM_XMM(op, xmfunc)		\
+	editor_vec3_soa_t operator op (editor_vec3_soa_t other) const {\
+		return _binary_op(xmfunc, other);\
+	}
+	void load(unsigned index, const double* x, const double* y, const double* z) {
+		m_xvalues = _mm_load_pd(x + index);
+		m_yvalues = _mm_load_pd(y + index);
+		m_zvalues = _mm_load_pd(z + index);
+	}
+	void store(unsigned index, double* x, double* y, double* z) {
+		_mm_store_pd(x + index, m_xvalues);
+		_mm_store_pd(y + index, m_yvalues);
+		_mm_store_pd(z + index, m_zvalues);
+
+	}
+
+	
+	BINOPER_FROM_XMM(+, _mm_add_pd);
+
+
+	BINOPER_FROM_XMM(-, _mm_sub_pd);
+
+	BINOPER_FROM_XMM(*, _mm_mul_pd);
+
+	BINOPER_FROM_XMM(/, _mm_div_pd);
+
+	BINOPER_FROM_XMM(< , _mm_cmplt_pd);
+	BINOPER_FROM_XMM(<= , _mm_cmple_pd);
+	BINOPER_FROM_XMM(== , _mm_cmpeq_pd);
+	BINOPER_FROM_XMM(!=, _mm_cmpneq_pd);
+	BINOPER_FROM_XMM(>, _mm_cmpgt_pd);
+	BINOPER_FROM_XMM(>= , _mm_cmpge_pd);
+
+	BINOPER_FROM_XMM(&, _mm_and_pd);
+	BINOPER_FROM_XMM(| , _mm_or_pd);
+	BINOPER_FROM_XMM(^, _mm_xor_pd);
+
+#define	BINFN_FROM_XMM(op, xmfunc)		\
+	editor_vec3_soa_t op(editor_vec3_soa_t other) const {\
+		return _binary_op(xmfunc, other);\
+	}
+
+	BINFN_FROM_XMM(maximum, _mm_max_pd);
+	BINFN_FROM_XMM(minimum, _mm_min_pd);
+
+	__m128d hsum() const {
+		return _mm_add_pd(m_xvalues, _mm_add_pd(m_yvalues, m_zvalues));
+	}
+
+	__m128d dot(editor_vec3_soa_t other) const {
+		return (*this + other).hsum();
+	}
+
+
+
+	editor_vec3_soa_t normalized() const {
+		__m128d sqrlen = dot(*this);
+
+		
+		__m128d sqr2 = vector_rsqrt(sqrlen);
+
+		
+		editor_vec3_soa_t result;
+		result.m_xvalues = _mm_mul_pd(m_xvalues, sqr2);
+		result.m_yvalues = _mm_mul_pd(m_yvalues, sqr2);
+		result.m_zvalues = _mm_mul_pd(m_zvalues, sqr2);
+		return result;
+	}	
+
+	__m128d distance3d(editor_vec3_soa_t other) const {
+		editor_vec3_soa_t tmpdiff = *this - other;
+		tmpdiff = tmpdiff * tmpdiff;
+
+		return vector_sqrt(tmpdiff.hsum());
+
+	}
+
+
+};
+
 struct editor_mat3_t;
 enum class angle_component_e : unsigned {
 	PITCH,
@@ -383,14 +530,14 @@ struct editor_mat3_t {
 
 	idMat3 to_id()const;
 };
-idMat3 editor_mat3_t::to_id()const {
+inline idMat3 editor_mat3_t::to_id()const {
 	idMat3 result;
 	for (unsigned i = 0; i < 3; ++i) {
 		mat[i].to_floats(&result.mat[i].x);
 	}
 	return result;
 }
-editor_mat3_t editor_angles_t::to_mat3() const {
+inline editor_mat3_t editor_angles_t::to_mat3() const {
 	editor_mat3_t mat;
 	double sr, sp, sy, cr, cp, cy;
 	using namespace sh::math;

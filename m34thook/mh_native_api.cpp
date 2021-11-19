@@ -1,5 +1,5 @@
 #include "mh_defs.hpp"
-
+#if !defined(DISABLE_MH_NATIVE_API)
 #include <Windows.h>
 #include "game_exe_interface.hpp"
 #include "memscan.hpp"
@@ -142,3 +142,5 @@ __declspec(dllexport)
 const mh_interface_t* mh_api_get() {
 	return &g_interface;
 }
+
+#endif

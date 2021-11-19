@@ -1,5 +1,5 @@
 #include "mh_defs.hpp"
-
+#if !defined(MH_DISABLE_ALL_DEV_STUFF)
 #include "game_exe_interface.hpp"
 #include "doomoffs.hpp"
 #include "meathook.h"
@@ -19,6 +19,7 @@
 #include <string_view>
 #include <bit>
 #include "snaphakalgo.hpp"
+
 void mh_fieldoffs(idCmdArgs* args) {
 	
 	classTypeInfo_t* cls = idType::FindClassInfo(args->argv[1]);
@@ -144,14 +145,13 @@ void mh_getresourceptr(idCmdArgs* args){
 	}
 
 	char buffres[64];
-
+	
 	sprintf_s(buffres, "%p",p);
 
 	set_clipboard_data(buffres);
 }
 template<typename T>
 void mh_pokei(idCmdArgs* args) {
-	
 	long long ptrval = strtoll(args->argv[1], nullptr, 16);
 
 
@@ -326,3 +326,9 @@ void install_memmanip_cmds() {
 
 	idCmd::register_command("mh_justforme", hide_special_cmds, "protected");
 }
+
+#else
+void install_memmanip_cmds() {
+
+}
+#endif

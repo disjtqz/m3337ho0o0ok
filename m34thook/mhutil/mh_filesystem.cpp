@@ -191,3 +191,7 @@ bool filesys::get_ntpath_for(const char* path, win32_path_conversion_context_ext
 	}
 	return res;
 }
+
+bool filesys::move_file(const char* from, const char* to) {
+	return MoveFileExA(from, to, MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING);
+}

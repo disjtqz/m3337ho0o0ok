@@ -56,7 +56,7 @@ void idc_dump(idCmdArgs* args) {
 
 void install_dumpngen_cmds() {
 
-
+#if !defined(MH_DISABLE_ALL_DEV_STUFF)
 	idCmd::register_command("mh_dumpeventdefs", event_dump, "mh_dumpeventdefs <as enum = 0/1>");
 
 	idCmd::register_command("idlib_dump", idlib_dump, "idlib_dump");
@@ -65,5 +65,5 @@ void install_dumpngen_cmds() {
 	idCmd::register_command("mh_gencvarset", mh_gencvarset, "Regenerate doom_eternal_cvars_generated.cpp/hpp for mh build");
 	idCmd::register_command("mh_dumppropidxinfo", mh_dumppropidxinfo, "Debug command for dumping the corresponding addresses/rvas for property indices");
 	idCmd::register_command("idlib_idc", idc_dump, "Generates a .idc file for ida that defines all structs and enums that have typeinfo for this build of eternal");
-
+#endif
 }

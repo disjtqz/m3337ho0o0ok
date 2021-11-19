@@ -204,6 +204,98 @@ sh_real_t cs_floorl(sh_real_t v){
 	}
 	return res;
 }
+/*
+https://godbolt.org/z/o16x6xMK8
+
+*/
+
+
+static constexpr const unsigned LC2 = 1069547520;
+
+static constexpr const unsigned LCX = 2;
+
+REALSEG
+__attribute__((naked))
+static double cs_precise_normalize(double* values) {
+	__asm {
+		fld     QWORD PTR[rcx]
+		fld     QWORD PTR[rcx + 8]
+		fld     QWORD PTR[rcx + 16]
+		fld     st(2)
+		fmul    st, st(3)
+		fld     st(2)
+		fmul    st, st(3)
+		faddp   st(1), st
+		fld     st(1)
+		fmul    st, st(2)
+		faddp   st(1), st
+		fld1
+		fld     st(1)
+		fsqrt
+		//fdivr   QWORD PTR LC0
+		
+		fdiv
+		fld     st(0)
+		fmul    st, st(1)
+		fld     st(2)
+		//fmul    DWORD PTR LC1
+		fidiv dword ptr LCX
+		fmulp   st(1), st
+		fsubr   DWORD PTR LC2
+		fmulp   st(1), st
+		fmul    st(1), st
+		fxch    st(1)
+#if 0
+		fstp    QWORD PTR[rcx]
+		fmul    st(3), st
+		fxch    st(3)
+		movlps  xmm0, QWORD PTR[rcx]
+#else
+		fstp    QWORD PTR[rsp-8]
+		fmul    st(3), st
+		fxch    st(3)
+		movlps  xmm0, QWORD PTR[rsp-8]
+#endif
+		fstp    QWORD PTR[rcx]
+		fxch    st(1)
+		fmul    st, st(2)
+		fstp    QWORD PTR[rcx + 8]
+		fmulp   st(1), st
+		fstp    QWORD PTR[rcx + 16]
+		ret
+
+	}
+}
+
+//https://godbolt.org/z/eT3Y9EadP
+REALSEG
+__attribute__((naked))
+double cs_precise_distance3d(double* vx, double* vy) {
+	__asm {
+		//modified to remove stack frame
+		//sub     rsp, 24
+		fld     QWORD PTR[rdx]
+		fsubr   QWORD PTR[rcx]
+		fld     QWORD PTR[rdx + 8]
+		fsubr   QWORD PTR[rcx + 8]
+		fld     QWORD PTR[rdx + 16]
+		fsubr   QWORD PTR[rcx + 16]
+		fxch    st(2)
+		fmul    st, st(0)
+		fxch    st(1)
+		fmul    st, st(0)
+		faddp   st(1), st
+		fxch    st(1)
+		fmul    st, st(0)
+		faddp   st(1), st
+		fsqrt
+		fstp    QWORD PTR[rsp - 8]
+		movlps  xmm0, QWORD PTR[rsp - 8]
+		//add     rsp, 24
+		ret
+	}
+}
+
 void realnum_init(snaphak_realroutines_t* algo) {
 	algo->m_add_real = cs_realadd;
 	algo->m_sub_real = cs_realsub;
@@ -220,4 +312,6 @@ void realnum_init(snaphak_realroutines_t* algo) {
 	algo->m_sincos=cs_realsincos;
 	algo->m_atan2 = cs_atan2;
 	algo->m_floor = cs_floorl;
+	algo->m_precise_normalize = cs_precise_normalize;
+	algo->m_precise_distance3d = cs_precise_distance3d;
 }

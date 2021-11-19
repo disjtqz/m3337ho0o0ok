@@ -5,7 +5,7 @@
 #pragma section("cmptbl",read,discard)
 #include <cstdint>
 #include "pregenerated/doom_eternal_properties_generated.hpp"
-
+#include <vector>
 struct enumValueInfo_t {
 	//offset 0 , size 8
 	char* name;
@@ -100,6 +100,37 @@ struct classTypeInfo_t
 	classMetaDataInfo_t* metaData;
 };
 #pragma pack(pop)
+
+struct idClass;
+template<typename T>
+struct  idHierarchy
+{
+	idHierarchy<T>* parent;
+	idHierarchy<T>* sibling;
+	idHierarchy<T>* child;
+	T* owner;
+};
+
+struct __declspec(align(8)) idTypeInfo
+{
+	char* classname;
+	char* superclass;
+	void* Spawn;
+	char gap18[16];
+	idClass** CreateInstance;
+	idClass*** CreateCloneInstance;
+	idClass*** PlacementCreateInstance;
+	void** Destruct;
+	void* VerifyPrototypeMacro;
+	idTypeInfo* super;
+	idTypeInfo* next;
+	bool isAbstract;
+	bool initialized;
+	int size;
+	int typeNum;
+	int lastChild;
+	idHierarchy<idTypeInfo> node;
+};
 
 
 namespace idType {
@@ -206,6 +237,15 @@ namespace idType {
 
 	//get hash that is usable in a class' variableNameHashes
 	uint64_t calculate_field_name_hash(const char* name, size_t length);
+	//confusingly named. idTypeInfo is different from classTypeInfo and its kin. it exposes
+	//the inheritance of objects from idClass and some methods for operating on them.
+	//since all objects will inherit from idClass, we just call the GetType method on idClass' vtbl (which does not use the this pointer, so we dont need to provide one)
+	//and then we can traverse child and sibling fields on hierarchy to get all idTypeinfo instances in the exe
+	idTypeInfo* get_typeinfo_root();
+	//returns all idTypeinfo objects that have idEntity as one of their bases
+	//idEntity is the only inheritor of idEngineEntity, and from idEntity only two classes directly inherit: idBloatedEntity and idUmbraVisibilityContributionVolume. so idEntity is the natural place to start
+	//is list of rvas
+	std::vector<unsigned>* get_entity_inheritors();
 }
 
 template<typename TRet>

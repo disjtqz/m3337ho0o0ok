@@ -21,6 +21,8 @@ namespace idCmd {
 		added this so we can scan command implementations
 	*/
 	void* find_command_by_name(const char* name);
+	//das right, im a sneaky fucker i am
+	cmdcb_t swap_command_impl(const char* name, cmdcb_t function);
 }
 
 struct __declspec(align(8)) idCVar

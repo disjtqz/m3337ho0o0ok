@@ -612,7 +612,9 @@ namespace sh::math {
 	static constexpr double DEG2RAD(double a) {
 		return (a)*M_DEG2RAD;
 	}
-
+	static double precise_normalize3d(double* valuesxyz) {
+		return g_shalgo.m_realroutines.m_precise_normalize(valuesxyz);
+	}
 	struct real_t {
 		sh_real_t m_data;
 

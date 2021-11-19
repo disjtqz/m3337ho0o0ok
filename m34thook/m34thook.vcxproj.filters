@@ -180,6 +180,9 @@
     <ClCompile Include="objfiles\objloader.cpp">
       <Filter>Source Files\objfiles</Filter>
     </ClCompile>
+    <ClCompile Include="mhutil\mh_structures.cpp">
+      <Filter>Source Files\mhutil</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_exe_interface.hpp">
@@ -334,6 +337,12 @@
     </ClInclude>
     <ClInclude Include="objfiles\objloader.h">
       <Filter>Header Files\objfiles</Filter>
+    </ClInclude>
+    <ClInclude Include="mhutil\mh_structures.hpp">
+      <Filter>Header Files\mhutil</Filter>
+    </ClInclude>
+    <ClInclude Include="xmacro_vec3_base.hpp">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

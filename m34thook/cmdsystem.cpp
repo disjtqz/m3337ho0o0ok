@@ -97,7 +97,7 @@ struct idAutoComplete;
 struct __declspec(align(8)) used_for_commands_t
 {
 	const char* name;
-	void(__fastcall* function)(const idCmdArgs*);
+	cmdcb_t function;
 	void(__fastcall* autocomplete)(idAutoComplete*);
 	const char* description;
 	int flags; //cmdFlags_t
@@ -111,8 +111,35 @@ struct __declspec(align(8)) idCmdSystem_buffer
 	idStrStatic<65536> buffer2;
 };
 
-void* idCmd::find_command_by_name(const char* name) {
+static used_for_commands_t* find_cmd_by_name(const char* name, unsigned nocheat = 0) {
+	auto cmdsystem = cmdSystem_get();
 
+
+	idCmdSystem_buffer* cmdinfo = *mh_lea<idCmdSystem_buffer*>(cmdsystem, 16);
+
+
+
+	//while (cmds) {
+
+	idListVoid* cmds_lists = &cmdinfo->all_cmds;
+	cmds_lists = &cmds_lists[nocheat];
+
+	for (unsigned i = 0; i < cmds_lists->num; ++i) {
+		used_for_commands_t* cmds = reinterpret_cast<used_for_commands_t*>(cmds_lists->list[i]);
+
+
+		const char* cmdname = *g_idCommandLink_cmdName(cmds, "idCommandLink", "cmdName");
+
+		if (sh::string::streq(cmds->name, name)) {
+			return cmds;
+		}
+
+	}
+	return nullptr;
+}
+
+void* idCmd::find_command_by_name(const char* name) {
+#if 0
 	auto cmdsystem = cmdSystem_get();
 
 
@@ -137,6 +164,15 @@ void* idCmd::find_command_by_name(const char* name) {
 
 	}
 	return nullptr;
+#else
+	auto cmd = find_cmd_by_name(name);
+	if (cmd) {
+		return cmd->function;
+	}
+	else {
+		return nullptr;
+	}
+#endif
 }
 
 idCVar** idCVar::GetList(unsigned& out_n) {
@@ -153,7 +189,15 @@ idCVar** idCVar::GetList(unsigned& out_n) {
 
 }
 
+cmdcb_t idCmd::swap_command_impl(const char* name, cmdcb_t function) {
+	//we actually dont need to swap the impl in nocheat, just in all cmds.
+	//the same pointer to the command structure is pushed into both lists when a command is added
+	auto cmd = find_cmd_by_name(name);
 
+	cmdcb_t result = cmd->function;
+	cmd->function = function;
+	return result;
+}
 
 static strviewset_t generate_cvar_name_set() {
 	strviewset_t res;

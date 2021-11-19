@@ -30,7 +30,9 @@ extern void install_query_cmds();
 extern void install_editor_cmds();
 extern void install_dumpngen_cmds();
 extern void install_miscndev_cmds();
-
+//executed on first frame
+//see mh_cmds_cheats
+extern void cheats_postinit();
 
 
 void* __fastcall idFileResourceCompressed__GetFile(__int64 a1);
@@ -63,7 +65,7 @@ void meathook_final_init() {
 	
 
 	descan::run_gamelib_postinit_scangroups();
-
+	cheats_postinit();
 }
 
 static void* nothinfunc = (void*)do_nothing;
