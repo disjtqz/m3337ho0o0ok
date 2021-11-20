@@ -28,7 +28,7 @@ MH_NOINLINE
 MH_SEMIPURE
 bool get_classfield_boolean(void* obj, const char* clazs, const char* field);
 MH_NOINLINE
-MH_SEMIPURE
+
 void set_classfield_boolean(void* obj, const classVariableInfo_t* varinfo, bool value);
 MH_NOINLINE
 MH_SEMIPURE
@@ -2215,3 +2215,15 @@ public:
 
 
 };
+
+static bool is_entity_valid(void* entity) {
+	if (!entity)
+		return false;
+
+	int spawnid = get_entity_spawnid(entity);
+	if (spawnid < 0 || spawnid > WORLD_ENTITY_IDX)
+		return false;
+	void* entfor = lookup_entity_index(spawnid);
+	return entfor == entity;
+
+}

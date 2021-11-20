@@ -257,6 +257,12 @@ static __m128 cs_permutev_ps(__m128 x, __m128i indices) {
 
 	return _mm_castsi128_ps(lookup4(Vec4i{ _mm_castps_si128(x) }, Vec4i{ indices }));
 
+
+
+}
+
+static bool cs_testz_ps(__m128 x, __m128 y) {
+	return _mm_testz_si128(_mm_castps_si128(x), _mm_castps_si128(y));
 }
 namespace vec3_simd {
 	ID_FORCE_INLINE
@@ -1045,7 +1051,7 @@ namespace bounds_simd {
 			__m128 msk1 = _mm_cmplt_ps(ab1, b0);
 			__m128 msk2 = _mm_cmpgt_ps(ab0, b1);
 			__m128 fullmsk = vec3_simd::clear_ele3(_mm_or_ps(msk1, msk2));
-			return _mm_testz_ps(fullmsk, fullmsk);
+			return cs_testz_ps(fullmsk, fullmsk);
 #else
 			idBounds tb, ab;
 			bounds_simd::store(tb, b0, b1);
@@ -1200,7 +1206,7 @@ namespace bounds_simd {
 
 			__m128 absfs = vec3_simd::calc_abs_zero_ele4(fs);
 
-
+			//cant figure out how to vectorize this
 			for (unsigned i = 0; i < 3; ++i) {
 				/*if(cs_index_m128(dir, i) == .0f)
 					continue;*/
@@ -1263,6 +1269,12 @@ namespace bounds_simd {
 
 		}
 
+
+		CS_SUPER_PURE
+			static __m128 center(__m128 b0, __m128 b1) {
+
+			return _mm_mul_ps(_mm_set_ps(.0f, .5f, .5f, 0.5f), _mm_add_ps(b0, b1));
+		}
 		/*
 		
 			it is far less expensive to calculate whether a line with a definite endpoint intersects
@@ -1323,7 +1335,7 @@ namespace bounds_simd {
 			__m128 cmpmask = _mm_cmpgt_ps(crossed, _mm_add_ps(partial.get_low(), partial.get_high()));
 
 #endif
-			if (!_mm_testz_ps(cmpmask, cmpmask)) {
+			if (!cs_testz_ps(cmpmask, cmpmask)) {
 				return false;
 			}
 			return true;

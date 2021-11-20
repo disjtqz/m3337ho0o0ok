@@ -34,13 +34,15 @@ void* find_entity(const char* name) {
 }
 
 void* get_local_player() {
-	//return find_entity("player1"); //alternatively, lookup entity index 0
-
+#if 1
+	return find_entity("player1"); //alternatively, lookup entity index 0
+#else
 	auto etab = get_entity_table();
 	MH_UNLIKELY_IF(!etab) {
 		return nullptr;
 	}
 	return etab[0];
+#endif
 }
 
 void* get_world() {
@@ -109,7 +111,7 @@ bool get_classfield_boolean(void* obj, const classVariableInfo_t* varinfo) {
 	//}
 }
 MH_NOINLINE
-MH_SEMIPURE
+
 void set_classfield_boolean(void* obj, const classVariableInfo_t* varinfo, bool value) {
 	if (varinfo->set) {
 		varinfo->set(obj, value);
@@ -157,8 +159,11 @@ bool get_classfield_boolean(void* obj, const char* clazs, const char* field) {
 	auto inf = idType::FindClassField(clazs, field);
 	return get_classfield_boolean(obj, inf);
 }
+CACHED_EVENTDEF(getName);
 const char* get_entity_name(void* obj) {
-	return reinterpret_cast<idStr*>(reinterpret_cast<char*>(obj) + idType::FindClassField("idEntity", "name")->offset)->data;
+
+	return ev_getName(obj).value.s;
+	//return reinterpret_cast<idStr*>(reinterpret_cast<char*>(obj) + idType::FindClassField("idEntity", "name")->offset)->data;
 }
 static mh_new_fieldcached_t<int, YS("idManagedClass"), YS("objectNumber")> g_idmanagedclass_objectnumber;
 

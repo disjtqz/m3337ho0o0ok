@@ -5,9 +5,9 @@
 #include <intrin.h>
 #include <array>
 
-#define     DISABLE_MH_NATIVE_API   
+//#define     DISABLE_MH_NATIVE_API   
 
-#define     MH_DISABLE_ALL_DEV_STUFF
+//#define     MH_DISABLE_ALL_DEV_STUFF
 #define		MH_FORCEINLINE		__forceinline
 #define		MH_CODE_SEG(name)	__declspec(code_seg(name)) 
 
@@ -45,6 +45,8 @@
 
 #define			MH_SEMIPURE						__attribute__((pure)) 
 #define			MH_PURE							__attribute__((const))
+//#define			MH_SEMIPURE						
+//#define			MH_PURE	
 #define			mh_unreachable_m()			__builtin_unreachable()
 #define			MH_NOCLONE					__attribute__((noclone))
 

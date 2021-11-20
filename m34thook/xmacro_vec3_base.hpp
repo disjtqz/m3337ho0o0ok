@@ -119,3 +119,14 @@ static double do_sqrt(double val) {
 editor_vec3_base_t squared()const {
 	return *this * *this;
 }
+
+
+vec3_simd_t to_vec3_simd() const {
+
+	Vec4d tmp4d{ xmmlo, xmmhi };
+	Vec4f asfs = to_float(tmp4d);
+
+	return (__m128)asfs;
+
+
+}
