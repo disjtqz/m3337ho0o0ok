@@ -3,7 +3,11 @@
 
 namespace idLib {
 	void VPrintf(int severity, const char* fmt, va_list ap);
-	static void Printf(const char* format, ...) {
+
+	//kinda dangerous to use noalias here, the printf could be optimized away?
+	MH_NOALIAS
+	MH_REGFREE_CALL
+	static void Printf(const char* MH_NOESCAPE format, ...) {
 		va_list ap;
 		va_start(ap, format);
 		VPrintf(1, format, ap);

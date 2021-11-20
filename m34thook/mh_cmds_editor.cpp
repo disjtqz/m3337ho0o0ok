@@ -130,7 +130,7 @@ static void mh_reload_decl(idCmdArgs* args) {
 
 
 }
-
+MH_NOINLINE
 static mh_editor_interface_t* get_editor_ensure_init() {
 	if (!get_current_editor())
 		return nullptr;

@@ -422,6 +422,7 @@
     <ClInclude Include="memorySystem.hpp" />
     <ClInclude Include="memscan.hpp" />
     <ClInclude Include="mhgui.hpp" />
+    <ClInclude Include="mhutil\cs_simd.hpp" />
     <ClInclude Include="mhutil\mh_filesystem.hpp" />
     <ClInclude Include="mhutil\mh_structures.hpp" />
     <ClInclude Include="mh_defs.hpp" />

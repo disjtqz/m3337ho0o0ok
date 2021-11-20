@@ -26,7 +26,6 @@
 #include "mh_editor_mode.hpp"
 #include "rapiddecl.hpp"
 #include "fs_hooks.hpp"
-#include <filesystem>
 
 
 #include "mh_editor_math.hpp"

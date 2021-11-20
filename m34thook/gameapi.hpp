@@ -21,11 +21,20 @@ void* get_local_player();
 void* get_level_map();
 
 void* get_world();
-bool get_classfield_boolean(void* obj, const classVariableInfo_t* varinfo);
-bool get_classfield_boolean(void* obj, const char* clazs, const char* field);
-void set_classfield_boolean(void* obj, const classVariableInfo_t* varinfo, bool value);
 
+MH_SEMIPURE
+bool get_classfield_boolean(void* obj, const classVariableInfo_t* varinfo);
+MH_NOINLINE
+MH_SEMIPURE
+bool get_classfield_boolean(void* obj, const char* clazs, const char* field);
+MH_NOINLINE
+MH_SEMIPURE
+void set_classfield_boolean(void* obj, const classVariableInfo_t* varinfo, bool value);
+MH_NOINLINE
+MH_SEMIPURE
 long long get_classfield_int(void* obj, const classVariableInfo_t* varinfo);
+MH_NOINLINE
+MH_SEMIPURE
 long long get_classfield_int(void* obj, const char* clazs, const char* field);
 
 const char* get_entity_name(void* obj);
@@ -46,7 +55,7 @@ void* resourceList_t_lookup_index(void* reslist, unsigned idx);
 const char* get_resource_name(void* resource);
 
 int* get_entity_spawnid_table();
-
+MH_PURE
 void** get_entity_table();
 //0-16384
 void* lookup_entity_index(unsigned idx);

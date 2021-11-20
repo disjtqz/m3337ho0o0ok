@@ -34,7 +34,13 @@ void* find_entity(const char* name) {
 }
 
 void* get_local_player() {
-	return find_entity("player1"); //alternatively, lookup entity index 0
+	//return find_entity("player1"); //alternatively, lookup entity index 0
+
+	auto etab = get_entity_table();
+	MH_UNLIKELY_IF(!etab) {
+		return nullptr;
+	}
+	return etab[0];
 }
 
 void* get_world() {
@@ -91,6 +97,8 @@ void* get_level_map() {
 	return call_as<void*>(getlevelmap_func, gamelocal);
 #endif
 }
+
+MH_SEMIPURE
 bool get_classfield_boolean(void* obj, const classVariableInfo_t* varinfo) {
 	/*if (varinfo->get) {
 		return varinfo->get(obj);
@@ -100,7 +108,8 @@ bool get_classfield_boolean(void* obj, const classVariableInfo_t* varinfo) {
 		//return *reinterpret_cast<bool*>(reinterpret_cast<char*>(obj) + varinfo->offset);
 	//}
 }
-
+MH_NOINLINE
+MH_SEMIPURE
 void set_classfield_boolean(void* obj, const classVariableInfo_t* varinfo, bool value) {
 	if (varinfo->set) {
 		varinfo->set(obj, value);
@@ -109,6 +118,8 @@ void set_classfield_boolean(void* obj, const classVariableInfo_t* varinfo, bool 
 		*reinterpret_cast<bool*>(reinterpret_cast<char*>(obj) + varinfo->offset) = value;
 	}
 }
+MH_NOINLINE
+MH_SEMIPURE
 long long get_classfield_int(void* obj, const classVariableInfo_t* varinfo) {
 	if (varinfo->get) {
 		return varinfo->get(obj);
@@ -134,10 +145,14 @@ long long get_classfield_int(void* obj, const classVariableInfo_t* varinfo) {
 		return 0;
 	}
 }
+MH_NOINLINE
+MH_SEMIPURE
 long long get_classfield_int(void* obj, const char* clazs, const char* field) {
 	auto inf = idType::FindClassField(clazs, field);
 	return get_classfield_int(obj, inf);
 }
+MH_NOINLINE
+MH_SEMIPURE
 bool get_classfield_boolean(void* obj, const char* clazs, const char* field) {
 	auto inf = idType::FindClassField(clazs, field);
 	return get_classfield_boolean(obj, inf);
@@ -646,7 +661,7 @@ static void init_entity_table_offset() {
 	}
 
 }
-
+MH_PURE
 void** get_entity_table() {
 	MH_UNLIKELY_IF(!g_gameLocal_entitytbl_offset) {
 		init_entity_table_offset();

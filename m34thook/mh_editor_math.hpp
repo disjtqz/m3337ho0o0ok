@@ -1,6 +1,6 @@
 #pragma once
 
-
+#include "mhutil/cs_simd.hpp"
 //from trial and error, this seems to be the limit for positions. tested by teleporting here on xyz and firing grenades. grenades went off into the world in most directions, but towards advancing coordinates
 //the projectiles freeze in limbo, flying forever
 #define			MH_EDGE_OF_REALITY		2047
