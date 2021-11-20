@@ -35,6 +35,13 @@ class mh_editor_local_t;
 
 #define		NEW_EDITOR_GRAB_MODE
 
+
+
+#define	TRACE_EDITOR(fmt, ...)		idLib::Printf(fmt "\n", __VA_ARGS__)
+
+//#define	TRACE_WORLDTRACE(fmt, ...)		TRACE_EDITOR(fmt, ...)
+//trace define for slow_trace. use the nop define in release, otherwise there is a stutter when tracing is done and the log gets flooded
+#define	TRACE_WORLDTRACE(fmt, ...)	
 /*
 	little bit of background: back when things were a little more primitive, i was mulling over how i wanted to do decl parsing/unparsing. my idea was to just acquire references
 	to the json parse/unparse functions for id's typeinfo system. ScorpOrXor on the other hand just modified rapidjson's parser to accept decls which i still think is an absolutely brilliant solution,
@@ -114,7 +121,6 @@ static void update_map_entity(void* entity, bool add) {
 	call_virtual<void>(gloc, 0xf8 / 8, entity, add, nullptr);
 }
 
-#define	TRACE_EDITOR(fmt, ...)		idLib::Printf(fmt "\n", __VA_ARGS__)
 class mh_editor_input_handler_t :public mh_input_handler_t {
 	mh_editor_local_t* m_editor;
 
@@ -583,7 +589,8 @@ class mh_editor_local_t : public mh_editor_interface_t {
 	editor_vec3_t get_player_look_hit_normal();
 	//gets a point along the ray the players look direction casts
 	editor_vec3_t get_point_in_player_direction(double distance);
-
+	MH_NOINLINE
+	MH_SEMIPURE
 	void* trace_slow(vec3_simd_t origin, vec3_simd_t direction, __m128 exclude_bbox0, __m128 exclude_bbox1, float maxdistance = MH_EDGE_OF_REALITY);
 
 	vec3_simd_t get_origin_simd(void* entity) {
@@ -642,6 +649,8 @@ static bounds_simd_t get_object_bbox_simd(void* obj) {
 	return { mins, maxs };
 }
 #define		TRACE_DONT_USE_MINMAX
+MH_NOINLINE
+MH_SEMIPURE
 void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, __m128 exclude_bbox0, __m128 exclude_bbox1, float maxdistance) {
 
 	void** etable = get_entity_table();
@@ -676,7 +685,7 @@ void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, _
 
 
 
-	TRACE_EDITOR("Tracing from %f %f %f in dir %f %f %f", INDEX3M128(origin), INDEX3M128(direction));
+	TRACE_WORLDTRACE("Tracing from %f %f %f in dir %f %f %f", INDEX3M128(origin), INDEX3M128(direction));
 	for (unsigned i = LAST_PLAYER_IDX; i < WORLD_ENTITY_IDX; ++i) {
 
 		void* current = etable[i];
@@ -697,8 +706,8 @@ void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, _
 		auto [expandmin, expandmax] = bounds_simd::expand(mins, maxs, 0.5f);
 
 		auto ename = get_entity_name(current);
-		if(ename)
-			TRACE_EDITOR("Tracing against object %s with bounds %f %f %f - %f %f %f", ename, INDEX3M128(mins), INDEX3M128(maxs));
+
+		TRACE_WORLDTRACE("Tracing against object %s with bounds %f %f %f - %f %f %f", ename, INDEX3M128(mins), INDEX3M128(maxs));
 
 		if (bounds_simd::intersects_bounds(exclude_bbox0, exclude_bbox1, mins, maxs))
 			continue;
@@ -712,7 +721,7 @@ void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, _
 		if (!bounds_simd::ray_intersection(expandmin, expandmax, origin, direction, scale))
 			continue;
 #endif
-		TRACE_EDITOR("Trace succeeded");
+		TRACE_WORLDTRACE("Trace succeeded");
 		vec3_simd_t currcenter = bounds_simd::center(mins, maxs);
 
 		__m128 deltapt = _mm_sub_ps(origin, currcenter);
@@ -728,7 +737,7 @@ void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, _
 	}
 	if (closest) {
 
-		TRACE_EDITOR("Closest is %s with distance of %f", get_entity_name(closest), closest_distance_sqr);
+		TRACE_WORLDTRACE("Closest is %s with distance of %f", get_entity_name(closest), closest_distance_sqr);
 
 	}
 	return closest;

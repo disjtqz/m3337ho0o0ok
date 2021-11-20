@@ -37,10 +37,11 @@ MH_NOINLINE
 MH_SEMIPURE
 long long get_classfield_int(void* obj, const char* clazs, const char* field);
 
+MH_PURE
 const char* get_entity_name(void* obj);
 
 void* get_material(const char* name);
-
+MH_PURE
 int get_entity_spawnid(void* obj);
 //warning: returns idResourceList, not resourceList_t!
 void* resourcelist_for_classname(const char* clsname);
@@ -58,6 +59,7 @@ int* get_entity_spawnid_table();
 MH_PURE
 void** get_entity_table();
 //0-16384
+MH_SEMIPURE
 void* lookup_entity_index(unsigned idx);
 //used by noclip, notarget, and entering editor mode 
 bool toggle_idplayer_boolean(void* player, const char* property_name, bool use_explicit_value = false, bool explicit_value = false, bool silent = false);
@@ -585,8 +587,11 @@ idEventArg mh_ScriptCmdEnt(const char* MH_NOESCAPE eventdef_name, void* MH_NOESC
 
 MH_LEAF
 idEventArg mh_ScriptCmdEntFast(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args = nullptr);
+MH_LEAF
+void mh_ScriptCmdEntFast(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args, idEventArg* MH_NOESCAPE retval);
 //directly calls idEntity::CallEvent from the idEntity vtbl instead of dispatching to self's method
 //can be much faster for classes that have a deep inheritance chain and is safe if the event is only implemented by idEntity
+//using this isnt a good idea honestly because it'll also end up calling internalrespondsto on the real vftbl and internalcallevent
 MH_LEAF
 idEventArg mh_ScriptCmdEnt_idEntity(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args = nullptr);
 MH_LEAF
@@ -621,7 +626,9 @@ struct cached_eventdef_t {
 
 		return mh_ScriptCmdEnt(Get(), self, args);
 	}
-
+	idEventArg call_fast(void* self, idEventArg* args = nullptr) const {
+		return mh_ScriptCmdEntFast(Get(), self, args);
+	}
 };
 
 
@@ -2215,8 +2222,8 @@ public:
 
 
 };
-
-static bool is_entity_valid(void* entity) {
+MH_SEMIPURE
+static inline bool is_entity_valid(void* MH_NOESCAPE entity) {
 	if (!entity)
 		return false;
 

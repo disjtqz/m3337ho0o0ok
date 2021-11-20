@@ -160,13 +160,14 @@ bool get_classfield_boolean(void* obj, const char* clazs, const char* field) {
 	return get_classfield_boolean(obj, inf);
 }
 CACHED_EVENTDEF(getName);
+MH_PURE
 const char* get_entity_name(void* obj) {
 
 	return ev_getName(obj).value.s;
 	//return reinterpret_cast<idStr*>(reinterpret_cast<char*>(obj) + idType::FindClassField("idEntity", "name")->offset)->data;
 }
 static mh_new_fieldcached_t<int, YS("idManagedClass"), YS("objectNumber")> g_idmanagedclass_objectnumber;
-
+MH_PURE
 int get_entity_spawnid(void* ent) {
 	return *g_idmanagedclass_objectnumber(ent);
 }
@@ -532,6 +533,15 @@ idEventArg mh_ScriptCmdEntFast(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESC
 	call_virtual<void>(self, VTBLOFFS_CALLEVENT, &result, tdef_name, args);
 	return result;
 }
+
+MH_LEAF
+void mh_ScriptCmdEntFast(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args, idEventArg* MH_NOESCAPE retval) {
+	if (args == nullptr) {
+		args = &g_null_eventargs;
+	}
+	call_virtual<void>(self, VTBLOFFS_CALLEVENT, retval, tdef_name, args);
+
+}
 MH_LEAF
 idEventArg mh_ScriptCmdEnt(const char* MH_NOESCAPE eventdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args) {
 
@@ -540,6 +550,9 @@ idEventArg mh_ScriptCmdEnt(const char* MH_NOESCAPE eventdef_name, void* MH_NOESC
 MH_LEAF
 idEventArg mh_ScriptCmdEnt_idEntity(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args ) {
 	void* callev = VTBL_MEMBER(idEntity, VTBLOFFS_CALLEVENT)::Get();
+	if (args == nullptr) {
+		args = &g_null_eventargs;
+	}
 	idEventArg result;
 	call_as<void>(callev,self, &result, tdef_name, args);
 	return result;
@@ -548,6 +561,9 @@ MH_LEAF
 void mh_ScriptCmdEnt_idEntity(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE self, idEventArg* MH_NOESCAPE args, idEventArg* MH_NOESCAPE out_arg) {
 	void* callev = VTBL_MEMBER(idEntity, VTBLOFFS_CALLEVENT)::Get();
 
+	if (args == nullptr) {
+		args = &g_null_eventargs;
+	}
 	call_as<void>(callev, self, out_arg, tdef_name, args);
 }
 /*
@@ -682,7 +698,7 @@ int* get_entity_spawnid_table() {
 	//spawnid table is always after entity table, has been since at least wolf
 	return reinterpret_cast<int*>(&get_entity_table()[16383]);
 }
-
+MH_SEMIPURE
 void* lookup_entity_index(unsigned idx) {
 	return get_entity_table()[idx];
 }
