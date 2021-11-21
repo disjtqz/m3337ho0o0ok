@@ -186,6 +186,11 @@ namespace idType {
 	classVariableInfo_t* try_locate_var_by_name(classVariableInfo_t* from, const char* field);
 	MH_NOINLINE
 	classVariableInfo_t* try_locate_var_by_name_inher(classTypeInfo_t* clstype, const char* field);
+	static
+	classVariableInfo_t* try_locate_var_by_name_inher(const char* clstype, const char* field) {
+		return try_locate_var_by_name_inher(FindClassInfo(clstype), field);
+
+	}
 
 	//cant use noclone on this, bug in clang. the params get dropped :/
 	template<typename... TRest>
@@ -246,6 +251,8 @@ namespace idType {
 	//idEntity is the only inheritor of idEngineEntity, and from idEntity only two classes directly inherit: idBloatedEntity and idUmbraVisibilityContributionVolume. so idEntity is the natural place to start
 	//is list of rvas
 	std::vector<unsigned>* get_entity_inheritors();
+
+	std::string stringify_object(void* obj, classTypeInfo_t* clstype, std::string tabulation = "");
 }
 
 template<typename TRet>

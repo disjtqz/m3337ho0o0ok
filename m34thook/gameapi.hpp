@@ -21,7 +21,10 @@ void* get_local_player();
 void* get_level_map();
 
 void* get_world();
-
+//get the idView for this player
+void* get_local_player_view();
+//get the renderView_t for this player
+void* get_local_player_renderview();
 MH_SEMIPURE
 bool get_classfield_boolean(void* obj, const classVariableInfo_t* varinfo);
 MH_NOINLINE
@@ -30,6 +33,8 @@ bool get_classfield_boolean(void* obj, const char* clazs, const char* field);
 MH_NOINLINE
 
 void set_classfield_boolean(void* obj, const classVariableInfo_t* varinfo, bool value);
+//returns new value
+bool toggle_classfield_boolean(void* obj, const classVariableInfo_t* varinfo);
 MH_NOINLINE
 MH_SEMIPURE
 long long get_classfield_int(void* obj, const classVariableInfo_t* varinfo);
@@ -254,7 +259,7 @@ void* get_console();
 MH_NOINLINE
 void* get_globalImages();
 //returns idtypeinfo for entity
-void* get_entity_typeinfo_object(void* ent);
+idTypeInfo* get_entity_typeinfo_object(void* ent);
 
 /*
 	get rendermodelgui for idConsole
@@ -2222,15 +2227,24 @@ public:
 
 
 };
+
+
 MH_SEMIPURE
-static inline bool is_entity_valid(void* MH_NOESCAPE entity) {
+static inline bool is_entity_valid(void* MH_NOESCAPE entity, void** MH_NOESCAPE etable) {
 	if (!entity)
 		return false;
 
 	int spawnid = get_entity_spawnid(entity);
 	if (spawnid < 0 || spawnid > WORLD_ENTITY_IDX)
 		return false;
-	void* entfor = lookup_entity_index(spawnid);
+	void* entfor = etable[spawnid];
 	return entfor == entity;
 
 }
+MH_SEMIPURE
+static inline bool is_entity_valid(void* MH_NOESCAPE entity) {
+	return is_entity_valid(entity, get_entity_table());
+
+}
+
+std::string stringify_entity(void* ent);

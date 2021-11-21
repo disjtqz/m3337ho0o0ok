@@ -493,6 +493,212 @@ static void mh_ScriptCmd(idCmdArgs* args) {
 }
 
 /*
+
+	idTypesafeTime < long long , microsecondUnique_t , 1000000 > renderTimeUs
+
+	//Player views will set this to a non-zero integer for per-view model suppression to allow a view weapon to only show in the player view while a player body only shows in a third person view.
+	unsigned int viewID
+
+	//The view has jumped, so occlusion queries from the previous frame are no longer valid, and everything in-frame should be assumed visible. This doesn't implicitly affect texture streaming, so the first frame will likely be blurry before textures page in.
+	bool discontinuousViewPosition
+
+	//Many tools don't want the final glare pass.
+	bool skipPostProcess
+
+	//Envshot never wants to see testimage, showtris, etc in the images
+	bool skipRenderTools
+
+	//Use a default environment map instead of dynamic rendering of one, usually for tools.
+	bool skipDynamicEnvironment
+
+	//XY windows gather with an ortho projection
+	bool streamingGatherOrthographic
+
+	//Disable the dynamic resolution scaling code, render only at the full resolution
+	bool forceFullResolution
+
+	//Use high quality mipmap generation method when generating the view color mips, this can be set for cinematics which take advantage of post effects which use the view color mips (ie depth of field) giving a higher-quality result.
+	bool useHQViewColorMipsGeneration
+
+	//For steroescopic 3D rendering, we don't want to allow the hands/weapons to use a custom (inconsistant) FOV
+	bool inhibitModelFovScale
+
+	//Render wireframe surfaces, used by idStudio XY view
+	bool enableWorldEditorPass
+
+	//In cut scene used for letting the renderer know that the cutscene has taken player camera control
+	bool inCutscene
+
+	//A cut scene just triggered a camera cut.
+	bool cameraCut
+
+	//the number of frames to hold with a camera cut
+	int cameraCutFrames
+
+	//Disable shakes
+	bool disableShakes
+
+	//Disable temporal amortization of sun shadows, required for some cutscenes only.
+	unsigned char numForcedSunShadowSlices
+	bool disableTriangleOcclusionCulling
+
+	//Disable async GPU particles (for when draws write depth in oapque in idStudio)
+	bool enableAsyncGPUParticles
+	toolsVisibilityMask_t toolsVisibilityMask
+	renderModelVisibilityScope_t renderModelVisibilityMask
+
+	//------------------------ the projection matrix is derived from these ------------------------
+	float fov_x
+	float fov_y
+	float weaponFOVX
+	float weaponFOVY
+	float customFOV2X
+	float customFOV2Y
+	float nominalFOVX
+	float nominalFOVY
+
+	//Cinematics often want control over the near plane. Remember that fidling with this comes at the  cost of altering depth precision! Valid if zNear > 0.0f {{ units = m }}
+	float zNear
+
+	//optional zFar, to override value supplied from environment
+	float zFar
+
+	//FIXME: remove the above specification and require setting the 'explicitProjectionMatrix'
+	idRenderMatrix explicitProjectionMatrix
+	bool useExplicitProjectionMatrix
+
+	//------------------------ the view matrix is derived from these ------------------------
+	idVec3 vieworg
+
+	//transformation matrix, view looks down the positive X axis
+	idMat3 viewaxis
+
+	//------------------------ De-concatenated view position. This is useful in very specific situations, typically on animated cameras far away from the origin. In order to minimize floating point inaccuracy in rendering computations that are very sensitive to precision (typically MVP computation), we can decompose the position into a mostly constant offset (viewOriginOffset) and an animated position (localViewOrigin). The sum of those two will be equal to the global view position (vieworg), but storing them separately makes it possible to minimize floating point error by carefully subtracting first the constant viewOriginOffset and then adding the animated part. Subtracting two arbitrarily large typically constant values (a model's position and the viewOriginOffset) and then adding a much smaller animated value will be much more temporaly stable than subtracting a large animated value in a single step thanks to a much more smaller epsilon near zero. This makes it possible to have jitter-free rendering of very
+	bool usesViewOriginOffset
+	idVec3 localViewOrigin
+	idVec3 viewOriginOffset
+	idVec2 particleFovScreenScale
+
+	//To reduce latency, the renderer may be given the option of creating new origin / axis data with an updated idUserCmd.
+	idViewBypass viewBypass
+
+	//If the explicitProjectionMatrix is to be used as a complete MVP matrix, we want this to be an identity. Because viewAxis is normally multiplied by the "flipMatrix" to go from the game coordinate system (looking down X) to our coordinate system (looking down -Z), there isn't a convenient and obvious way to disable the view matrix without this option.
+	bool forceIdentityViewMatrix
+
+	//------------------------  any variables to be passed to the renderProgs can be put here.
+	idGrowableParmBlock < 32 > parmBlock
+
+	//used to completely override the current dynamic environment
+	idDeclEnv* dynEnvOverride
+	bool dynEnvOverrideDirty
+	float dynEnvOverrideDuration
+	int dynEnvOverrideModelIndex
+	bool applyDynEnvOverride
+
+	//used to change a subset of env parms on the current dynamic environment
+	idGrowableParmBlock < 32 > envOverrideParmBlock
+	bool depthOfFieldEnable
+	bool depthOfFieldNearEnabled
+
+	//depthOfFieldNearEnd < depthOfFieldNearStart < depthOfFieldFarStart < depthOfFieldFarEnd  The focus field starts at depthOfFieldNearStart and ends at DepthOfFieldFarStart  NearDof starts at depthofFieldNearStart and gradually increases to "max dof" as you get closer to the camera until depthOfFieldNearEnd where max dof is reached. Closer than that  gets max dof.  FarDof starts at depthofFieldFarStart and gradually increases to "max dof" as you get further from the camera until depthOfFieldFarEnd where max dof is reached. Further than that  gets max dof.  depthOfField(Near | Far)Blend controls the maximum amount of dof to apply in each case. It is  a scalar from 0 - 1 (so it scales max dof in each case).  depthOfField(Near | Far)Min specifies the minimum amount of dof to apply at the near & far dof planes. {{ units = m }}
+	float depthOfFieldNearEnd
+
+	//{{ units = m }}
+	float depthOfFieldNearStart
+	float depthOfFieldNearBlend
+
+	//{{ units = m }}
+	float depthOfFieldNearMin
+
+	//{{ units = m }}
+	float depthOfFieldFarStart
+
+	//{{ units = m }}
+	float depthOfFieldFarEnd
+	float depthOfFieldFarBlend
+	float depthOfFieldFarMin
+	bool wallhackVision
+	bool prowlerVision
+	bool deathCamVision
+
+	//{{ units = m }}
+	idVec3 echoProjectorPosition
+	bool hdrAutoExposureInstant
+
+	//If != 0.0f use this value instead of auto exposure. Fully disables auto exposure if != 0.0f.
+	float hdrManualExposure
+	bool filmicCurveOverride
+	float filmicCurveShadowsScale
+	float filmicCurveMidtonesScale
+	float filmicCurveHighlightsScale
+	float filmicCurveWhitePoint
+
+	//sub sample indices used for temporal AA / screenshots up-resolution
+	unsigned char subBufferIndex
+
+	//numSubSamples = numSubSamplesRow * numSubSamplesRow
+	unsigned char numSubBuffersRow
+	unsigned char subSampleIndex
+
+	//numSubSamples = numSubSamplesRow * numSubSamplesRow
+	unsigned char numSubSamplesRow
+	unsigned char upsamplerSubSampleIndex
+	bool screenshotResolutionScale
+	float slowMotionScale
+	int forceLod
+
+	//Scale factor applied to the density of all light scattering volumes.
+	float lightScatteringDensityScale
+
+	//Prevents background color from being cleared to black where ndcZ == 1.0
+	bool deferredPassesKeepBackground
+
+	//used to calculate the radial blur screen space position - radial blurs are added game-side, the calculations are render dependent though
+	blurRadialParms_t[8] blurRadialParms
+	int numRadialBlurs
+	blurRadialDashParms_t blurRadialDashParms
+	blurGaussianParms_t blurGaussianParms
+
+	//Different from hdrManualExposure: hdrManualExposure is applied during autoexposure pass, and therefore requires the autoexposure update to run. exposureOverride (if enabled) supersedes hdrManualExposure, and is applied in postprocess regardless if autoexposure updates or not.
+	float exposureOverride
+	bool skipAutoExposureUpdate
+	bool disableToneMapping
+	bool disableScreenEffects
+	bool disableScreenWaterTransitionEffect
+	bool disableTssaaNextFewFrames
+	screenOverlayParms_t[3] screenOverlayParms
+	screenOverlayAnimatedMaskParms_t[4] screenOverlayAnimatedMaskParms
+	int numScreenOverlayAnimatedMasks
+	screenDistortionParms_t screenDistortionParms
+	screenVignetteParms_t[3] screenVignetteParms
+	int numScreenVignettes
+	idVec4[4] augmentHighlightColors
+	idVec4 augmentHighlightFillColor
+	idVec3 pingCenterPos
+	float pingDistance
+	idImageView* deferredCompositeBackgroundImg
+	bool skipFogAndRainForGUIs
+	idImage* hdrCalibrationImage
+
+*/
+
+static void toggle_idview_bool(const char* name) {
+	void* rv = get_local_player_renderview();
+	
+	bool newval = toggle_classfield_boolean(rv, idType::try_locate_var_by_name_inher("renderView_t", name));
+
+	idLib::Printf("Turning %s %s", name, newval ? "on" : "off");
+}
+static void mh_wallhack(idCmdArgs* args) {
+
+	toggle_idview_bool("wallhackVision");
+
+}
+static void mh_worldedpass(idCmdArgs* args) {
+	toggle_idview_bool("enableWorldEditorPass");
+	
+}
+/*
 	default godmode command sends idClientGameMsg_PlayerCommand_God to the server, allowing easy cheating in mp
 	our version just sets the godmode flag on the local player, which still works in sp but will have no effect in mp
 	so players will just assume id patched out godmode in mp... which they havent done lol. they did patch out the remoteconsole shit but left godmode in :/
@@ -533,4 +739,6 @@ void install_cheat_cmds() {
 	idCmd::register_command("noclip", cmd_noclip, "Toggle noclip");
 
 	idCmd::register_command("notarget", cmd_notarget, "Toggle notarget");
+	idCmd::register_command("mh_wallhack", mh_wallhack, "Turn on the wallhack field for idview");
+	idCmd::register_command("mh_worldedpass", mh_worldedpass, "");
 }

@@ -298,12 +298,9 @@ namespace scanners_phase2 {
 
 	BSCANENT(locate_idstaticmodel_finish_entry, &descan::g_idRenderModelStatic_FinishStaticModel, scanbehavior_identity<&descan::g_idRenderModelStatic_FinishStaticModel,locate_idstaticmodel_finish>);
 	BSCANENT(getentitystate_needsoffset, &descan::g_declentitydef_gettextwithinheritance, scanbehavior_locate_func_with_start_search<locate_getentitystate_in_body>);
-	#if !defined(MH_ETERNAL_V6)
-	BSCANENT(locate_getlevelmap_entry, &descan::g_maplocal_getlevelmap, scanbehavior_locate_func<locate_body_of_getlevelmap>);
-#else
+
 	BSCANENT(locate_getlevelmap_entry, nullptr, scanbehavior_locate_func<locate_getlevelmap_offset>);
 
-#endif
 #if !defined(MH_ETERNAL_V6)
 	BSCANENT(atomicstringset_locator_entry, &descan::g_atomic_string_set, scanbehavior_locate_csrel_preceding<locate_atomicstring_set>);
 #else

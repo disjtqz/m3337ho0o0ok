@@ -1,7 +1,6 @@
 SCANNED_PTR_FEATURE(g_alloca_probe)
 SCANNED_PTR_FEATURE(g_security_cookie)
 SCANNED_PTR_FEATURE(g_security_check_cookie)
-SCANNED_PTR_FEATURE(g_msvc_typeinfo_vtbl)
 SCANNED_PTR_FEATURE(g_doom_memorysystem)
 SCANNED_PTR_FEATURE(g_sqrtf)
 SCANNED_PTR_FEATURE(g_sqrt)
@@ -12,7 +11,6 @@ SCANNED_PTR_FEATURE(g_idoodle_decompress)
 SCANNED_PTR_FEATURE(g_idcmdsystem)
 SCANNED_PTR_FEATURE(g_idcvarsystem)
 SCANNED_PTR_FEATURE(g_idlib_vprintf)
-SCANNED_PTR_FEATURE(g_idstr_hash)
 
 SCANNED_PTR_FEATURE(g_idtypeinfo_findclassinfo)
 SCANNED_PTR_FEATURE(g_idtypeinfo_findenuminfo)
@@ -27,15 +25,12 @@ SCANNED_PTR_FEATURE(g_listOfResourceLists)
 SCANNED_PTR_FEATURE(g_gamelocal)
 SCANNED_PTR_FEATURE(g_idgamesystemlocal)
 
-SCANNED_PTR_FEATURE(g_serialize_type_to_json)
 SCANNED_PTR_FEATURE(g_atomic_string_set)
 
-SCANNED_PTR_FEATURE(g_declentitydef_setentitystate)
 SCANNED_PTR_FEATURE(g_declentitydef_gettextwithinheritance)
 SCANNED_PTR_FEATURE(g_idstr_dctor)
 SCANNED_PTR_FEATURE(g_idstr_assign_charptr)
 SCANNED_PTR_FEATURE(g_global_typeinfo_tools)
-SCANNED_PTR_FEATURE(g_maplocal_getlevelmap)
 SCANNED_PTR_FEATURE(g_idmapfile_write)
 
 SCANNED_PTR_FEATURE(g_idlib_fatalerror)
@@ -136,3 +131,5 @@ SCANNED_PTR_FEATURE(g_idMapEntity_SetEntityDef)
 SCANNED_PTR_FEATURE(g_idMapFile_WriteInternal)
 
 SCANNED_PTR_FEATURE(g_idLib_Warning)
+
+SCANNED_PTR_FEATURE(g_idPlayer_GetView)

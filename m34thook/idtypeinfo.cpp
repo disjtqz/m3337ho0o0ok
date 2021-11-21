@@ -1477,3 +1477,127 @@ std::vector<unsigned>* idType::get_entity_inheritors() {
 		return &g_entity_inheritors;
 	}
 }
+
+static bool ops_has_ptr(const char* s) {
+	if (!s)
+		return false;
+	for (unsigned i = 0; s[i]; ++i) {
+		if (s[i] == '*')
+			return true;
+	}
+	return false;
+
+}
+
+
+
+static std::string stringify_properties(void* obj, classTypeInfo_t* clstype, std::string tabulation) {
+
+	char tmpbuf[128];
+	std::string result = "";
+	auto vr = clstype->variables;
+	if (!vr) {
+
+		return "<NO REFLECTION DATA AVAILABLE>";
+	}
+	
+	while (vr->name && vr->name[0]) {
+		using namespace sh::string;
+
+		result += tabulation;
+
+		result += vr->type;
+		result += " ";
+		result += vr->name;
+		result += " = ";
+		unsigned voffs = vr->offset;
+
+		classTypeInfo_t* fldclass = nullptr;
+
+		if (ops_has_ptr(vr->ops)) {
+			sprintf_s(tmpbuf, "%p", *mh_lea<void*>(obj, voffs));
+			result += (const char*)(&tmpbuf[0]);
+		}
+		else {
+			if (streq(vr->type, "float")) {
+
+				result += std::to_string(*mh_lea<float>(obj, voffs));
+
+			}
+			else if (streq(vr->type, "double")) {
+
+				result += std::to_string(*mh_lea<double>(obj, voffs));
+
+			}
+#define	HANDLE_PRIM_INTEGRAL(name)		\
+			else if (streq(vr->type, #name)) {\
+			name val = 0;\
+			if (vr->get) {\
+				val = vr->get(obj);\
+			}\
+			else {\
+				val = *mh_lea<name>(obj, voffs);\
+			}\
+			result += std::to_string(val);\
+			}
+			HANDLE_PRIM_INTEGRAL(int)
+			HANDLE_PRIM_INTEGRAL(bool)
+			HANDLE_PRIM_INTEGRAL(short)
+			HANDLE_PRIM_INTEGRAL(char)
+			HANDLE_PRIM_INTEGRAL(long long)
+			HANDLE_PRIM_INTEGRAL(unsigned int)
+			HANDLE_PRIM_INTEGRAL(unsigned short)
+			HANDLE_PRIM_INTEGRAL(unsigned char)
+			HANDLE_PRIM_INTEGRAL(unsigned long long)
+			else {
+				fldclass = idType::get_field_class(vr);
+
+				if (fldclass) {
+					result += idType::stringify_object(mh_lea<void>(obj, voffs), fldclass, tabulation + "\t");
+
+				}
+				else {
+					auto fldenum = idType::FindEnumInfo(vr->type);
+
+					if (fldenum) {
+						long long val = get_classfield_int(obj, vr);
+						result += idType::get_enum_member_name_for_value(fldenum, val);
+
+					}
+					else {
+						result += "<UNHANDLED>";
+					}
+				}
+			}
+
+		}
+		if (fldclass) {
+			result += "\n";
+		}
+		else
+			result += ";\n";
+		++vr;
+
+
+	}
+	return result;
+}
+
+static std::string stringify_inner(void* obj, classTypeInfo_t* clstype, std::string tabulation ) {
+	auto supertype = idType::get_class_superclass(clstype);
+	std::string result = "";
+
+	if (supertype) {
+		result = stringify_inner(obj, supertype, tabulation);
+
+	}
+	return result + stringify_properties(obj, clstype, tabulation);
+
+}
+
+std::string idType::stringify_object(void* obj, classTypeInfo_t* clstype,std::string tabulation ) {
+	return  "{\n" + stringify_inner(obj, clstype,tabulation) + tabulation + "}";
+
+
+
+}

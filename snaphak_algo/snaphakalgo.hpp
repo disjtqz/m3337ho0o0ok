@@ -870,6 +870,89 @@ struct mh_string_view_t {
 	unsigned m_length;
 	unsigned m_weak_hashcode;
 };
+//this might be handy, but im worried about it breaking msvc compatability
+#if 1
+template<template<snaphak_cpu_lvl_t lvlarg> class TImpl>
+struct sh_multiversioner_t {
+	template<typename... TArgs>
 
+#if !defined(__clang__)
+	template<typename... TArgs>
+	static auto exec(TArgs... args) {
+
+		return TImpl<snaphak_cpu_lvl_t::GenericCpu>::Run(args...);
+	}
+#else
+	__attribute__((target("avx2,avx,bmi,bmi2")))
+		__attribute__((flatten))
+		static auto fnavx2(TArgs... args) {
+		auto result = TImpl<snaphak_cpu_lvl_t::AVX2Cpu>::Run(args...);
+		//__asm__ volatile ("vzeroupper");
+		return result;
+	}
+
+
+	template<typename... TArgs>
+	__attribute__((target("avx,avx2,avx512f,avx512bw,avx512dq,avx512cd,avx512vl")))
+		__attribute__((flatten))
+		static auto fnavx512(TArgs... args) {
+
+		auto result = TImpl<snaphak_cpu_lvl_t::AVX512Cpu>::Run(args...);
+	//	__asm__ volatile ("vzeroupper");
+		return result;
+	}
+	//mark this as noinline so that the code is never fetched on cpus that support avx2/avx512
+	template<typename... TArgs>
+	__attribute__((noinline))
+	static auto fngeneric(TArgs... args) {
+		return TImpl<snaphak_cpu_lvl_t::GenericCpu>::Run(args...);
+	}
+
+
+	template<typename... TArgs>
+	static auto exec(TArgs... args) {
+
+		switch (g_shalgo.m_cpulevel) {
+
+		case snaphak_cpu_lvl_t::AVX2Cpu:
+			return fnavx2(args...);
+
+		case snaphak_cpu_lvl_t::AVX512Cpu:
+			return fnavx512(args...);
+
+		default:
+			return fngeneric(args...);
+		}
+	}
+#endif
 #endif
 
+
+
+
+
+
+
+};
+//multiversioner example:
+/*
+template<snaphak_cpu_lvl_t lvl>
+struct my_test {
+	MH_FORCEINLINE
+		static double Run(double* input, unsigned n) {
+
+		double result = 0;
+
+		for (unsigned i = 0; i < n; ++i) {
+
+			result += input[i];
+		}
+		return result;
+	}
+};
+
+
+double sum_values(double* input, unsigned n) {
+	return sh_multiversioner_t<my_test>::exec(input, n);
+}*/
+#endif

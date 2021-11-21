@@ -87,9 +87,7 @@ void* locate_challenge_entity() {
 
 }
 void* get_level_map() {
-#if !defined(MH_ETERNAL_V6)
-	return call_as<void*>(descan::g_maplocal_getlevelmap, *reinterpret_cast<void**>(descan::g_gamelocal));
-#else
+
 	void* gamelocal = get_gamelocal();
 
 	char* gamelocal_vftbl = *reinterpret_cast<char**>(gamelocal);
@@ -97,7 +95,6 @@ void* get_level_map() {
 	void* getlevelmap_func = *reinterpret_cast<void**>(gamelocal_vftbl + descan::g_vftbl_offset_getlevelmap);
 
 	return call_as<void*>(getlevelmap_func, gamelocal);
-#endif
 }
 
 MH_SEMIPURE
@@ -119,6 +116,12 @@ void set_classfield_boolean(void* obj, const classVariableInfo_t* varinfo, bool 
 	else {
 		*reinterpret_cast<bool*>(reinterpret_cast<char*>(obj) + varinfo->offset) = value;
 	}
+}
+
+bool toggle_classfield_boolean(void* obj, const classVariableInfo_t* varinfo) {
+	bool newval = !get_classfield_boolean(obj, varinfo);
+	set_classfield_boolean(obj, varinfo, newval);
+	return newval;
 }
 MH_NOINLINE
 MH_SEMIPURE
@@ -163,8 +166,8 @@ CACHED_EVENTDEF(getName);
 MH_PURE
 const char* get_entity_name(void* obj) {
 
-	return ev_getName(obj).value.s;
-	//return reinterpret_cast<idStr*>(reinterpret_cast<char*>(obj) + idType::FindClassField("idEntity", "name")->offset)->data;
+//	return ev_getName(obj).value.s;
+	return reinterpret_cast<idStr*>(reinterpret_cast<char*>(obj) + idType::FindClassField("idEntity", "name")->offset)->data;
 }
 static mh_new_fieldcached_t<int, YS("idManagedClass"), YS("objectNumber")> g_idmanagedclass_objectnumber;
 MH_PURE
@@ -530,7 +533,7 @@ idEventArg mh_ScriptCmdEntFast(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESC
 		args = &g_null_eventargs;
 	}
 	idEventArg result;
-	call_virtual<void>(self, VTBLOFFS_CALLEVENT, &result, tdef_name, args);
+	call_virtual<void>(self, VTBLOFFS_CALLEVENT/8, &result, tdef_name, args);
 	return result;
 }
 
@@ -539,7 +542,7 @@ void mh_ScriptCmdEntFast(idEventDef* MH_NOESCAPE tdef_name, void* MH_NOESCAPE se
 	if (args == nullptr) {
 		args = &g_null_eventargs;
 	}
-	call_virtual<void>(self, VTBLOFFS_CALLEVENT, retval, tdef_name, args);
+	call_virtual<void>(self, VTBLOFFS_CALLEVENT/8, retval, tdef_name, args);
 
 }
 MH_LEAF
@@ -848,9 +851,9 @@ void upload_2d_imagedata(const char* imagename, const void* picdata, unsigned wi
 
 }
 
-void* get_entity_typeinfo_object(void* ent) {
+idTypeInfo* get_entity_typeinfo_object(void* ent) {
 	//GetType technically takes the this pointer as an arg, but all of them just lea rax and return anyway without referencing rcx
-	return call_virtual<void*>(ent, VTBLOFFS_IDCLASS_GETTYPE);
+	return call_virtual<idTypeInfo*>(ent, VTBLOFFS_IDCLASS_GETTYPE / 8);
 }
 
 static mh_new_fieldcached_t<idVec3, YS("idBloatedEntity"), YS("clipModelInfo"), YS("size")> g_clipmodel_size{};
@@ -918,4 +921,34 @@ void set_debug_target(void* newtarget) {
 	idEventArg rg;
 	rg.make_entity(newtarget);
 	ev_setDebugTarget(get_world(), &rg);
+}
+
+void* get_local_player_view() {
+	auto glp = get_local_player();
+	MH_UNLIKELY_IF(!glp)
+		return nullptr;
+	return call_as<void*>(descan::g_idPlayer_GetView, glp);
+}
+static mh_new_fieldcached_t<void, YS("idView"), YS("gameview")> g_view_gameview;
+void* get_local_player_renderview() {
+
+	void* gv = get_local_player_view();
+	MH_UNLIKELY_IF(!gv)
+		return nullptr;
+	return g_view_gameview(gv);
+}
+
+std::string stringify_entity(void* ent) {
+	if (!ent) {
+		return "NULL";
+	}
+
+	auto typ = get_entity_typeinfo_object(ent);
+	cs_assert(typ);
+
+	classTypeInfo_t* clstype = idType::FindClassInfo(typ->classname);
+
+	cs_assert(clstype);
+
+	return idType::stringify_object(ent, clstype);
 }

@@ -221,11 +221,7 @@ static void descan_locate_critical_features() {
 
 
 	//	descan::g_declentitydef_gettextwithinheritance = hunt_assumed_func_start_back(descan::g_declentitydef_gettextwithinheritance);
-#if !defined(MH_ETERNAL_V6)
-	descan::g_noclip_func = hunt_assumed_func_start_back(descan::g_noclip_func);
 
-	descan::g_maplocal_getlevelmap = hunt_assumed_func_start_back(descan::g_maplocal_getlevelmap);
-#endif
 	//fallback
 	if (!descan::g_doom_memorysystem)
 		descan::g_doom_memorysystem = locate_csrelative_address_after<locate_memorysystem>();
@@ -531,6 +527,25 @@ static void run_scanners_over_ExportDuplicatCollisionGeometryModel() {
 	void* retpos = mh_disassembler_t::after_first_return(exportimpl);
 
 	descan::g_idStaticModel_WriteStaticBModel = run_range_scanner<scanbehavior_locate_csrel_after< locate_writestaticbmodel>>(exportimpl, retpos);
+}
+
+using locate_idplayer_getview = memscanner_t< scanbytes<0x4c, 0x8d, 0x45, 0xd7, 0x48, 0x8b, 0xc8, 0x48, 0x8d, 0x55, 0xb7>>;
+
+MH_NOINLINE
+static void run_scanners_over_getviewpos() {
+	void* gvp = idCmd::find_command_by_name("getviewpos");
+	if (!gvp) {
+		mh_error_message("uh oh, getviewpos was removed...");
+		return;
+	}
+
+	void* retpos = mh_disassembler_t::after_first_return(gvp);
+
+
+	descan::g_idPlayer_GetView = run_range_scanner < scanbehavior_locate_csrel_preceding < locate_idplayer_getview>>(gvp, retpos);
+
+
+
 
 }
 /*
@@ -544,6 +559,7 @@ static void descan_run_gamelib_postinit_scangroups() {
 	run_scanners_over_staticmodelmanager_init();
 	run_scanners_over_idconsolelocal_draw();
 	run_scanners_over_ExportDuplicatCollisionGeometryModel();
+	run_scanners_over_getviewpos();
 	scanners_phase3::tertiary_scangroup_pass.execute_on_image();
 
 	postinit_timer.end("Postinit scan");

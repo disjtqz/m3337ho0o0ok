@@ -315,10 +315,6 @@ namespace initial_scanners {
 	BSCANENT(locate_idoodle_decompress_entry, &descan::g_idoodle_decompress, scanbehavior_locate_func<locate_idoodle_decompress>);
 
 	BSCANENT(locate_idlib_vprintf_entry, &descan::g_idlib_vprintf, scanbehavior_locate_csrel_after<locate_idlib_vprintf>);
-#if !defined(MH_ETERNAL_V6)
-	//hashstr is inlined everywhere in v6
-	BSCANENT(locate_idlib_hashstr_entry, &descan::g_idstr_hash, scanbehavior_locate_func<locate_idstr_hash>);
-#endif
 
 	BSCANENT(locate_game_engine_init_ptr_entry, &descan::g_gamelib_initialize_ptr, scanbehavior_simple<locate_game_engine_init_ptr>);
 

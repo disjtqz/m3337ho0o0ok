@@ -246,6 +246,25 @@ static void mh_testnormalize(idCmdArgs* args) {
 	idLib::Printf("Precise result: %s\nStandard result: %s\n", normalprec.to_string().c_str(), normalnorm.to_string().c_str());
 
 }
+
+
+static void mh_dumpentityvalues(idCmdArgs* args) {
+	void* ent = nullptr;
+	if (args->argc < 2) {
+		ent = get_player_look_target();
+
+	}
+	else {
+
+		ent = find_entity(args->argv[1]);
+	}
+
+	std::string result = stringify_entity(ent);
+
+	set_clipboard_data(result.c_str());
+	idLib::Printf("%s", result.c_str());
+
+}
 void install_miscndev_cmds() {
 #if !defined(MH_DISABLE_ALL_DEV_STUFF)
 	idCmd::register_command("mh_cpuinfo", meathook_cpuinfo, "takes no args, dumps info about your cpu for dev purposes");
@@ -257,5 +276,7 @@ void install_miscndev_cmds() {
 	idCmd::register_command("mh_findchallenge", mh_findchallenge, "Locate the current challenge entity");
 
 	idCmd::register_command("mh_testnormalize", mh_testnormalize, "<x> <y> <z> dev command for checking results of normalize.");
+
+	idCmd::register_command("mh_dumpentity", mh_dumpentityvalues, "<entity name> dumps a string representation of an entities current values in memory.");
 #endif
 }

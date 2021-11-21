@@ -37,6 +37,8 @@ class mh_editor_local_t;
 
 
 
+
+
 #define	TRACE_EDITOR(fmt, ...)		idLib::Printf(fmt "\n", __VA_ARGS__)
 
 //#define	TRACE_WORLDTRACE(fmt, ...)		TRACE_EDITOR(fmt, ...)
@@ -582,7 +584,7 @@ class mh_editor_local_t : public mh_editor_interface_t {
 	}
 
 	void* get_local_player_focus_trace();
-
+	editor_vec3_t get_player_look_endpoint();
 
 	editor_vec3_t get_player_look_direction();
 	//normal of the surface that the line trace from the player hit
@@ -632,6 +634,8 @@ public:
 };
 CACHED_EVENTDEF(getSize);
 
+
+
 static bounds_simd_t get_object_bbox_simd(void* obj) {
 	idEventArg tmp = ev_getWorldOrigin(obj);
 	vec3_simd_t other_origin = _mm_loadu_ps(&tmp.value.v[0]);
@@ -649,13 +653,166 @@ static bounds_simd_t get_object_bbox_simd(void* obj) {
 	return { mins, maxs };
 }
 #define		TRACE_DONT_USE_MINMAX
+struct trace_context_t {
+	idEventDef* getorigin;
+	idEventDef* getsize;
+	void** etable;
+
+	__m128 origin;
+	__m128 direction;
+	__m128 exclude_bbox0;
+	__m128 exclude_bbox1;
+	float maxdistance;
+	idEventArg m_scratch_evret;
+	idEventArg m_scratch_evargs[2];
+	template<snaphak_cpu_lvl_t cpulvl>
+	MH_FORCEINLINE
+	void* run() {
+
+
+		vec3_simd_t endpoint = _mm_add_ps(origin, _mm_mul_ps(direction, _mm_set1_ps(MH_EDGE_OF_REALITY)));
+
+
+		void* closest = nullptr;
+		//just track distance squared so we dont need to do a square root
+		float closest_distance_sqr = (MH_EDGE_OF_REALITY * MH_EDGE_OF_REALITY);
+
+
+		/*auto get_object_bounds = [this, getmins, getmaxs, entity_eventcall](void* obj, __m128& out_mins, __m128& out_maxs) {
+
+		};*/
+#define		INDEX3M128(m)		 cs_index_m128(m, 0), cs_index_m128(m, 1), cs_index_m128(m, 2)
+
+
+
+		TRACE_WORLDTRACE("Tracing from %f %f %f in dir %f %f %f", INDEX3M128(origin), INDEX3M128(direction));
+		maxdistance *= maxdistance;
+		for (unsigned i = LAST_PLAYER_IDX; i < WORLD_ENTITY_IDX; ++i) {
+
+			void* current = etable[i];
+
+			if (!is_entity_valid(current, etable))
+				continue;
+
+			//call_as<void>(entity_eventcall, current, &m_scratch_evret, getorigin, m_scratch_evargs);
+
+
+			vec3_simd_t mins, maxs;
+			{
+
+				/*
+					todo: we should actually vzeroupper before calling these events... but we can't, because clang complains
+					that this function is compiled without support for avx because we get avx here by being inlined into our caller.
+					need a workaround somehow
+
+				*/
+				mh_ScriptCmdEntFast(getorigin, current, m_scratch_evargs, &m_scratch_evret);
+
+				//idEventArg tmp = ev_getWorldOrigin(obj);
+				vec3_simd_t other_origin = _mm_loadu_ps(&m_scratch_evret.value.v[0]);
+
+				//call_as<void>(entity_eventcall, current, &m_scratch_evret, getsize, m_scratch_evargs);
+				mh_ScriptCmdEntFast(getsize, current, m_scratch_evargs, &m_scratch_evret);
+
+
+				vec3_simd_t size = _mm_loadu_ps(&m_scratch_evret.value.v[0]);
+
+
+				vec3_simd_t halfsize = _mm_mul_ps(size, _mm_set1_ps(0.5f));
+
+				mins = _mm_sub_ps(other_origin, halfsize);
+				maxs = _mm_add_ps(other_origin, halfsize);
+
+			}
+
+			//auto [expandmin, expandmax] = bounds_simd::expand(mins, maxs, 0.5f);
+			auto expandmin = mins;
+			auto expandmax = maxs;
+			auto ename = get_entity_name(current);
+
+			TRACE_WORLDTRACE("Tracing against object %s with bounds %f %f %f - %f %f %f", ename, INDEX3M128(mins), INDEX3M128(maxs));
+			vec3_simd_t currcenter = bounds_simd::center(mins, maxs);
+
+			__m128 deltapt = _mm_sub_ps(origin, currcenter);
+			deltapt = _mm_mul_ps(deltapt, deltapt);
+			float distsqr = vec3_simd::horiz_sum3(deltapt);
+
+			if (distsqr > maxdistance || distsqr > closest_distance_sqr) {
+
+				continue;
+			}
+			if (bounds_simd::intersects_bounds(exclude_bbox0, exclude_bbox1, mins, maxs))
+				continue;
+
+#if 1
+			if (!bounds_simd::line_intersection(expandmin, expandmax, origin, endpoint))
+				continue;
+#else
+			float scale = 0;
+
+			if (!bounds_simd::ray_intersection(expandmin, expandmax, origin, direction, scale))
+				continue;
+#endif
+			TRACE_WORLDTRACE("Trace succeeded");
+
+			
+			if (distsqr < closest_distance_sqr) {
+
+
+				closest_distance_sqr = distsqr;
+				closest = current;
+			}
+		}
+		if (closest) {
+
+			TRACE_WORLDTRACE("Closest is %s with distance of %f", get_entity_name(closest), closest_distance_sqr);
+
+		}
+
+		return closest;
+	}
+};
+template<snaphak_cpu_lvl_t cpulvl>
+struct run_trace_t {
+
+	MH_FORCEINLINE
+	static void* Run(trace_context_t* MH_NOESCAPE tracectx) {
+		return tracectx->run<cpulvl>();
+
+	}
+};
+
 MH_NOINLINE
 MH_SEMIPURE
 void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, __m128 exclude_bbox0, __m128 exclude_bbox1, float maxdistance) {
 
+#if 1
+	auto start = GetTickCount64();
+
+	trace_context_t ctx;
 	void** etable = get_entity_table();
 
-	int* entidtable=get_entity_spawnid_table();
+
+	idEventDef* getorigin = ev_getWorldOrigin.Get();
+	idEventDef* getsize = ev_getSize.Get();
+
+	ctx.etable = etable;
+	ctx.getorigin = getorigin;
+	ctx.getsize = getsize;
+	ctx.origin = origin;
+	ctx.direction = direction;
+	ctx.exclude_bbox0 = exclude_bbox0;
+	ctx.exclude_bbox1 = exclude_bbox1;
+	ctx.maxdistance = maxdistance;
+	void* result = sh_multiversioner_t<run_trace_t>::exec(&ctx);
+
+	TRACE_EDITOR("Trace took %d ms", ((unsigned)(GetTickCount64() - start)));
+
+	return result;
+
+#else
+	void** etable = get_entity_table();
+
 #if defined(TRACE_DONT_USE_MINMAX)
 	
 	idEventDef* getorigin = ev_getWorldOrigin.Get();
@@ -666,7 +823,8 @@ void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, _
 	idEventDef* getmaxs = ev_getMaxs.Get();
 #endif
 	
-	void* entity_eventcall = get_identity_callevent_impl();
+
+	auto start = GetTickCount64();
 
 
 
@@ -690,7 +848,7 @@ void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, _
 
 		void* current = etable[i];
 
-		if (!is_entity_valid(current))
+		if (!is_entity_valid(current, etable))
 			continue;
 #if !defined(TRACE_DONT_USE_MINMAX)
 		call_as<void>(entity_eventcall, current, &m_scratch_evret, getmins, m_scratch_evargs);
@@ -701,10 +859,35 @@ void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, _
 		vec3_simd_t maxs = _mm_loadu_ps(&m_scratch_evret.value.v[0]);
 #else
 		//call_as<void>(entity_eventcall, current, &m_scratch_evret, getorigin, m_scratch_evargs);
+		
+#if 0
 		auto [mins, maxs] = get_object_bbox_simd(current);
-#endif
-		auto [expandmin, expandmax] = bounds_simd::expand(mins, maxs, 0.5f);
+#else
+		vec3_simd_t mins, maxs;
+		{
+			mh_ScriptCmdEntFast(getorigin, current, m_scratch_evargs, &m_scratch_evret);
 
+			//idEventArg tmp = ev_getWorldOrigin(obj);
+			vec3_simd_t other_origin = _mm_loadu_ps(&m_scratch_evret.value.v[0]);
+
+			//call_as<void>(entity_eventcall, current, &m_scratch_evret, getsize, m_scratch_evargs);
+			mh_ScriptCmdEntFast(getsize, current, m_scratch_evargs, &m_scratch_evret);
+
+
+			vec3_simd_t size = _mm_loadu_ps(&m_scratch_evret.value.v[0]);
+
+
+			vec3_simd_t halfsize = _mm_mul_ps(size, _mm_set1_ps(0.5f));
+
+			mins = _mm_sub_ps(other_origin, halfsize);
+			maxs = _mm_add_ps(other_origin, halfsize);
+
+		}
+#endif
+#endif
+		//auto [expandmin, expandmax] = bounds_simd::expand(mins, maxs, 0.5f);
+		auto expandmin = mins;
+		auto expandmax = maxs;
 		auto ename = get_entity_name(current);
 
 		TRACE_WORLDTRACE("Tracing against object %s with bounds %f %f %f - %f %f %f", ename, INDEX3M128(mins), INDEX3M128(maxs));
@@ -740,12 +923,15 @@ void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, _
 		TRACE_WORLDTRACE("Closest is %s with distance of %f", get_entity_name(closest), closest_distance_sqr);
 
 	}
+
+	TRACE_EDITOR("Trace took %d ms", ((unsigned)(GetTickCount64() - start)));
 	return closest;
+#endif
 }
 
 
 static mh_new_fieldcached_t<void, YS("idPlayer"), YS("focusTracker"), YS("focusTrace")> g_idPlayer_focusTracker_focusTrace;
-
+static mh_new_fieldcached_t<float, YS("idPlayer"), YS("focusTracker"), YS("traceDistance")> g_idPlayer_focusTracker_traceDistance;
 static mh_new_fieldcached_t<idVec3, YS("idFocusTrace"), YS("close")> g_focustrace_close;
 
 static mh_new_fieldcached_t < idVec3, YS("idFocusTrace"), YS("tr"), YS("c"), YS("normal")> g_focustrace_tr_contact_normal{};
@@ -754,9 +940,12 @@ static mh_new_fieldcached_t < idVec3, YS("idFocusTrace"), YS("tr"), YS("c"), YS(
 void* mh_editor_local_t::get_local_player_focus_trace() {
 	return g_idPlayer_focusTracker_focusTrace(get_local_player());
 }
+editor_vec3_t mh_editor_local_t::get_player_look_endpoint() {
+	return *g_focustrace_close(get_local_player_focus_trace());
 
+}
 editor_vec3_t mh_editor_local_t::get_player_look_direction() {
-	editor_vec3_t endpoint = *g_focustrace_close(get_local_player_focus_trace());
+	editor_vec3_t endpoint = get_player_look_endpoint();
 	idVec3 tmp_playerpos;
 	get_entity_position(get_local_player(), &tmp_playerpos);
 	editor_vec3_t playerpos = tmp_playerpos;
@@ -1298,6 +1487,8 @@ void mh_editor_local_t::editor_spawn_entitydef(void* entitydef) {
 	update_map_entity(newe, true);
 	grab(newe);
 }
+
+static mh_new_fieldcached_t<float, YS("idFocusTrace"), YS("distance")> g_focustrace_distance;
 void* mh_editor_local_t::look_target() {
 #if 0
 	return get_player_look_target();
@@ -1306,9 +1497,25 @@ void* mh_editor_local_t::look_target() {
 	void* lplayer = get_local_player();
 
 
+	float dist = *g_focustrace_distance(get_local_player_focus_trace());
+
+	TRACE_EDITOR("Focustrace dist = %f, trackerdist = %f", dist, *g_idPlayer_focusTracker_traceDistance(lplayer));
+
+	std::string tracetxt = idType::stringify_object(get_local_player_focus_trace(), idType::FindClassInfo("idFocusTrace"));
+	TRACE_EDITOR("Focustrace dump: %s", tracetxt.c_str());
+	*g_idPlayer_focusTracker_traceDistance(lplayer) = 2047.0f;
 	auto [playerb0u, playerb1u] = get_object_bbox_simd(lplayer);
-	auto [playerb0, playerb1] = bounds_simd::expand(playerb0u, playerb1u, 2.0f);
-	return trace_slow(get_origin_simd(lplayer), get_player_look_direction().to_vec3_simd(), playerb0, playerb1, 64.0f);
+	auto [playerb0, playerb1] = bounds_simd::expand(playerb0u, playerb1u, 0.2f);
+
+	auto endp = get_player_look_endpoint();
+	idVec3 ppos;
+	get_entity_position(lplayer, &ppos);
+
+	double endpoint_dist = endp.distance3d(ppos);
+	//fudge
+	endpoint_dist += 4.0;
+
+	return trace_slow(get_origin_simd(lplayer), get_player_look_direction().to_vec3_simd(), playerb0, playerb1, (float)endpoint_dist);
 #endif
 
 }
