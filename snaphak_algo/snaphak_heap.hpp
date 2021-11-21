@@ -1,8 +1,10 @@
 #pragma once
-typedef struct {
+/*typedef struct {
 
 }* sh_heap_t;
+*/
 
+using sh_heap_t = void*;
 
 #if defined(SNAPHAKALGO_BUILDING)
 namespace sh::heap {

@@ -7,7 +7,9 @@
 #include "meathook.h"
 #include "scanner_core.hpp"
 #include "fs_hooks.hpp"
-#include "snaphakalgo.hpp"
+sh_heap_t g_mh_heap = nullptr;
+static void* g_mh_heap_base = nullptr;
+
 //#define		SUPPORT_NEWER_VERSIONS
 MH_NOINLINE
 void mh_error_message(const char* fmt, ...) {
@@ -161,7 +163,11 @@ BOOL WINAPI DllMain(
 	}
 	if (g_did_init)
 		return TRUE;
+
 	sh_algo_init(&g_shalgo);
+	g_mh_heap_base = sh::vmem::allocate_rw(MH_HEAP_SIZE);
+
+	g_mh_heap = sh::heap::create_heap_from_mem(g_mh_heap_base, MH_HEAP_SIZE, 0);
 	g_did_init = true;
 
 	init_reach();

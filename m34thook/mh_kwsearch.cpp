@@ -226,7 +226,7 @@ static DWORD process_vtbls_kwsearch(void* ud) {
 
 	//g_str_to_rrti_type_descr
 
-	for (auto&& memb : g_str_to_rrti_type_descr) {
+	for (auto&& memb : *get_str_to_rtti_type_map()) {
 		if (check_string_against_query(memb.first.data(), args, argc)) {
 			b.fmt("Vtbl name %s", memb.first.data());
 		}

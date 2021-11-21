@@ -269,7 +269,7 @@ void idCVar::get_cvardata_rvas() {
 
 	strviewset_t decompressed_set = unpack_strset(hugebuffer_decompress1, DE_NUMCVARS);
 
-	std::map<std::string_view, idCVar::cvarData_t*> cvar_datas;
+	mh_map_t<std::string_view, idCVar::cvarData_t*> cvar_datas;
 	unsigned num_cvars;
 	idCVar** cvs = idCVar::GetList(num_cvars);
 

@@ -5,6 +5,12 @@
 #include <intrin.h>
 #include <array>
 #include "snaphakalgo.hpp"
+//fuck it lets just pre-include this stuff here. tired of duplicating these includes
+#include <map>
+#include <vector>
+#include <string>
+#include <set>
+
 //#define     DISABLE_MH_NATIVE_API   
 
 //#define     MH_DISABLE_ALL_DEV_STUFF
@@ -12,14 +18,9 @@
 #define		MH_CODE_SEG(name)	__declspec(code_seg(name)) 
 
 //64 mb for mh heap
-#define     MH_HEAP_SIZE        (64ULL*(1024*1024))
-/*
-    MH should use its own heap, so that when it pointer scans the global heap it doesnt have hits on itself
-    we use this heap just for basic bookkeeping information that mh uses, like the vtbl set
-*/
-extern sh_heap_t g_mh_heap;
+#define     MH_HEAP_SIZE        (16ULL*(1024*1024))
 
-sh_heap_t get_mh_heap();
+
 //for static noinline functions in header files so compiler is aware of what they do unlike with extern at early phases
 //but cant bloat our shit
 #define		MH_SELECTANY			__declspec(selectany)
@@ -70,6 +71,30 @@ sh_heap_t get_mh_heap();
 template<typename T>
 concept mh_ptr_sized_c = sizeof(T) == sizeof(void*);
 
+extern
+sh_heap_t g_mh_heap;
+
+
+/*
+    MH should use its own heap, so that when it pointer scans the global heap it doesnt have hits on itself
+    we use this heap just for basic bookkeeping information that mh uses, like the vtbl set
+*/
+/*MH_SELECTANY
+extern sh_heap_t g_mh_heap;*/
+
+template<typename T>
+using mh_allocator_t = sh::heap::sh_heap_based_allocator_t<T, &g_mh_heap, 0>;
+
+template<typename TKey, typename TValue>
+using mh_map_t = std::map < TKey, TValue, std::less<TKey>, mh_allocator_t<std::pair<const TKey, TValue>>>;
+
+template<typename TElement>
+using mh_vector_t = std::vector<TElement, mh_allocator_t<TElement>>;
+
+template<typename TElement>
+using mh_set_t = std::set<TElement, std::less<TElement>, mh_allocator_t<TElement>>;
+
+using mh_str_t = std::basic_string<char, std::char_traits<char>, mh_allocator_t<char>>;
 /*
 	pointer arithmetic helper
 */

@@ -237,7 +237,7 @@ static void list_scanned_features(idCmdArgs* args) {
 
 static void list_vftbls(idCmdArgs* args) {
 	
-	for(auto&& vf : g_str_to_rrti_type_descr) {
+	for(auto&& vf : *get_str_to_rtti_type_map()) {
 		
 		if(args->argc == 2) {
 			if(!sh::string::strstr( vf.first.data(), args->argv[1])) {

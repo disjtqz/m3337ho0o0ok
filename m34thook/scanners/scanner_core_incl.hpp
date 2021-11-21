@@ -66,7 +66,7 @@ static void scan_for_vftbls() {
 
 	uint64_t largest_seen_rtti_base_descr_addr = (uint64_t)(g_blamdll.image_base);
 
-	std::map<unsigned, std::string_view> find_by_rtti_locator{};
+	mh_map_t<unsigned, std::string_view> find_by_rtti_locator{};
 
 	struct find_by_rtti_node_t {
 		rb_node m_node;
@@ -81,8 +81,9 @@ static void scan_for_vftbls() {
 	unsigned current_tmpnode = 0;
 
 	rb_root root_find_by_rtti{};
-
-
+	//very gross, this is because we leave the global map uninitialized so that we dont segfault on its static initializer (mh heap not created yet)
+	auto& g_str_to_rrti_type_descr =*( new (get_str_to_rtti_type_map()) vtblmap_t);
+	
 	for (size_t i = 0; i < (g_blamdll.image_size / 8); ++i) {
 		if (base[i] == typeinfo_vtable) {
 
@@ -128,7 +129,7 @@ static void scan_for_vftbls() {
 	uint64_t smallest_objlocator_addr = (uint64_t)(g_blamdll.image_base + g_blamdll.image_size);
 
 	uint64_t largest_objlocator_addr = (uint64_t)(g_blamdll.image_base);
-	std::map<void*, std::string_view> locator_to_name{};
+	mh_map_t<void*, std::string_view> locator_to_name{};
 
 	for (size_t i = 0; i < (g_blamdll.image_size / 4); ++i) {
 

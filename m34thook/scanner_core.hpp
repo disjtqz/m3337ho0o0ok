@@ -4,10 +4,9 @@
 #include <string_view>
 using located_feature_t = void*;
 //need 1080 getlevelmap
-
-
-extern std::map<std::string_view, void*> g_str_to_rrti_type_descr;
-
+using vtblmap_t = mh_map_t< std::string_view, void*>;
+//extern mh_map_t< std::string_view, void*> g_str_to_rrti_type_descr;
+vtblmap_t* get_str_to_rtti_type_map();
 namespace descan {
 #define		SCANNED_PTR_FEATURE(name, ...)		extern located_feature_t name;
 #define		SCANNED_UINT_FEATURE(name,...)		extern unsigned name;

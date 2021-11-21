@@ -16,7 +16,12 @@
 #undef SCANNED_PTR_FEATURE
 #undef SCANNED_UINT_FEATURE
 
-std::map<std::string_view, void*> g_str_to_rrti_type_descr{};
+cs_uninit_t< vtblmap_t>g_str_to_rtti_type_descr;
+
+vtblmap_t* get_str_to_rtti_type_map() {
+
+	return &g_str_to_rtti_type_descr.ref();
+}
 MH_NOINLINE
 MH_PURE
 static scanner_ops_t* get_scanops_for_curr_cpu() {

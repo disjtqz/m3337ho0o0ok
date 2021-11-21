@@ -633,9 +633,9 @@ void get_entity_position(void* entity, idVec3* pos) {
 }
 void** get_class_vtbl(std::string_view clsname) {
 
-	auto iter = g_str_to_rrti_type_descr.find(clsname);
+	auto iter = get_str_to_rtti_type_map()->find(clsname);
 
-	if (iter == g_str_to_rrti_type_descr.end())
+	if (iter == get_str_to_rtti_type_map()->end())
 		return nullptr;
 
 
