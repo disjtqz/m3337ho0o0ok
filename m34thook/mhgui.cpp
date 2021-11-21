@@ -103,6 +103,7 @@ mh_ui_ele_t::mh_ui_ele_t() {
 	txt_color = 0;
 	txt = nullptr;
 	txt_scale = 0;
+	depth = 0;
 }
 
 mh_ui_ele_t::~mh_ui_ele_t() {
@@ -153,7 +154,10 @@ void mh_ui_ele_t::init_common(const char* _id, float _x, float _y, float w, floa
 	width = w;
 	height = h;
 }
+void mh_ui_ele_t::set_depth(float val) {
 
+	depth = val;
+}
 void mh_ui_ele_t::scroll_text_up() {
 	if (scrollYPos == 0)
 		return;
@@ -189,7 +193,7 @@ void mh_ui_ele_t::draw(gui_draw_context_t& g) {
 
 		}*/
 		g.m_guimod->set_current_vertexcolor(mat_color);
-		g.m_guimod->DrawRectMaterial(rx, ry, rw, rh, material);
+		g.m_guimod->DrawRectMaterialDepth(rx, ry, rw, rh, depth, material);
 		//g.m_guimod->DrawStretchPic(&vrts[0], &vrts[1], &vrts[2], &vrts[3], material, 1.0);
 
 	}
@@ -301,6 +305,9 @@ void mh_ui_ele_t::draw(gui_draw_context_t& g) {
 
 class mh_dom_local_t : public mh_dom_t {
 	rb_root g_2d_eles_tree{};
+	//executed after the dom has rendered its stuff
+	mh_domrender_cb_t m_postrender = nullptr;
+	void* m_postrender_ud = nullptr;
 public:
 	 mh_ui_ele_t* try_find_2dele(const char* id, sh::rb::insert_hint_t& hint) {
 		return sh::rb::rbnode_find<mh_ui_ele_t, cs_offsetof_m(mh_ui_ele_t, m_tree_id_iter), const char*>(&g_2d_eles_tree,
@@ -312,7 +319,11 @@ public:
 
 	virtual mh_ui_ele_t* find_ele_by_id(const char* id) override;
 	virtual void snapgui_render(idRenderModelGui* guimod) override;
+	virtual void add_postrender_cb(mh_domrender_cb_t cb, void* ud) override {
 
+		m_postrender = cb;
+		m_postrender_ud = ud;
+	}
 	mh_dom_local_t()  {
 		g_2d_eles_tree = RB_ROOT;
 	}
@@ -362,6 +373,9 @@ void mh_dom_local_t::snapgui_render(idRenderModelGui* guimod) {
 		gui_draw_context_t g{ .m_guimod = guimod, .m_virtwidth = guimod->GetVirtualWidth(), .m_virtheight = guimod->GetVirtualHeight() };
 		element->draw(g);
 	}
+
+	if (m_postrender)
+		m_postrender(m_postrender_ud, this, guimod);
 }
 
 mh_dom_t* new_dom() {

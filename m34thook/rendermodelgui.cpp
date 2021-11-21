@@ -69,7 +69,7 @@ MH_NOINLINE
 void idRenderModelGui::DrawRectMaterial(
 	float xstart, float ystart, float width, float height, void* material
 ) {
-
+#if 0
 	idVec4 topl, topr, botr, botl;
 
 	topl.x = xstart;
@@ -99,6 +99,42 @@ void idRenderModelGui::DrawRectMaterial(
 	botl.w = .0f;
 	make_texcoords(botl);
 	DrawStretchPic(&topl, &topr, &botr, &botl, material, 1.0f);
+#else
+	DrawRectMaterialDepth(xstart, ystart, width, height, 1.0f, material);
+#endif
+}
+MH_NOINLINE
+void idRenderModelGui::DrawRectMaterialDepth(float xstart, float ystart, float width, float height, float depth, void* material) {
+	idVec4 topl, topr, botr, botl;
+
+	topl.x = xstart;
+	topl.y = ystart;
+	topl.z = .0f;
+	topl.w = .0f;
+	auto make_texcoords = [xstart, ystart, width, height](idVec4& v) {
+		v.z = (v.x - xstart) / width;
+		v.w = (v.y - ystart) / height;
+	};
+
+	make_texcoords(topl);
+
+	topr.x = xstart + width;
+	topr.y = ystart;
+	topr.z = .0f;
+	topr.w = .0f;
+	make_texcoords(topr);
+	botr.x = xstart + width;
+	botr.y = ystart + height;
+	botr.z = .0f;
+	botr.w = .0f;
+	make_texcoords(botr);
+	botl.x = xstart;
+	botl.y = ystart + height;
+	botl.z = .0f;
+	botl.w = .0f;
+	make_texcoords(botl);
+	DrawStretchPic(&topl, &topr, &botr, &botl, material, depth);
+
 }
 
 void idRenderModelGui::set_current_vertexcolor(unsigned vcolor) {

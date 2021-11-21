@@ -1,4 +1,8 @@
 #pragma once
+
+#define		DISABLE_MH_TYPEINFO_EXTENSIONS
+
+#define		DISABLE_MH_PROP_RVAS
 #pragma pack(push, 1)
 #include <string>
 //segment for compressed tables embedded in dll
@@ -13,6 +17,8 @@ struct enumValueInfo_t {
 	long long value;
 
 };
+
+#define		ENUMFLAG_IS_BITFLAGS		0x000000000080000ull
 struct enumTypeInfo_t {
 	//offset 0 , size 8
 	char* name;
@@ -135,19 +141,28 @@ struct __declspec(align(8)) idTypeInfo
 
 namespace idType {
 
+	MH_NOINLINE
+	classTypeInfo_t* FindClassInfo(const char* cname);
+	MH_NOINLINE
+	enumTypeInfo_t* FindEnumInfo(const char* enumname);
+
 	static inline classTypeInfo_t* get_class_superclass(classTypeInfo_t* cl) {
+#if !defined(DISABLE_MH_TYPEINFO_EXTENSIONS)
 		intptr_t delta = cl->m_mh_added_delta2super;
 		if (delta) {
 			return mh_lea<classTypeInfo_t>(cl, delta);
-		}
+}
 		else
 		{
 			return nullptr;
 		}
-
+#else
+		return FindClassInfo(cl->superType);
+#endif
 	}
 
 	static inline classTypeInfo_t* get_field_class(classVariableInfo_t* vr) {
+#if !defined(DISABLE_MH_TYPEINFO_EXTENSIONS)
 
 		intptr_t delta = vr->m_mh_added_delta2type;
 
@@ -156,12 +171,10 @@ namespace idType {
 		}
 		else
 			return nullptr;
+#else
+		return FindClassInfo(vr->type);
+#endif
 	}
-	MH_NOINLINE
-	classTypeInfo_t* FindClassInfo(const char* cname);
-	MH_NOINLINE
-	enumTypeInfo_t* FindEnumInfo(const char* enumname);
-
 	MH_NOINLINE
 	long long* get_enum_member_value(const char* ename, const char* mname);
 	MH_NOINLINE

@@ -25,6 +25,8 @@ void* get_world();
 void* get_local_player_view();
 //get the renderView_t for this player
 void* get_local_player_renderview();
+
+void get_player_view_pos_and_axis(idVec3* out_position, idMat3* out_axis);
 MH_SEMIPURE
 bool get_classfield_boolean(void* obj, const classVariableInfo_t* varinfo);
 MH_NOINLINE
@@ -102,6 +104,10 @@ struct idRenderModelGui {
 
 	MH_NOINLINE
 		void DrawRectMaterial(float xstart, float ystart, float width, float height, void* material);
+
+
+	MH_NOINLINE
+		void DrawRectMaterialDepth(float xstart, float ystart, float width, float height, float depth, void* material);
 	MH_NOINLINE
 		void DrawRectMaterial(float xstart, float ystart, float width, float height, const char* material);
 

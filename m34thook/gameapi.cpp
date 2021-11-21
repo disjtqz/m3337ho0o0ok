@@ -952,3 +952,13 @@ std::string stringify_entity(void* ent) {
 
 	return idType::stringify_object(ent, clstype);
 }
+static mh_new_fieldcached_t<idVec3, YS("renderView_t"), YS("vieworg")> g_renderview_origin;
+static mh_new_fieldcached_t<idMat3, YS("renderView_t"), YS("viewaxis")> g_renderview_axis;
+
+void get_player_view_pos_and_axis(idVec3* out_position, idMat3* out_axis) {
+	auto rv = get_local_player_renderview();
+	if (!rv)
+		return;
+	*out_position = *g_renderview_origin(rv);
+	*out_axis = *g_renderview_axis(rv);
+}

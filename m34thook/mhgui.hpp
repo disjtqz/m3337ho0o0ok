@@ -42,7 +42,7 @@ struct mh_ui_ele_t {
 	const char* id;
 	float x, y;
 	float width, height;
-
+	float depth;
 	struct {
 		unsigned m_hidden : 1;
 		unsigned m_text_positioning_style : 4;
@@ -63,7 +63,7 @@ struct mh_ui_ele_t {
 	text_positioning_style_t get_text_positioning_style() {
 		return (text_positioning_style_t)m_text_positioning_style;
 	}
-
+	void set_depth(float val);
 	gui_draw_context_t* m_current_ctx;
 	void draw(gui_draw_context_t& rmg);
 	void set_text(const char* newtxt);
@@ -110,12 +110,15 @@ struct mh_ui_ele_t {
 	}
 };
 
-
+using mh_domrender_cb_t = void (*)(void*, mh_dom_t*, idRenderModelGui* rmg);
 
 class mh_dom_t {
 public:
+
 	virtual ~mh_dom_t() {
 	}
+
+	virtual void add_postrender_cb(mh_domrender_cb_t cb, void* ud) = 0;
 	virtual mh_ui_ele_t* alloc_e2d(const char* id, float x, float y, float w, float h) = 0;
 
 	virtual mh_ui_ele_t* find_ele_by_id(const char* id) = 0;

@@ -888,6 +888,7 @@ uint64_t g_propname_hashes[DE_NUMPROPS];
 mh_classtypeextra_t* g_typeextra;
 
 void idType::compute_classinfo_mh_payloads() {
+#if !defined(DISABLE_MH_TYPEINFO_EXTENSIONS)
 	void* typeinfo_tools = get_typeinfo_tools();
 	unsigned totalclasses = NumClassesTotal();
 
@@ -1055,7 +1056,7 @@ void idType::compute_classinfo_mh_payloads() {
 
 	}
 
-
+#endif
 	//return reinterpret_cast<classTypeInfo_t * (*)(void*, const char*)>(descan::g_idtypeinfo_findclassinfo)(typeinfo_tools, cname);
 
 }
@@ -1063,7 +1064,7 @@ void idType::compute_classinfo_mh_payloads() {
 //called from meathook_final_init because typeinfogenerated doesnt exist until it
 //actually, it probably exists much earlier at some point between the second stage running and us giving exec back to the game, but that would require another hook
 void idType::init_prop_rva_table() {
-
+#if !defined(DISABLE_MH_PROP_RVAS)
 	
 
 	bvec_t hugebuffer_decompress1 = decompress_strset(ALLPROPS_COMPRESSED_DATA, ALLPROPS_COMPRESSED_SIZE, ALLPROPS_DECOMPRESSED_SIZE);
@@ -1098,10 +1099,11 @@ void idType::init_prop_rva_table() {
 		}
 		current_findpos++;
 	}
-
+#endif
 }
 
 void idType::dump_prop_rvas() {
+#if !defined(DISABLE_MH_PROP_RVAS)
 	std::string result = "Dump of all property indices:\n";
 
 	char sprintfbuf[2048];
@@ -1126,7 +1128,7 @@ void idType::dump_prop_rvas() {
 
 	idLib::Printf("%s", result.c_str());
 	set_clipboard_data(result.c_str());
-	
+#endif
 }
 
 #define	__ROL8__	std::rotl<unsigned long long>
@@ -1489,8 +1491,10 @@ static bool ops_has_ptr(const char* s) {
 
 }
 
-
-
+static bool ops_is_only_ptr(const char* s) {
+	return s[0] == '*' && !s[1];
+}
+//todo:resolve typedefs, handle arrays, handle typedef ops
 static std::string stringify_properties(void* obj, classTypeInfo_t* clstype, std::string tabulation) {
 
 	char tmpbuf[128];
@@ -1515,8 +1519,23 @@ static std::string stringify_properties(void* obj, classTypeInfo_t* clstype, std
 		classTypeInfo_t* fldclass = nullptr;
 
 		if (ops_has_ptr(vr->ops)) {
-			sprintf_s(tmpbuf, "%p", *mh_lea<void*>(obj, voffs));
-			result += (const char*)(&tmpbuf[0]);
+			void* currptr = *mh_lea<void*>(obj, voffs);
+			if (streq(vr->type, "char") && ops_is_only_ptr(vr->ops)) {
+
+				if (!currptr) {
+					result += "NULL";
+				}
+				else {
+					result += "\"";
+					result += (const char*)currptr;
+					result += "\"";
+				}
+				
+			}
+			else {
+				sprintf_s(tmpbuf, "%p", currptr);
+				result += (const char*)(&tmpbuf[0]);
+			}
 		}
 		else {
 			if (streq(vr->type, "float")) {
@@ -1529,17 +1548,18 @@ static std::string stringify_properties(void* obj, classTypeInfo_t* clstype, std
 				result += std::to_string(*mh_lea<double>(obj, voffs));
 
 			}
-#define	HANDLE_PRIM_INTEGRAL(name)		\
+#define	HANDLE_PRIM_INTEGRAL_TYPEDEF(name, typeld)	\
 			else if (streq(vr->type, #name)) {\
-			name val = 0;\
+			typeld val = 0;\
 			if (vr->get) {\
 				val = vr->get(obj);\
 			}\
 			else {\
-				val = *mh_lea<name>(obj, voffs);\
+				val = *mh_lea<typeld>(obj, voffs);\
 			}\
 			result += std::to_string(val);\
 			}
+#define	HANDLE_PRIM_INTEGRAL(name)		HANDLE_PRIM_INTEGRAL_TYPEDEF(name, name)
 			HANDLE_PRIM_INTEGRAL(int)
 			HANDLE_PRIM_INTEGRAL(bool)
 			HANDLE_PRIM_INTEGRAL(short)
@@ -1549,6 +1569,8 @@ static std::string stringify_properties(void* obj, classTypeInfo_t* clstype, std
 			HANDLE_PRIM_INTEGRAL(unsigned short)
 			HANDLE_PRIM_INTEGRAL(unsigned char)
 			HANDLE_PRIM_INTEGRAL(unsigned long long)
+			HANDLE_PRIM_INTEGRAL_TYPEDEF(byte, unsigned char)
+			HANDLE_PRIM_INTEGRAL_TYPEDEF(uint16, unsigned short)
 			else {
 				fldclass = idType::get_field_class(vr);
 
@@ -1561,7 +1583,46 @@ static std::string stringify_properties(void* obj, classTypeInfo_t* clstype, std
 
 					if (fldenum) {
 						long long val = get_classfield_int(obj, vr);
-						result += idType::get_enum_member_name_for_value(fldenum, val);
+
+						if (fldenum->flags & ENUMFLAG_IS_BITFLAGS) {
+							if (!val) {
+								result += "<No flags set>";
+
+							}
+							else {
+
+								unsigned added_one = 0;
+								
+								while (val) {
+
+									auto valcount = std::countl_zero<unsigned long long>(val);
+
+									unsigned long long highbit = 1ULL << 63;
+
+									auto current_bit = highbit >> valcount;
+
+									val ^= current_bit;
+
+									auto current_bit_name = idType::get_enum_member_name_for_value(fldenum, current_bit);
+
+									if(added_one) {
+										result += " | ";
+									}
+									if (!current_bit_name) {
+										result += "COULDNTFINDBIT";
+
+									}
+									else
+										result += current_bit_name;
+
+									added_one |= 1;
+
+								}
+							}
+							
+						}
+						else
+							result += idType::get_enum_member_name_for_value(fldenum, val);
 
 					}
 					else {

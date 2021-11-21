@@ -9,4 +9,5 @@ namespace mh_gui {
 
 	mh_dom_t* new_named_dom(const char* name);
 
+	mh_dom_t* get_dialogbox_dom();
 }

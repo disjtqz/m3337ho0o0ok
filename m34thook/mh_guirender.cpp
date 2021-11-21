@@ -151,12 +151,56 @@ mh_dom_t* mh_gui::new_named_dom(const char* name) {
 
 }
 
+static mh_dom_t* g_dlgbox_dom = nullptr;
+
+MH_NOINLINE
+MH_REGFREE_CALL
+static void init_dlgbox_dom() {
+	mh_dom_t* newdm = mh_gui::new_named_dom("global_lineedit_dlgbox");
+
+	auto basebox_ele = newdm->alloc_e2d("basebox", 0.40, 0.40, 0.10, 0.10);
+
+	basebox_ele->init_rect("_white", colorBrown);
+
+	//create thin black bars around rect
+	auto box_outline_top = newdm->alloc_e2d("basebox_top_outline", 0.40, 0.40, 0.10, 0.01);
+	box_outline_top->init_rect("_white", colorBlack);
+
+	auto box_outline_bottom = newdm->alloc_e2d("basebox_bottom_outline", 0.40, 0.49, 0.10, 0.01);
+
+	box_outline_bottom->init_rect("_white", colorBlack);
+
+
+	auto box_outline_left = newdm->alloc_e2d("basebox_left_outline", 0.40, 0.40, 0.01, 0.10);
+
+	box_outline_left->init_rect("_white", colorBlack);
+
+
+	auto box_outline_right = newdm->alloc_e2d("basebox_right_outline", 0.49, 0.40, 0.01, 0.10);
+
+	box_outline_right->init_rect("_white", colorBlack);
+
+	auto textedit_contents = newdm->alloc_e2d("textedit_contents", 0.42, 0.42, 0.08, 0.08);
+
+	textedit_contents->init_text("Textedit contents.", 1, colorGreen);
+	textedit_contents->set_depth(1.0f);
+}
+
+mh_dom_t* mh_gui::get_dialogbox_dom() {
+	if (!g_dlgbox_dom) {
+
+
+	}
+
+}
 void mh_gui::show_test_gui() {
 
-	mh_dom_t* mydom = new_named_dom("testgui1");
+	/*mh_dom_t* mydom = new_named_dom("testgui1");
 
 	auto testele = mydom->alloc_e2d("testele", 0.25, 0.25, 0.5, 0.5);
 	testele->m_text_positioning_style = _text_style_centered;
 	testele->init_rect("swf/hud/menus/re_spec_station_textures/swf_images/common/frame/frame_backplate_", colorWhite);
-	testele->init_text("Heres some text for our testgui", 1.0, colorCyan);
+	testele->init_text("Heres some text for our testgui", 1.0, colorCyan);*/
+
+	init_dlgbox_dom();
 }
