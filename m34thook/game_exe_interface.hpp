@@ -363,3 +363,9 @@ struct feature_binder_ptr_t {
 
 	
 };
+
+//scans all blocks on the heap and all 8 byte aligned addresses in the blocks for instances of the pointer "scanfor"
+//out_array needs to be preallocated unless we use an alternate heap, otherwise we may invalidate our walk
+
+//DO NOT pass in a heap allocated pointer for out_array, matches may end up becoming duplicated! (possibly until crash?) instead pass in virtual memory or statically allocated memory. do not pass in stack arrays, the stack may have been malloced
+unsigned pointer_reference_scan(void* scanfor, void** out_array, unsigned max_outputs);

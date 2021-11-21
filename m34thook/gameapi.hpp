@@ -137,6 +137,13 @@ struct idRenderModelGui {
 	float GetVirtualWidth();
 	float GetVirtualHeight();
 	unsigned GetStringWidth(const char* string, const float scale);
+	//same offset in all ver
+	unsigned long long GetGLState() const {
+		return *mh_lea<unsigned long long>(this, 16);
+	}
+	void SetGLState(unsigned long long statebits) {
+		*mh_lea<unsigned long long>(this, 16) = statebits;
+	}
 
 };
 struct idDebugHUD;

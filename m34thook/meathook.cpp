@@ -46,9 +46,11 @@ static bool return_1() {
 static void do_nothing() {
 
 }
-
-
-
+sh_heap_t g_mh_heap = nullptr;
+void* g_mh_heap_base = nullptr;
+sh_heap_t get_mh_heap() {
+	return g_mh_heap;
+}
 
 static void* g_original_renderthread_run = nullptr;
 static __int64 testdebugtools(void* x) {
@@ -94,7 +96,7 @@ static void test_cvar_disable(idCmdArgs* args) {
 
 
 void meathook_init() {
-	
+	g_mh_heap = sh::heap::
 	install_gameapi_hooks();
 
 	void** vtbl_render = get_class_vtbl(".?AVidRenderThread@@");

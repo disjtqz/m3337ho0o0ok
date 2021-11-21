@@ -265,6 +265,39 @@ static void mh_dumpentityvalues(idCmdArgs* args) {
 	idLib::Printf("%s", result.c_str());
 
 }
+
+static void mh_count_entities(idCmdArgs* args) {
+	unsigned res = 0;
+	for(unsigned i = 0; i < WORLD_ENTITY_IDX; ++i) {
+
+		void* ent = lookup_entity_index(i);
+		if (!ent)
+			continue;
+
+		if (!is_entity_valid(ent))
+			continue;
+		++res;
+	}
+	idLib::Printf("%d entities are currently in existence.\n", res);
+}
+
+static void mh_test_pointerscan(idCmdArgs* args) {
+#define		POINTERSCAN_MAX		(1024ULL*1024ULL*256ULL)
+	void** vtbl = get_class_vtbl(args->argv[1]);
+
+	
+	void** results = (void**)sh::vmem::allocate_rw(POINTERSCAN_MAX * 8ULL);
+
+
+	unsigned numrefs = pointer_reference_scan((void*)vtbl, results, POINTERSCAN_MAX);
+
+	idLib::Printf("Found %d references to %s\n", numrefs, args->argv[1]);
+
+	sh::vmem::release_rw(results);
+	//delete[] results;
+
+
+}
 void install_miscndev_cmds() {
 #if !defined(MH_DISABLE_ALL_DEV_STUFF)
 	idCmd::register_command("mh_cpuinfo", meathook_cpuinfo, "takes no args, dumps info about your cpu for dev purposes");
@@ -278,5 +311,7 @@ void install_miscndev_cmds() {
 	idCmd::register_command("mh_testnormalize", mh_testnormalize, "<x> <y> <z> dev command for checking results of normalize.");
 
 	idCmd::register_command("mh_dumpentity", mh_dumpentityvalues, "<entity name> dumps a string representation of an entities current values in memory.");
+	idCmd::register_command("mh_count_entities", mh_count_entities, "prints the total number of entities that are currently in existence");
+	idCmd::register_command("mh_test_pointerscan", mh_test_pointerscan, "<class rtti mangled name> Do a pointer scan for references to a given vtbl on the global heap");
 #endif
 }

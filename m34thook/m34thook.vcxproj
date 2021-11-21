@@ -412,6 +412,7 @@
     <ClInclude Include="gameapi.hpp" />
     <ClInclude Include="game_exe_interface.hpp" />
     <ClInclude Include="generalized_number.hpp" />
+    <ClInclude Include="GLState.hpp" />
     <ClInclude Include="idLib.hpp" />
     <ClInclude Include="idmath.hpp" />
     <ClInclude Include="idStr.hpp" />

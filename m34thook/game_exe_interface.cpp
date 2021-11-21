@@ -277,3 +277,65 @@ void* detour_with_thunk_for_original(void* detour_from, void* detour_to, bool us
 	patch_memory(detour_from, redirector.getSize(), (char*)redirector.getCode());
 	return g_original_ds_getfile;
 }
+
+unsigned pointer_reference_scan(void* scanfor, void** out_array, unsigned max_outputs) {
+
+	HANDLE gheap = GetProcessHeap();
+
+	if (!HeapLock(gheap)) {
+		mh_error_message("heaplock failed");
+		return 0;
+	}
+	unsigned numgot = 0;
+	//__try {
+		PROCESS_HEAP_ENTRY pheap;
+
+		sh::memops::smol_memzero(&pheap, sizeof(pheap));
+		pheap.lpData = 0;
+		if (!HeapWalk(gheap, &pheap)) {
+
+			mh_error_message("Failed to begin enumerating global heap!");
+			goto done_iterating;
+		}
+
+		//pheap.wFlags = 0;
+
+
+		while (true) {
+
+			if (!HeapWalk(gheap, &pheap)) {
+				goto done_iterating;
+			}
+			if (!(pheap.wFlags & PROCESS_HEAP_ENTRY_BUSY)) {
+				continue;
+
+			}
+			//assume we're not going to encounter a region > 32gb
+
+			unsigned numqwords = ((size_t)pheap.cbData) / 8;
+			//align up to 8 bytes, should already be aligned though
+			void** startblk = reinterpret_cast<void**>((reinterpret_cast<uintptr_t>(pheap.lpData) + 7ULL) & ~7ULL);
+
+			for (unsigned i = 0; i < numqwords; ++i) {
+
+				if (startblk[i] == scanfor) {
+					if ((numgot+1) == max_outputs) {
+						mh_error_message("Pointer scan array of size %d is not big enough for all the results!", max_outputs);
+						goto done_iterating;
+						//return numgot;
+					}
+					out_array[numgot++] = (void*)(&startblk[i]);
+
+				}
+			}
+
+		}
+	//}
+
+	//__finally {
+done_iterating:
+		HeapUnlock(gheap);
+		return numgot;
+	//}
+
+}

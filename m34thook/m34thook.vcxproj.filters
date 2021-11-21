@@ -347,5 +347,8 @@
     <ClInclude Include="mhutil\cs_simd.hpp">
       <Filter>Header Files\mhutil</Filter>
     </ClInclude>
+    <ClInclude Include="GLState.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

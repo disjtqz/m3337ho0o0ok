@@ -19,6 +19,7 @@
 #include "mh_guirender.hpp"
 
 #include "mhgui.hpp"
+#include "GLState.hpp"
 #include <mutex>
 static idCVar* com_debugHUD = nullptr;
 
@@ -106,6 +107,12 @@ static void mh_testgui(idCmdArgs* args) {
 	mh_gui::show_test_gui();
 }
 
+static void mh_set_cursor_glstate(idCmdArgs* args) {
+	auto crsg = get_cursor_rendermodel();
+	crsg->SetGLState(crsg->GetGLState() | atoi(args->argv[1]));
+
+}
+
 #define idDebugHUDLocal_Render_VtblIdx	1
 void mh_gui::install_gui_hooks() {
 	
@@ -120,6 +127,7 @@ void mh_gui::install_gui_hooks() {
 	idCmd::register_command("mh_testgui", mh_testgui, "test");
 
 	idCmd::register_command("mh_testmaterial", cmd_set_testmaterial, "Takes one arg, a material name. Renders the material to the test window. Passing no args clears the test window");
+	idCmd::register_command("mh_set_cursor_glstate", mh_set_cursor_glstate, "<statebits> test func");
 }
 
 
@@ -148,6 +156,13 @@ mh_dom_t* mh_gui::new_named_dom(const char* name) {
 	g_doms_mutex.unlock();
 
 	return result;
+
+}
+
+static void postrender_dlgbox(void* ud, mh_dom_t* dom, idRenderModelGui* rmg) {
+
+
+
 
 }
 
@@ -184,6 +199,8 @@ static void init_dlgbox_dom() {
 
 	textedit_contents->init_text("Textedit contents.", 1, colorGreen);
 	textedit_contents->set_depth(1.0f);
+
+	newdm->add_postrender_cb(postrender_dlgbox, nullptr);
 }
 
 mh_dom_t* mh_gui::get_dialogbox_dom() {

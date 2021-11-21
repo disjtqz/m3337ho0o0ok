@@ -4,13 +4,22 @@
 
 #include <intrin.h>
 #include <array>
-
+#include "snaphakalgo.hpp"
 //#define     DISABLE_MH_NATIVE_API   
 
 //#define     MH_DISABLE_ALL_DEV_STUFF
 #define		MH_FORCEINLINE		__forceinline
 #define		MH_CODE_SEG(name)	__declspec(code_seg(name)) 
 
+//64 mb for mh heap
+#define     MH_HEAP_SIZE        (64ULL*(1024*1024))
+/*
+    MH should use its own heap, so that when it pointer scans the global heap it doesnt have hits on itself
+    we use this heap just for basic bookkeeping information that mh uses, like the vtbl set
+*/
+extern sh_heap_t g_mh_heap;
+
+sh_heap_t get_mh_heap();
 //for static noinline functions in header files so compiler is aware of what they do unlike with extern at early phases
 //but cant bloat our shit
 #define		MH_SELECTANY			__declspec(selectany)
