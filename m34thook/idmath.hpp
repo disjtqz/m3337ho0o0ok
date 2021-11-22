@@ -111,6 +111,22 @@ struct  idDrawVert
 	idVec2 materialUV;
 	unsigned __int16 materials[2];
 	unsigned __int16 unused[2];
+	//some of this is copied from d3bfg
+	void idDrawVert::Clear()
+	{
+		this->pos.Set(0);
+		*reinterpret_cast<uint64_t*>(&this->lightmapUV) = 0;
+		*reinterpret_cast<uint64_t*>(&this->materialUV) = 0;
+		*reinterpret_cast<unsigned*>(this->normal) = 0x00FF8080;	// x=0, y=0, z=1
+		*reinterpret_cast<unsigned*>(this->tangent) = 0xFF8080FF;	// x=1, y=0, z=0
+		*reinterpret_cast<unsigned*>(this->color) = 0;
+	}
+	idDrawVert() {
+		Clear();
+	}
+	void set_color(idColor c) {
+		*reinterpret_cast<int*>(&color[0]) = c.PackColor();
+	}
 };
 
 

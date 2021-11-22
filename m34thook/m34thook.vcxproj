@@ -418,7 +418,6 @@
     <ClInclude Include="idStr.hpp" />
     <ClInclude Include="idtypeinfo.hpp" />
     <ClInclude Include="id_resources_lowlevel.hpp" />
-    <ClInclude Include="mapfile.hpp" />
     <ClInclude Include="meathook.h" />
     <ClInclude Include="memorySystem.hpp" />
     <ClInclude Include="memscan.hpp" />

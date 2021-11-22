@@ -212,9 +212,6 @@
     <ClInclude Include="alltypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="mapfile.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="types_with_vtables.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

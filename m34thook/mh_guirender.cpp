@@ -159,11 +159,184 @@ mh_dom_t* mh_gui::new_named_dom(const char* name) {
 
 }
 
+struct mh_uigeo_builder_t {
+	void* m_mtr;
+	mh_ui_vector_t<idDrawVert> verts;
+	mh_ui_vector_t<unsigned short> indices;
+	mh_uigeo_builder_t(): m_mtr(get_material("_white")) {
+		verts.reserve(256);
+		indices.reserve(256 * 3);
+	}
+
+
+	void stream2gui(idRenderModelGui* rmg) {
+		idDrawVert* wrv = rmg->AllocTris(verts.size(), indices.data(), indices.size(), m_mtr);
+		sh::memops::nt_move_mem(wrv, verts.data(), sizeof(idDrawVert) * verts.size());
+	}
+
+	unsigned idxbase() const {
+		return verts.size();
+	}
+
+	unsigned addvert(idDrawVert v) {
+		unsigned res = verts.size();
+		verts.push_back(v);
+		return res;
+	}
+
+	template<typename... Ts>
+	void addidx(Ts... vals) {
+
+		unsigned localtris[] = { vals... };
+		for (auto&& tr : localtris) {
+			indices.push_back(tr);
+		}
+	}
+
+};
+
+static idDrawVert push_center_into_edge(double centerx, double centery, double radius, double rads) {
+	double sine, cosine;
+	sh::math::sincos(rads, sine, cosine);
+
+	double xlatx = cosine * radius;
+	double xlaty = sine * radius;
+
+	xlatx += centerx;
+	xlaty += centery;
+
+	idDrawVert result;
+	result.pos.x = xlatx;
+	result.pos.y = xlaty;
+	
+	return result;
+}
+
+//a circle, but every other triangle is rendered. its a cool look
+//(this is bugged, pretty sure its not submitting the right number of indices)
+static void make_partial_triangle_fan(
+	mh_ui_vector_t<idDrawVert>* verts,
+	mh_ui_vector_t<unsigned short>* indices,
+	float centerx,
+	float centery,
+	float radius,
+	unsigned numsegm,
+	idColor color) {
+
+
+	idDrawVert dvcenter;
+	dvcenter.pos.x = centerx;
+	dvcenter.pos.y = centery;
+	dvcenter.set_color(color);
+
+	verts->push_back(dvcenter);
+
+
+	double radianstep = (sh::math::PI * 2.0) / (double)numsegm;
+	double currrad = .0;
+
+
+
+	for (unsigned i = 0; i < numsegm; ++i) {
+
+		idDrawVert pt = push_center_into_edge(centerx, centery, radius, currrad);
+		if (i & 1) {
+			indices->push_back(verts->size());
+
+		}
+		else {
+			indices->push_back(0);
+			indices->push_back(verts->size());
+
+		}
+		pt.set_color(color);
+		verts->push_back(pt);
+		currrad += radianstep;
+	}
+
+
+
+}
+static void make_circle(
+	mh_ui_vector_t<idDrawVert>* verts,
+	mh_ui_vector_t<unsigned short>* indices,
+	float centerx,
+	float centery,
+	float radius,
+	unsigned numsegm,
+	idColor color) {
+
+
+	idDrawVert dvcenter;
+	dvcenter.pos.x = centerx;
+	dvcenter.pos.y = centery;
+	dvcenter.set_color(color);
+	
+	verts->push_back(dvcenter);
+
+
+	double radianstep = (sh::math::PI * 2.0) / (double)numsegm;
+	double currrad = .0;
+
+
+	
+	for (unsigned i = 0; i < numsegm; ++i) {
+
+		idDrawVert pt = push_center_into_edge(centerx, centery, radius, currrad);
+
+		indices->push_back(0);
+		indices->push_back(verts->size());
+		//next vert or first vert. add one to skip the center vert if we're wrapping around
+		indices->push_back(((i + 1) % (numsegm))+1);
+		
+		pt.set_color(color);
+		verts->push_back(pt);
+		currrad += radianstep;
+	}
+
+
+	
+}
+
+static void submit_rect(mh_uigeo_builder_t* ub, float upperx, float uppery, float width, float height) {
+	
+	idDrawVert upl, upr, bl, br;
+
+	unsigned i = ub->idxbase();
+	upl.pos.x = upperx;
+	upl.pos.y = uppery;
+
+	upr = upl;
+	upr.pos.x += width;
+
+
+	bl.pos.x = upperx;
+	bl.pos.y = uppery + height;
+
+	br = bl;
+	br.pos.x += width;
+
+	auto triul = ub->addvert(upl), triur = ub->addvert(upr), trill = ub->addvert(bl), trilr = ub->addvert(br);
+
+
+	ub->addidx(triul, triur, trill, trill, trilr, triur);
+
+
+
+}
+
 static void postrender_dlgbox(void* ud, mh_dom_t* dom, idRenderModelGui* rmg) {
 
+	//mh_ui_vector_t<idDrawVert> verts;
+	//mh_ui_vector_t<unsigned short> indices;
 
+	mh_uigeo_builder_t gb;
 
+	make_circle(&gb.verts, &gb.indices, 400, 400, 200, 128, colorWhite);
 
+	submit_rect(&gb, 800, 800, 200, 200);
+
+	gb.stream2gui(rmg);
 }
 
 static mh_dom_t* g_dlgbox_dom = nullptr;

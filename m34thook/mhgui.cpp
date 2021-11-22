@@ -18,7 +18,7 @@
 #include "mhgui.hpp"
 
 
-static sh_heap_t g_ui_frontend_heap = nullptr;
+sh_heap_t g_ui_frontend_heap = nullptr;
 static void* g_ui_frontend_backing_storage = nullptr;
 template<typename T>
 using allocator_sh_ui_t = sh::heap::sh_heap_based_allocator_t<T, &g_ui_frontend_heap, 0>;

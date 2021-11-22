@@ -293,6 +293,7 @@ enum keyNum_t {
 	K_VR_END_INDEX = 0x17C,
 	K_LAST_KEY = 0x17C,
 };
+#if 0
 struct kbd_macro_entry_t {
 	unsigned m_sendkey;
 	bool m_up;
@@ -347,6 +348,7 @@ static void init_testmacro() {
 	g_testmacro.m_entries.emplace_back(K_BACKSPACE, true, 1);
 
 }
+#endif
 static std::mutex g_input_handler_mutex{};
 
 //static std::vector<mh_input_handler_t*> g_input_handlers{};

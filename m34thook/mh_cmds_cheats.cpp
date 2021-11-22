@@ -11,17 +11,14 @@
 #include "idLib.hpp"
 #include "idStr.hpp"
 #include "clipboard_helpers.hpp"
-#include <vector>
 #include "errorhandling_hooks.hpp"
 #include "gameapi.hpp"
 #include "idmath.hpp"
 #include "memscan.hpp"
 #include "mh_memmanip_cmds.hpp"
-#include "snaphakalgo.hpp"
 #include <string.h>
 #include "mh_guirender.hpp"
 #include "mh_editor_mode.hpp"
-#include <string>
 
 struct idClientGameMsgDoom2016
 {

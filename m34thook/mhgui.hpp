@@ -130,3 +130,11 @@ void init_sh_ingame_ui();
 mh_dom_t* new_dom();
 
 
+extern sh_heap_t g_ui_frontend_heap;
+
+template<typename TAlloc>
+using mh_ui_allocator_t = sh::heap::sh_heap_based_allocator_t<TAlloc, &g_ui_frontend_heap, 0>;
+
+template<typename TAlloc>
+using mh_ui_vector_t = std::vector<TAlloc, mh_ui_allocator_t<TAlloc>>;
+
