@@ -339,7 +339,19 @@ MH_NOINLINE
 void* get_cursor() {
 	return *g_cursor_offset(get_engine(), "engine_t", "cursor");
 }
+static mh_new_fieldcached_t<void*, YS("engine_t"), YS("globalFontTable")> g_engine_globalFontTable;
 
+MH_NOINLINE
+void* get_global_font_table() {
+
+	return *g_engine_globalFontTable(get_engine());
+}
+static mh_new_fieldcached_t<void*, YS("idDeclGlobalFontTable"), YS("debugGUIFont")> g_globalfonttable_debugGuiFont;
+
+MH_NOINLINE
+void* get_debuggui_font() {
+	return *g_globalfonttable_debugGuiFont(get_global_font_table());
+}
 static mh_fieldcached_t<void*> g_editor_iface_offset{};
 MH_NOINLINE
 void* get_editor_interface() {

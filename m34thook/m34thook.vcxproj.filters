@@ -183,6 +183,9 @@
     <ClCompile Include="mhutil\mh_structures.cpp">
       <Filter>Source Files\mhutil</Filter>
     </ClCompile>
+    <ClCompile Include="mh_gui_rasterizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_exe_interface.hpp">
@@ -345,6 +348,9 @@
       <Filter>Header Files\mhutil</Filter>
     </ClInclude>
     <ClInclude Include="GLState.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mh_gui_rasterizer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

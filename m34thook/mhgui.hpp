@@ -126,6 +126,34 @@ public:
 
 
 };
+
+struct __declspec(align(2)) glyphInfo_t
+{
+	unsigned __int8 width;
+	unsigned __int8 height;
+	char top;
+	char left;
+	unsigned __int8 xSkip;
+	unsigned __int16 s;
+	unsigned __int16 t;
+};
+
+struct glyphcache_t {
+	//! -> ~
+	glyphInfo_t m_glyphs['~' + 1];
+
+
+	void init() {
+
+		void* dfont = get_debuggui_font();
+		for (unsigned i = 0; i < '~' + 1; ++i) {
+			m_glyphs[i] = *call_as<glyphInfo_t*>(descan::g_idFont_GetGlyph, dfont, i);
+		}
+	}
+};
+
+extern void* g_debuggui_font_material;
+
 void init_sh_ingame_ui();
 mh_dom_t* new_dom();
 

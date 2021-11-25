@@ -254,6 +254,11 @@ void* get_rendersystem();
 MH_NOINLINE
 void* get_cursor();
 
+MH_NOINLINE
+void* get_debuggui_font();
+
+MH_NOINLINE
+void* get_global_font_table();
 
 MH_NOINLINE
 void* get_editor_interface();

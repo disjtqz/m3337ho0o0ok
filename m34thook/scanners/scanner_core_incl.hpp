@@ -276,6 +276,12 @@ static void obtain_rendermodelgui_stuff() {
 
 
 	descan::g_idRenderModelGui_GetVirtualHeight = run_range_scanner<scanbehavior_locate_csrel_after<scanner_extract_getvirtualdims>>(start, end);
+
+	//getmaterialwidth,getmaterialheight, setupmonospace,getglyph,getmaterial
+	
+	mh_disassembler_t::extract_call_targets(descan::g_idRenderModelGui__DrawChar,
+		descan::g_idFont_GetMaterialWidth, descan::g_idFont_GetMaterialHeight, descan::g_idRenderModelGui_SetupMonospaceFont, descan::g_idFont_GetGlyph, descan::g_idFont_GetMaterial
+	);
 	/*
 		todo: scan for getvirtualwidth/height
 	*/

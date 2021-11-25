@@ -133,3 +133,12 @@ SCANNED_PTR_FEATURE(g_idMapFile_WriteInternal)
 SCANNED_PTR_FEATURE(g_idLib_Warning)
 
 SCANNED_PTR_FEATURE(g_idPlayer_GetView)
+
+//rendermodelgui font/char drawing stuff
+SCANNED_PTR_FEATURE(g_idFont_GetMaterialWidth)
+SCANNED_PTR_FEATURE(g_idFont_GetMaterialHeight)
+//this should be unused
+SCANNED_PTR_FEATURE(g_idRenderModelGui_SetupMonospaceFont)
+SCANNED_PTR_FEATURE(g_idFont_GetGlyph)
+
+SCANNED_PTR_FEATURE(g_idFont_GetMaterial)
