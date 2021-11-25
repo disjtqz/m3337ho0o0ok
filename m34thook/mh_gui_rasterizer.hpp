@@ -74,4 +74,4 @@ extern void* g_dbgfont_mtr;
 void ensure_text_rasterization_initialized();
 void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypos, mh_color_t color, float scale=1.0f);
 
-
+void draw_string(mh_uigeo_builder_t* ub, float xpos, float ypos, const char* string, mh_color_t color, float scale=1.0f);

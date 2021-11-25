@@ -178,7 +178,8 @@ static void postrender_dlgbox(void* ud, mh_dom_t* dom, idRenderModelGui* rmg) {
 	gb.set_material(g_dbgfont_mtr);
 	//bb.a = 0.5;
 	//make_circle(&gb.verts, &gb.indices, 400, 400, 200, 128, bb);
-	draw_char(&gb, 'H', 400, 400, mh_colorRed);
+	//draw_char(&gb, 'H', 400, 400, mh_colorRed);
+	draw_string(&gb, 400, 400, "hello world custom text", mh_colorRed);
 	//gb.set_material("_white");
 	//submit_rect(&gb, 800, 800, 200, 200);
 //	submit_line(&gb, 100, 100, 900, 900, colorWhite);

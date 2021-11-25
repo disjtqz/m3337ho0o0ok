@@ -289,8 +289,8 @@ void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypo
 	
 	//compute_glyphinfo(&glyph, s1, t1, s2, t2, scale);
 
-	float upperx = xpos;
-	float uppery = ypos;
+	float upperx = v17 + xpos;
+	float uppery = (ypos + SMALLCHAR_HEIGHT) - v18;
 	float width = v10 * v14;
 	float height = v10 * v16;
 
@@ -335,6 +335,16 @@ void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypo
 
 
 	ub->addidx(triul, triur, trill, trill, trilr, triur);
+}
+
+void draw_string(mh_uigeo_builder_t* ub, float xpos, float ypos, const char* string, mh_color_t color, float scale ) {
+	while (*string) {
+
+		draw_char(ub, *string, xpos, ypos, color, scale);
+		xpos += SMALLCHAR_WIDTH * scale;
+		++string;
+	}
+
 }
 void submit_line(mh_uigeo_builder_t* ub, float x1, float y1, float x2, float y2) {
 
