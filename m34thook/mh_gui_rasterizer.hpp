@@ -55,7 +55,7 @@ void make_partial_triangle_fan(
 	float centery,
 	float radius,
 	unsigned numsegm,
-	idColor color);
+	mh_color_t color);
 
 void make_circle(
 	mh_ui_vector_t<idDrawVert>* verts,
@@ -64,7 +64,7 @@ void make_circle(
 	float centery,
 	float radius,
 	unsigned numsegm,
-	idColor color);
+	mh_color_t color);
 
 void submit_rect(mh_uigeo_builder_t* ub, float upperx, float uppery, float width, float height);
 
@@ -72,4 +72,6 @@ void submit_line(mh_uigeo_builder_t* ub, float x1, float y1, float x2, float y2)
 
 extern void* g_dbgfont_mtr;
 void ensure_text_rasterization_initialized();
-void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypos, idColor& color);
+void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypos, mh_color_t color);
+
+

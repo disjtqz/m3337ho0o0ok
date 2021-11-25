@@ -5,15 +5,15 @@ struct idColor {
 	{
 		int v1; // edx
 		unsigned __int8 v2; // al
-		int v3; // er9
+		int r_packed; // er9
 		int v4; // edx
 		unsigned __int8 v5; // al
-		int v6; // er8
+		int g_packed; // er8
 		int v7; // edx
 		unsigned __int8 v8; // al
-		int v9; // edx
+		int b_packed; // edx
 		int v10; // ecx
-		unsigned __int8 v11; // al
+		unsigned __int8 a_packed; // al
 
 		v1 = (int)(float)(this->r * 255.0);
 		if (v1 >= 0)
@@ -26,7 +26,7 @@ struct idColor {
 		{
 			v2 = 0;
 		}
-		v3 = v2;
+		r_packed = v2;
 		v4 = (int)(float)(this->g * 255.0);
 		if (v4 >= 0)
 		{
@@ -38,7 +38,7 @@ struct idColor {
 		{
 			v5 = 0;
 		}
-		v6 = v5;
+		g_packed = v5;
 		v7 = (int)(float)(this->b * 255.0);
 		if (v7 >= 0)
 		{
@@ -50,19 +50,19 @@ struct idColor {
 		{
 			v8 = 0;
 		}
-		v9 = v8;
+		b_packed = v8;
 		v10 = (int)(float)(this->a * 255.0);
 		if (v10 >= 0)
 		{
-			v11 = v10;
+			a_packed = v10;
 			if (v10 > 255)
-				v11 = -1;
+				a_packed = -1;
 		}
 		else
 		{
-			v11 = 0;
+			a_packed = 0;
 		}
-		return v3 | ((v6 | ((v9 | (v11 << 8)) << 8)) << 8);
+		return r_packed | ((g_packed | ((b_packed | (a_packed << 8)) << 8)) << 8);
 	}
 };
 
@@ -126,6 +126,10 @@ struct  idDrawVert
 	}
 	void set_color(idColor c) {
 		*reinterpret_cast<int*>(&color[0]) = c.PackColor();
+	}
+
+	void set_color(mh_color_t mhcol) {
+		*reinterpret_cast<int*>(&color[0]) = mhcol.m_color;
 	}
 };
 

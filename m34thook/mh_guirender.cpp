@@ -173,12 +173,12 @@ static void postrender_dlgbox(void* ud, mh_dom_t* dom, idRenderModelGui* rmg) {
 	mh_uigeo_builder_t gb;
 
 
-	idColor bb = colorWhite;
+
 
 	gb.set_material(g_dbgfont_mtr);
 	//bb.a = 0.5;
 	//make_circle(&gb.verts, &gb.indices, 400, 400, 200, 128, bb);
-	draw_char(&gb, 'H', 400, 400, bb);
+	draw_char(&gb, 'H', 400, 400, mh_colorRed);
 	//gb.set_material("_white");
 	//submit_rect(&gb, 800, 800, 200, 200);
 //	submit_line(&gb, 100, 100, 900, 900, colorWhite);

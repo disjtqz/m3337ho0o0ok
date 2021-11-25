@@ -593,3 +593,29 @@ static inline bool cs_x86_jrcxnz(T vv) {
 
 }
 #define     CS_DECLARE_GETSET(propname, type, getter, setter)   __declspec(property(get = getter, put = setter)) type propname
+
+
+static constexpr unsigned pack_color(unsigned r, unsigned g, unsigned b, unsigned a = 255) {
+    return r | ((g | ((b | (a << 8)) << 8)) << 8);
+}
+
+struct MH_TRIVIAL_ABI mh_color_t {
+    unsigned m_color;
+
+    constexpr mh_color_t() : m_color(~0u) {}
+
+    constexpr mh_color_t(unsigned r, unsigned g, unsigned b, unsigned a = 255) : m_color(pack_color(r, g, b, a)) {
+    
+    }
+
+
+
+};
+
+static constexpr mh_color_t mh_colorWhite{};
+
+static constexpr mh_color_t mh_colorBlack{ 0,0,0 };
+static constexpr mh_color_t mh_colorRed{ 255, 0, 0 };
+static constexpr mh_color_t mh_colorGreen{ 0, 255, 0 };
+static constexpr mh_color_t mh_colorBlue{ 0, 0, 255 };
+

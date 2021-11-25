@@ -50,7 +50,7 @@ void make_partial_triangle_fan(
 	float centery,
 	float radius,
 	unsigned numsegm,
-	idColor color) {
+	mh_color_t color) {
 
 
 	idDrawVert dvcenter;
@@ -94,7 +94,7 @@ void make_circle(
 	float centery,
 	float radius,
 	unsigned numsegm,
-	idColor color) {
+	mh_color_t color) {
 
 
 	idDrawVert dvcenter;
@@ -266,7 +266,7 @@ void ensure_text_rasterization_initialized() {
 	}
 
 }
-void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypos, idColor& color) {
+void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypos, mh_color_t color) {
 
 
 	glyphInfo_t glyph = g_glyphcache[character];
