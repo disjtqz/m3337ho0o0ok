@@ -169,21 +169,32 @@ static void postrender_dlgbox(void* ud, mh_dom_t* dom, idRenderModelGui* rmg) {
 
 	//mh_ui_vector_t<idDrawVert> verts;
 	//mh_ui_vector_t<unsigned short> indices;
+	float textend;
+	{
+		mh_uigeo_builder_t gb;
 
-	mh_uigeo_builder_t gb;
 
 
 
+		gb.set_material(g_dbgfont_mtr);
+		//bb.a = 0.5;
+		//make_circle(&gb.verts, &gb.indices, 400, 400, 200, 128, bb);
+		//draw_char(&gb, 'H', 400, 400, mh_colorRed);
+		textend = draw_string(&gb, 400, 400, "hello world custom text", mh_colorRed);
+		//gb.set_material("_white");
+		//submit_rect(&gb, 800, 800, 200, 200);
+	//	submit_line(&gb, 100, 100, 900, 900, colorWhite);
+		gb.stream2gui(rmg);
 
-	gb.set_material(g_dbgfont_mtr);
-	//bb.a = 0.5;
-	//make_circle(&gb.verts, &gb.indices, 400, 400, 200, 128, bb);
-	//draw_char(&gb, 'H', 400, 400, mh_colorRed);
-	draw_string(&gb, 400, 400, "hello world custom text", mh_colorRed);
-	//gb.set_material("_white");
-	//submit_rect(&gb, 800, 800, 200, 200);
-//	submit_line(&gb, 100, 100, 900, 900, colorWhite);
-	gb.stream2gui(rmg);
+	}
+	{
+
+		mh_uigeo_builder_t gb2;
+
+		submit_hollow_rect(&gb2, 399, 399 + (get_smallchar_height() / 2.0f), textend - 399, get_smallchar_height(), 1.0f, mh_colorBlue);
+
+		gb2.stream2gui(rmg);
+	}
 }
 
 static mh_dom_t* g_dlgbox_dom = nullptr;

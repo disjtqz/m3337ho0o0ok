@@ -66,12 +66,21 @@ void make_circle(
 	unsigned numsegm,
 	mh_color_t color);
 
-void submit_rect(mh_uigeo_builder_t* ub, float upperx, float uppery, float width, float height);
+void submit_rect(mh_uigeo_builder_t* ub, float upperx, float uppery, float width, float height, mh_color_t color = mh_colorWhite);
 
 void submit_line(mh_uigeo_builder_t* ub, float x1, float y1, float x2, float y2);
+
+void submit_hollow_rect(mh_uigeo_builder_t* ub, float x, float y, float width, float height, float thiqness, mh_color_t color);
 
 extern void* g_dbgfont_mtr;
 void ensure_text_rasterization_initialized();
 void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypos, mh_color_t color, float scale=1.0f);
-
-void draw_string(mh_uigeo_builder_t* ub, float xpos, float ypos, const char* string, mh_color_t color, float scale=1.0f);
+//returns ending xpos
+float draw_string(mh_uigeo_builder_t* ub, float xpos, float ypos, const char* string, mh_color_t color, float scale=1.0f);
+float get_smallchar_height();
+static unsigned num_indices_for_string(unsigned stringlen) {
+	return stringlen * 6;
+}
+static unsigned numverts_for_string(unsigned stringlen) {
+	return stringlen * 4;
+}

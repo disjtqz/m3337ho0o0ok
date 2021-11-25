@@ -265,6 +265,80 @@ void* get_player_look_target() {
 
 	return (void*)looktarg->ptr;
 }
+
+static unsigned g_offset_idimage_width = ~0u, g_offset_idimage_height = ~0u;
+
+MH_NOINLINE
+MH_REGFREE_CALL
+CS_COLD_CODE
+static void init_idimage_offsets() {
+
+	classTypeInfo_t* idresource = idType::FindClassInfo("idResource");
+	cs_assert(idresource);
+	//we skip past idResource which idImage inherits from
+	unsigned sizealign4 = (idresource->size + 3) & ~3ULL;
+	//scan for two instance of the dims we know these two have.
+	//we have no reflection for idimage so this is our best option here
+	unsigned* dither256 = mh_lea<unsigned>(locate_resourcelist_member("idImage", "_dither256"), sizealign4);
+
+	cs_assert(dither256);
+
+	unsigned* dither16 = mh_lea<unsigned>(locate_resourcelist_member("idImage", "_dither16"), sizealign4);
+
+	cs_assert(dither16);
+
+	
+	for (unsigned i = 0; i < 256; ++i) {
+
+		if (dither256[i] == 256 && dither256[i + 1] == 256 && dither16[i] == 16 && dither16[i + 1] == 16) {
+
+			g_offset_idimage_width = sizealign4 + (i * 4);
+			g_offset_idimage_height = g_offset_idimage_width + 4;
+			return;
+		}
+	}
+	mh_error_message("Failed to locate idImage width and height!!!");
+	cs_assert(false);
+	
+
+	
+
+}
+void get_idimage_width_and_height(void* img, unsigned* out_w, unsigned* out_h) {
+	MH_UNLIKELY_IF(!~g_offset_idimage_height) {
+		init_idimage_offsets();
+	}
+	*out_w = *mh_lea<unsigned>(img, g_offset_idimage_width);
+
+	*out_h = *mh_lea<unsigned>(img, g_offset_idimage_height);
+}
+
+static mh_new_fieldcached_t<int, YS("idDeclRenderParm"), YS("parmIndex")> g_rp_parmindex;
+int get_renderparm_index(const char* rp) {
+
+	void* memb = locate_resourcelist_member("idDeclRenderParm", rp);
+	cs_assert(memb);
+	return *g_rp_parmindex(memb);
+}
+static mh_new_fieldcached_t<void, YS("idMaterial2"), YS("Parms")> g_material_parms;
+
+void get_renderparm_from_mtr(void* mtr, int rpidx, renderparm_value_t* out) {
+	void* parms = g_material_parms(mtr);
+
+	call_as <void>(descan::g_idParmBlock_GetParmValue, parms, out, rpidx);
+}
+
+void get_guimaterial_dims(void* guimtr, unsigned* out_w, unsigned* out_h) {
+	int rpgui = get_renderparm_index("guiTexture");
+	renderparm_value_t rpval;
+	get_renderparm_from_mtr(guimtr, rpgui, &rpval);
+	void* img = rpval.m_image;
+	cs_assert(img);
+
+	get_idimage_width_and_height(img, out_w, out_h);
+
+}
+
 static mh_fieldcached_t<void*> g_entity_physics{};
 void* get_entity_physics_obj(void* ent) {
 	MH_UNLIKELY_IF(!ent)
@@ -431,6 +505,7 @@ void* resourceList_t_lookup_index(void* reslist, unsigned idx) {
 const char* get_resource_name(void* resource) {
 	return *g_idresource_get_name(resource, "idResource", "name", "str");
 }
+MH_NOINLINE
 void* locate_resourcelist_member_from_resourceList_t(void* resourcelist, const char* member_name, bool end_at_dollar ) {
 
 	int reslist_length = resourceList_t_get_length(resourcelist);
@@ -487,6 +562,7 @@ void* locate_resourcelist_member_from_idResourceList(void* reslist /* example:"i
 	}
 	return locate_resourcelist_member_from_resourceList_t(resourcelist, member_name, end_at_dollar);
 }
+MH_NOINLINE
 void* locate_resourcelist_member(const char* reslist_classname /* example:"idDeclEntityDef" */, const char* member_name, bool end_at_dollar) {
 	void* reslist = resourcelist_for_classname(reslist_classname);
 	if (!reslist) {

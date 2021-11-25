@@ -462,7 +462,8 @@ struct match_within_variable_distance {
 
 void* scanner_late_get_cvar(const char* s);
 unsigned scanner_late_get_struct_size(const char* s);
-
+MH_NOINLINE
+unsigned scanner_late_get_field_offset(const char* cls, const char* fld);
 void* scanner_late_get_eventdef(const char* name);
 /*
 	late-stage scanner types
@@ -581,6 +582,46 @@ struct late_match_sizeof_type {
 };
 
 #define		match_sizeof_type_m(size_type, ...)			late_match_sizeof_type<size_type, yuckystring_m(__VA_ARGS__)>
+
+
+#define		late_riprel_to_eventdef_m(...)		late_riprel_to_eventdef<yuckystring_m(__VA_ARGS__)>
+
+
+//only supports one field, no nested fields
+template<typename TValue, typename TClassname, typename Targs>
+struct late_match_field_offset {
+
+	static constexpr const char* cls = yuckystring_str_from_type_m(TClassname);
+	static constexpr const char* fld = yuckystring_str_from_type_m(Targs);
+	//dont use zero as guard because the field might actually be at zero
+	static inline unsigned g_fieldsize = ~0u;
+	static constexpr unsigned required_valid_size = sizeof(TValue);
+
+	MH_NOINLINE
+		MH_REGFREE_CALL
+		static void init_cvar() {
+		g_fieldsize = scanner_late_get_field_offset(cls, fld);
+	}
+
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
+		MH_UNLIKELY_IF(!~g_fieldsize) {
+			init_cvar();
+		}
+
+		if ((*reinterpret_cast<TValue*>(state.addr)) != g_fieldsize) {
+			return false;
+		}
+
+		state.addr += sizeof(TValue);
+		return true;
+
+
+	}
+
+};
+#define		match_fieldoffs_m(size_type, cls, fld)			late_match_field_offset<size_type, yuckystring_m(cls), yuckystring_m(fld)>
+
 using workgroup_result_t = void*;
 
 

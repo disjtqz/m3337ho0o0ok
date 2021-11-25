@@ -43,12 +43,21 @@ using ideventreceiver_process_eventargs = memscanner_t<
 	0x6E, 0x64, 0x6C, 0x65, 0x20, 0x65, 0x76, 0x65, 0x6E, 0x74,
 	0x20, 0x25, 0x73, 0x2E, 0x00>>;
 
+//v1= 1407D1710
+//v666 r1 = 140934520
+using parmblock_getvalue_locator = memscanner_t<
+	scanbytes< 0x48, 0x83, 0xEC>, skip<1>,
+	scanbytes<0x8B, 0x82>,
+	match_fieldoffs_m(unsigned, "idDeclRenderParm", "parmType"),
+	scanbytes<0x83, 0xc0, 0xf9, 0x83, 0xf8, 0x6, 0x77, 0x1b, 0x44, 0x8b, 0x82, 0x88, 0x0, 0x0, 0x0, 0x48, 0x8d, 0x54, 0x24, 0x20, 0xe8>
+>;
 
 namespace scanners_phase3 {
 	BSCANENT(locate_vertexcolor_offset_entry, &descan::g_idRenderModelGui_VertexColorOffsPtr, scanbehavior_simple<rendermodelgui_vertexcolor_offset_locator>);
 	BSCANENT(ideventarg_from_entity_ctor_enty, &descan::g_eventarg_ctor_identityptr, scanbehavior_locate_csrel_preceding< ideventarg_from_entity_ctor_locator>);
 
 	BSCANENT(locate_processeventargs, &descan::g_eventreceiver_processeventargs, scanbehavior_locate_csrel_preceding< ideventreceiver_process_eventargs>);
-	static scangroup_t<locate_vertexcolor_offset_entry, ideventarg_from_entity_ctor_enty, locate_processeventargs> tertiary_scangroup_pass{};
+	BSCANENT(locate_getparmvalue, &descan::g_idParmBlock_GetParmValue, scanbehavior_locate_csrel_after< parmblock_getvalue_locator>);
+	static scangroup_t<locate_vertexcolor_offset_entry, ideventarg_from_entity_ctor_enty, locate_processeventargs, locate_getparmvalue> tertiary_scangroup_pass{};
 
 }

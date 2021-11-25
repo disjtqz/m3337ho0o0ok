@@ -26,6 +26,17 @@
 #include <mutex>
 #include "mh_gui_rasterizer.hpp"
 
+static  float useScale = 1.0f, oneOverWidth = 1.0f, oneOverHeight = 1.0f;
+static unsigned int fontHeight = 1;
+static unsigned int fontWidth = 1;
+float SMALLCHAR_WIDTH = 10.0f;
+float SMALLCHAR_HEIGHT;
+static void* g_dbgfont = nullptr;
+void* g_dbgfont_mtr = nullptr;
+
+static glyphInfo_t g_glyphcache[128];
+
+
 static idDrawVert push_center_into_edge(double centerx, double centery, double radius, double rads) {
 	double sine, cosine;
 	sh::math::sincos(rads, sine, cosine);
@@ -129,8 +140,7 @@ void make_circle(
 
 
 }
-
-void submit_rect(mh_uigeo_builder_t* ub, float upperx, float uppery, float width, float height) {
+void submit_rect(mh_uigeo_builder_t* ub, float upperx, float uppery, float width, float height, mh_color_t color) {
 
 	idDrawVert upl, upr, bl, br;
 
@@ -148,13 +158,28 @@ void submit_rect(mh_uigeo_builder_t* ub, float upperx, float uppery, float width
 	br = bl;
 	br.pos.x += width;
 
+	upl.set_color(color);
+	upr.set_color(color);
+	bl.set_color(color);
+	br.set_color(color);
 	auto triul = ub->addvert(upl), triur = ub->addvert(upr), trill = ub->addvert(bl), trilr = ub->addvert(br);
 
 
 	ub->addidx(triul, triur, trill, trill, trilr, triur);
 }
-static  float useScale = 1.0f, oneOverWidth = 1.0f, oneOverHeight = 1.0f;
-static  float unk_144F39260 = 1.0f;//this one actually doesnt seem constant
+
+void submit_hollow_rect(mh_uigeo_builder_t* ub, float x, float y, float width, float height, float thiqness, mh_color_t color) {
+
+
+	submit_rect(ub, x, y, width, thiqness, color);
+
+	submit_rect(ub, x, (y + height) - thiqness, width, thiqness, color);
+
+	submit_rect(ub, x, y, thiqness, height, color);
+
+	submit_rect(ub, x + width - thiqness, y, thiqness, height, color);
+
+}
 
 /*
 void __fastcall idRenderModelGui::DrawChar(idRenderModelGui *this, float x, float y, int character, float scale)
@@ -192,35 +217,7 @@ void __fastcall idRenderModelGui::DrawChar(idRenderModelGui *this, float x, floa
   idRenderModelGui::DrawStretchPic(this, v17 + x, v7 - v16, 0.0, v9 * v10, v9 * v13, s1, t1, s2, t2, material);
 }
 */
-static unsigned int fontHeight = 1;
-static unsigned int fontWidth = 1;
-float SMALLCHAR_WIDTH = 10.0f;
-float SMALLCHAR_HEIGHT;
-static void compute_glyphinfo(glyphInfo_t* Glyph, 
-	/*float& x,
-	float& y,
-	float& w,
-	float& h,*/
-	float& s1,
-	float&t1,
-	float& s2,
-	float& t2,
-	float scale = 1.0f
-) {
-	float v10 = useScale * scale;
-	s1 = (float)((float)Glyph->s - 0.5) * oneOverWidth;
-	t1 = (float)((float)Glyph->t - 0.5) * oneOverHeight;
-	s2 = (float)((float)(Glyph->s + Glyph->width) + 0.5) * oneOverWidth;
-	float v14 = (float)Glyph->width + 1.0;
-	t2 = (float)((float)(Glyph->t + Glyph->height) + 0.5) * oneOverHeight;
-	float v16 = (float)Glyph->height + 1.0;
-	float v17 = (float)((float)((float)((float)(useScale * SMALLCHAR_WIDTH) - (float)Glyph->xSkip) * 0.5) + (float)Glyph->left)
-		* (float)(useScale * scale);
-	float v18 = (float)Glyph->top * (float)(useScale * scale);
 
-	
-//	material = (const idMaterial*)idFont::GetMaterial(debugGUIFont);
-}
 //this seems to be the same in all versions
 static __int64  idFont_GetPointSize(__int64 a1)
 {
@@ -235,10 +232,7 @@ static __int64  idFont_GetPointSize(__int64 a1)
 	return result;
 }
 
-static void* g_dbgfont = nullptr;
-void* g_dbgfont_mtr = nullptr;
 
-static glyphInfo_t g_glyphcache[128];
 void ensure_text_rasterization_initialized() {
 	MH_UNLIKELY_IF(!g_dbgfont)
 		g_dbgfont = get_debuggui_font();
@@ -266,6 +260,11 @@ void ensure_text_rasterization_initialized() {
 	}
 
 }
+
+float get_smallchar_height() {
+
+	return SMALLCHAR_HEIGHT;
+}
 void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypos, mh_color_t color, float scale) {
 
 
@@ -276,13 +275,13 @@ void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypo
 	
 		
 	float v10 = useScale * scale;
-	s1 = (float)((float)glyph.s - 0.5) * oneOverWidth;
-	t1 = (float)((float)glyph.t - 0.5) * oneOverHeight;
-	s2 = (float)((float)(glyph.s + glyph.width) + 0.5) * oneOverWidth;
-	float v14 = (float)glyph.width + 1.0;
-	t2 = (float)((float)(glyph.t + glyph.height) + 0.5) * oneOverHeight;
-	float v16 = (float)glyph.height + 1.0;
-	float v17 = (float)((float)((float)((float)(useScale * SMALLCHAR_WIDTH) - (float)glyph.xSkip) * 0.5) + (float)glyph.left)
+	s1 = (float)((float)glyph.s - 0.5f) * oneOverWidth;
+	t1 = (float)((float)glyph.t - 0.5f) * oneOverHeight;
+	s2 = (float)((float)(glyph.s + glyph.width) + 0.5f) * oneOverWidth;
+	float v14 = (float)glyph.width + 1.0f;
+	t2 = (float)((float)(glyph.t + glyph.height) + 0.5f) * oneOverHeight;
+	float v16 = (float)glyph.height + 1.0f;
+	float v17 = (float)((float)((float)((float)(useScale * SMALLCHAR_WIDTH) - (float)glyph.xSkip) * 0.5f) + (float)glyph.left)
 		* (float)(useScale * scale);
 	float v18 = (float)glyph.top * (float)(useScale * scale);
 
@@ -337,14 +336,14 @@ void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypo
 	ub->addidx(triul, triur, trill, trill, trilr, triur);
 }
 
-void draw_string(mh_uigeo_builder_t* ub, float xpos, float ypos, const char* string, mh_color_t color, float scale ) {
+float draw_string(mh_uigeo_builder_t* ub, float xpos, float ypos, const char* string, mh_color_t color, float scale ) {
 	while (*string) {
 
 		draw_char(ub, *string, xpos, ypos, color, scale);
 		xpos += SMALLCHAR_WIDTH * scale;
 		++string;
 	}
-
+	return xpos;
 }
 void submit_line(mh_uigeo_builder_t* ub, float x1, float y1, float x2, float y2) {
 

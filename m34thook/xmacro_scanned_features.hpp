@@ -142,3 +142,5 @@ SCANNED_PTR_FEATURE(g_idRenderModelGui_SetupMonospaceFont)
 SCANNED_PTR_FEATURE(g_idFont_GetGlyph)
 
 SCANNED_PTR_FEATURE(g_idFont_GetMaterial)
+
+SCANNED_PTR_FEATURE(g_idParmBlock_GetParmValue)

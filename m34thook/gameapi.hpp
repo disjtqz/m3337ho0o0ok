@@ -297,6 +297,19 @@ void remove_persistent_text(unsigned x, unsigned y);
 void* get_player_look_target();
 
 
+void get_idimage_width_and_height(void* img, unsigned* out_w, unsigned* out_h);
+
+
+union renderparm_value_t {
+	char m_raw[16];
+	void* m_image;
+};
+
+int get_renderparm_index(const char* rp);
+void get_renderparm_from_mtr(void* mtr, int rpidx, renderparm_value_t* out);
+
+void get_guimaterial_dims(void* guimtr, unsigned* out_w, unsigned* out_h);
+
 struct idSpawnId {
 	int handle;
 };
@@ -326,10 +339,11 @@ void get_player_trace_pos(idVec3* outvec);
 //expects idResourceList as first arg
 //prefer this one and caching the resourcelist pointer to the string version
 
+MH_NOINLINE
 void* locate_resourcelist_member_from_resourceList_t(void* reslist, const char* member_name, bool end_at_dollar = false);
 void* locate_resourcelist_member_from_idResourceList(void* reslist /* example:"idDeclEntityDef" */, const char* member_name, bool end_at_dollar = false);
 
-
+MH_NOINLINE
 void* locate_resourcelist_member(const char* reslist_classname /* example:"idDeclEntityDef" */, const char* member_name, bool end_at_dollar = false);
 
 void* get_resourceList_t_containing_resource(void* resource);

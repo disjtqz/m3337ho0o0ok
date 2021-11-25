@@ -31,3 +31,41 @@ void* scanner_late_get_eventdef(const char* name) {
 
 	return idEventDefInterfaceLocal::Singleton()->FindEvent(name);
 }
+MH_NOINLINE
+unsigned scanner_late_get_field_offset(const char* cls, const char* fld) {
+	/*
+		this is all written out like this because most of our advanced typeinfo stuff
+		isnt initialized when this runs
+	*/
+	auto clstype = idType::FindClassInfo(cls);
+	cs_assert(clstype != nullptr);
+
+	auto namehash = idType::calculate_field_name_hash(fld, sh::string::strlength(fld));
+
+	while (clstype) {
+
+		auto vrs = clstype->variables;
+
+		auto vrhashes = clstype->variableNameHashes;
+
+		unsigned i = 0;
+		for (; vrhashes[i]; ++i) {
+			if (vrhashes[i] == namehash) {
+				break;
+			}
+		}
+		if (vrhashes[i] == 0) {
+
+			if (clstype->superType && clstype->superType[0]) {
+				clstype = idType::FindClassInfo(clstype->superType);
+			}
+			else
+				clstype = nullptr;
+		}
+		else {
+
+			return vrs[i].offset;
+		}
+		
+	}
+}
