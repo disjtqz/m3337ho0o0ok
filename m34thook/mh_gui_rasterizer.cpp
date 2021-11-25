@@ -266,18 +266,33 @@ void ensure_text_rasterization_initialized() {
 	}
 
 }
-void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypos, mh_color_t color) {
+void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypos, mh_color_t color, float scale) {
 
 
 	glyphInfo_t glyph = g_glyphcache[character];
 
 	float s1, t1, s2, t2;
-	compute_glyphinfo(&glyph, s1, t1, s2, t2);
+
+	
+		
+	float v10 = useScale * scale;
+	s1 = (float)((float)glyph.s - 0.5) * oneOverWidth;
+	t1 = (float)((float)glyph.t - 0.5) * oneOverHeight;
+	s2 = (float)((float)(glyph.s + glyph.width) + 0.5) * oneOverWidth;
+	float v14 = (float)glyph.width + 1.0;
+	t2 = (float)((float)(glyph.t + glyph.height) + 0.5) * oneOverHeight;
+	float v16 = (float)glyph.height + 1.0;
+	float v17 = (float)((float)((float)((float)(useScale * SMALLCHAR_WIDTH) - (float)glyph.xSkip) * 0.5) + (float)glyph.left)
+		* (float)(useScale * scale);
+	float v18 = (float)glyph.top * (float)(useScale * scale);
+
+	
+	//compute_glyphinfo(&glyph, s1, t1, s2, t2, scale);
 
 	float upperx = xpos;
 	float uppery = ypos;
-	float width = 100.0f;
-	float height = 100.0f;
+	float width = v10 * v14;
+	float height = v10 * v16;
 
 	idDrawVert upl, upr, bl, br;
 
