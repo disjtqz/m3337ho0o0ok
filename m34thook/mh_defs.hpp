@@ -20,6 +20,11 @@
 //64 mb for mh heap
 #define     MH_HEAP_SIZE        (16ULL*(1024*1024))
 
+//the base of our dll
+extern char* g_mh_module_base;
+
+
+
 
 //for static noinline functions in header files so compiler is aware of what they do unlike with extern at early phases
 //but cant bloat our shit
@@ -619,3 +624,18 @@ static constexpr mh_color_t mh_colorRed{ 255, 0, 0 };
 static constexpr mh_color_t mh_colorGreen{ 0, 255, 0 };
 static constexpr mh_color_t mh_colorBlue{ 0, 0, 255 };
 
+
+MH_PURE
+static inline const char* get_mh_base() {
+    return g_mh_module_base;
+}
+template<typename T>
+MH_PURE
+static inline unsigned to_mh_rva(T* p) {
+    return reinterpret_cast<char*>(p) - get_mh_base();
+}
+
+template<typename T>
+static inline T* from_mh_rva(unsigned rva) {
+    return mh_lea<T>(get_mh_base(), static_cast<uintptr_t>(rva));
+}

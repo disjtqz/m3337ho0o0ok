@@ -195,6 +195,24 @@ static void postrender_dlgbox(void* ud, mh_dom_t* dom, idRenderModelGui* rmg) {
 
 		gb2.stream2gui(rmg);
 	}
+	{
+		mh_uigeo_builder_t gbc;
+		make_circle(&gbc, 800, 800, 200, 128, mh_colorRed);
+
+
+		mh_color_t othercircle{ 0, 0, 255, 64 };
+		make_circle(&gbc, 800, 800, 100, 64, othercircle);
+
+		gbc.stream2gui(rmg);
+	}
+
+	{
+
+		mh_uigeo_builder_t gbsc;
+
+		make_circle_quarter(&gbsc, 1000, 1000, 50, 64, 3, mh_colorGreen);
+		gbsc.stream2gui(rmg);
+	}
 }
 
 static mh_dom_t* g_dlgbox_dom = nullptr;

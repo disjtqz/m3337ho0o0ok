@@ -1,4 +1,4 @@
-//yes, i know. technically by definition this isnt rasterization, the engine/the gpu driver is doing the actual rasterization
+//yes, i know. technically by definition this isnt rasterization, the gpu is doing the actual rasterization
 //i like the word, okay?
 
 #include "mh_defs.hpp"
@@ -99,8 +99,7 @@ void make_partial_triangle_fan(
 }
 
 void make_circle(
-	mh_ui_vector_t<idDrawVert>* verts,
-	mh_ui_vector_t<unsigned short>* indices,
+	mh_uigeo_builder_t* ub,
 	float centerx,
 	float centery,
 	float radius,
@@ -113,7 +112,9 @@ void make_circle(
 	dvcenter.pos.y = centery;
 	dvcenter.set_color(color);
 
-	verts->push_back(dvcenter);
+	unsigned idxbase = ub->idxbase();
+
+	unsigned int centeridx = ub->addvert(dvcenter);
 
 
 	double radianstep = (sh::math::PI * 2.0) / (double)numsegm;
@@ -124,16 +125,59 @@ void make_circle(
 	for (unsigned i = 0; i < numsegm; ++i) {
 
 		idDrawVert pt = push_center_into_edge(centerx, centery, radius, currrad);
-
-		indices->push_back(0);
-		indices->push_back(verts->size());
-		//next vert or first vert. add one to skip the center vert if we're wrapping around
-
-		//yucky modulus, could use magu
-		indices->push_back(((i + 1) % (numsegm)) + 1);
-
 		pt.set_color(color);
-		verts->push_back(pt);
+		unsigned currv = ub->addvert(pt);
+
+		
+
+		ub->addidx(centeridx, currv, idxbase + (((i + 1) % (numsegm)) + 1));
+
+
+		
+		currrad += radianstep;
+	}
+
+
+
+}
+
+
+void make_circle_quarter(mh_uigeo_builder_t* ub,
+	float centerx,
+	float centery,
+	float radius,
+	unsigned numsegm,
+	unsigned quadrant,
+	mh_color_t color) {
+
+
+	idDrawVert dvcenter;
+	dvcenter.pos.x = centerx;
+	dvcenter.pos.y = centery;
+	dvcenter.set_color(color);
+
+	unsigned idxbase = ub->idxbase();
+
+	unsigned int centeridx = ub->addvert(dvcenter);
+
+
+	double radianstep = (sh::math::PI * 2.0) / (double)numsegm;
+	double currrad = radianstep * static_cast<double>(quadrant * (numsegm/4));
+
+
+	//yikes
+	for (unsigned i = 0; i < (numsegm / 4) - 1; ++i) {
+
+		idDrawVert pt = push_center_into_edge(centerx, centery, radius, currrad);
+		pt.set_color(color);
+		unsigned currv = ub->addvert(pt);
+
+
+
+		ub->addidx(centeridx, currv, currv+1);
+
+
+
 		currrad += radianstep;
 	}
 

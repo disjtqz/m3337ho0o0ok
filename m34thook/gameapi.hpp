@@ -299,7 +299,18 @@ void* get_player_look_target();
 
 void get_idimage_width_and_height(void* img, unsigned* out_w, unsigned* out_h);
 
+/*
+union parmValue_t {
+	float value[4];
+	idImage* image;
+	idTextureSampler* sampler;
+	idDeclRenderProg* program;
+	char* string;
+	int swizzle[4];
 
+
+};
+*/
 union renderparm_value_t {
 	char m_raw[16];
 	void* m_image;

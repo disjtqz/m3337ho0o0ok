@@ -1,9 +1,65 @@
 #pragma once
 
+
+/*
+	idVec3 pos;
+	idVec2 lightmapUV;
+	unsigned __int8 normal[4];
+	unsigned __int8 tangent[4];
+	unsigned __int8 color[4];
+	idVec2 materialUV;
+	unsigned __int16 materials[2];
+	unsigned __int16 unused[2];
+*/
+/*
+	no normals, no lightmap, no tangent, just unsigned short positions,colors and uvs
+
+	Z might not be necessary... really only need it if i want to do culling of surfaces?
+
+	the idea here is that we can have one thread that generates data in our vertex format, which can be kept around for multiple frames (until it gets invalidated by something)
+	and then on another thread we handle allocating the gui surfaces and unpacking our vertex format to idDrawVert and streaming it (in the same loop preferably, we can do a couple of shuffles and ors and then stream)
+	if we want to do a full fledged editor ingame, we're going to be rendering a lot of gui shit, so this approach might be best. it definitely is a bit more complicated than simple immediate rendering though
+
+
+
+	no, this is not a good idea i think. because we mix integer and float types, we are forced to incur a stall when unpacking to stream
+*/
+struct mh_vertex2d_t {
+	unsigned short m_position[3];
+	
+	unsigned short m_uv[2];
+	unsigned int m_color;
+};
+
+
+struct mh_vertex2d_packed_t {
+	unsigned short m_position[2];//4 bytes
+	float m_uv[2]; //8 bytes = 12
+	unsigned int m_color; //4 bytes = 16
+};
+
+/*
+	this is a more sensible approach that lets us unpack without mixing pipeline operations
+*/
+struct mh_uisurface_soa_t {
+	unsigned short* m_positions_x;
+	unsigned short* m_positions_y;
+	unsigned short* m_positions_z;
+	float* m_uv_s;
+	float* m_uv_t;
+	unsigned* m_color;
+
+
+
+};
+
+
 struct mh_uigeo_builder_t {
 	void* m_mtr;
 	mh_ui_vector_t<idDrawVert> verts;
 	mh_ui_vector_t<unsigned short> indices;
+
+	//todo: cache white material!!
 	mh_uigeo_builder_t() : m_mtr(get_material("_white")) {
 		verts.reserve(256);
 		indices.reserve(256 * 3);
@@ -58,13 +114,21 @@ void make_partial_triangle_fan(
 	mh_color_t color);
 
 void make_circle(
-	mh_ui_vector_t<idDrawVert>* verts,
-	mh_ui_vector_t<unsigned short>* indices,
+	mh_uigeo_builder_t* ub,
 	float centerx,
 	float centery,
 	float radius,
 	unsigned numsegm,
 	mh_color_t color);
+
+void make_circle_quarter(mh_uigeo_builder_t* ub,
+	float centerx,
+	float centery,
+	float radius,
+	unsigned numsegm,
+	unsigned quadrant,
+	mh_color_t color);
+
 
 void submit_rect(mh_uigeo_builder_t* ub, float upperx, float uppery, float width, float height, mh_color_t color = mh_colorWhite);
 

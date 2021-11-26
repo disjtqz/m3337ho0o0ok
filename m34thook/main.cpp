@@ -9,7 +9,7 @@
 #include "fs_hooks.hpp"
 sh_heap_t g_mh_heap = nullptr;
 static void* g_mh_heap_base = nullptr;
-
+char* g_mh_module_base = nullptr;
 //#define		SUPPORT_NEWER_VERSIONS
 MH_NOINLINE
 void mh_error_message(const char* fmt, ...) {
@@ -163,7 +163,9 @@ BOOL WINAPI DllMain(
 	}
 	if (g_did_init)
 		return TRUE;
-
+	//https://stackoverflow.com/questions/2126657/how-can-i-get-hinstance-from-a-dll
+	//"Note As it turns out, HMODULEs and HINSTANCEs are exactly the same thing"
+	g_mh_module_base = (char*)hinstDLL;
 	sh_algo_init(&g_shalgo);
 	g_mh_heap_base = sh::vmem::allocate_rw(MH_HEAP_SIZE);
 
