@@ -62,11 +62,10 @@ void idStaticModelPtr::Write(const char* output_path, bool skip_compression) {
 
 void idStaticModelPtr::Setup_Singlesurface_hack(unsigned num_verts, unsigned num_tris, idDrawVert** out_verts, unsigned short** out_tris) {
 
+	
+	auto old_freetrival = idCVar::Find("r_freeTriangleCPUData")->data->valueInteger;
 
-	auto old_freetrival = cvar_data(cvr_r_freeTriangleCPUData)->valueInteger;
-
-
-	cvar_data(cvr_r_freeTriangleCPUData)->valueInteger = 0;
+	set_cvar_integer("r_freeTriangleCPUData", 0);
 
 	//try not doing this hack and see if we avoid segfault
 #if 0
@@ -91,7 +90,7 @@ void idStaticModelPtr::Setup_Singlesurface_hack(unsigned num_verts, unsigned num
 	//idk?
 	*g_model_materialNum(current_surf) = 0;
 #endif
-	cvar_data(cvr_r_freeTriangleCPUData)->valueInteger = old_freetrival;
+	set_cvar_integer("r_freeTriangleCPUData", old_freetrival);
 
 	idListVoid* surfptr2 = g_model_surfs(m_ptr);
 

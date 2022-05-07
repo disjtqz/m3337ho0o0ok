@@ -1387,33 +1387,6 @@ uint64_t idType::calculate_field_name_hash(const char* name, size_t length) {
 }
 
 
-classVariableInfo_t* mh_fast_field_get(classTypeInfo_t* cls, de_prop_e propert) {
-	classTypeInfo_t* currsrch = cls;
-
-	do {
-		mh_classtypeextra_t* xtra = (mh_classtypeextra_t*)currsrch->metaData;
-
-		if (!xtra->m_num_fields)
-			return nullptr;
-
-
-		de_prop_e* props = mh_lea<de_prop_e>(xtra, xtra->m_offset2fields);
-
-		unsigned propidx = sh::ibulk::find_first_equal16((unsigned short*)props, xtra->m_num_fields, propert);
-
-		
-		if (propidx != ~0u) {
-
-			classVariableInfo_t* var = &currsrch->variables[propidx];
-
-			return var;
-
-		}
-		currsrch = idType::get_class_superclass(currsrch);
-
-	} while (currsrch);
-	return nullptr;
-}
 
 CACHED_SIMPLE_VTBL(idClass);
 

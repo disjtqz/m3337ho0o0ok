@@ -52,12 +52,35 @@ using parmblock_getvalue_locator = memscanner_t<
 	scanbytes<0x83, 0xc0, 0xf9, 0x83, 0xf8, 0x6, 0x77, 0x1b, 0x44, 0x8b, 0x82, 0x88, 0x0, 0x0, 0x0, 0x48, 0x8d, 0x54, 0x24, 0x20, 0xe8>
 >;
 
+//140AD1B20                         idClientGameMsg_InvasionNotification__idClientGameMsg_InvasionNotification
+using gamelocal_getplayerbyidx_and_peermask_for_player_locator = memscanner_t<
+	scanbytes<0x40, 0x53, 0x48, 0x83, 0xec, 0x20, 0xb8,
+	0xff, 0xff, 0x0, 0x0, 0xc7, 0x41, 0xc, 0xff,
+	0xff, 0xff, 0xff, 0x66, 0x89, 0x41, 0x8, 0x48, 0x8b, 0xd9,
+	0x48, 0x8d, 0x05
+	>,
+	late_riprel_to_vtbl_m(".?AVidClientGameMsg_InvasionNotification@@"),
+	skip_call_within_distance_and_capture_target<&descan::g_idgamelocal_getplayer, 32>,
+	//we should be pointing at 140AD1B56 now
+	scanbytes<0x48, 0x85, 0xc0, 0x74, 0x15, 0x48, 0x8b, 0xc8, //test rax, jz short, mov rcx rax
+	0xE8>>; //4 bytes after = rva to peermask_for_player
+
+
+
 namespace scanners_phase3 {
 	BSCANENT(locate_vertexcolor_offset_entry, &descan::g_idRenderModelGui_VertexColorOffsPtr, scanbehavior_simple<rendermodelgui_vertexcolor_offset_locator>);
 	BSCANENT(ideventarg_from_entity_ctor_enty, &descan::g_eventarg_ctor_identityptr, scanbehavior_locate_csrel_preceding< ideventarg_from_entity_ctor_locator>);
 
 	BSCANENT(locate_processeventargs, &descan::g_eventreceiver_processeventargs, scanbehavior_locate_csrel_preceding< ideventreceiver_process_eventargs>);
 	BSCANENT(locate_getparmvalue, &descan::g_idParmBlock_GetParmValue, scanbehavior_locate_csrel_after< parmblock_getvalue_locator>);
-	static scangroup_t<locate_vertexcolor_offset_entry, ideventarg_from_entity_ctor_enty, locate_processeventargs, locate_getparmvalue> tertiary_scangroup_pass{};
+
+	BSCANENT(locate_getplayerbyidx_and_peermask_for_player, &descan::g_peermask_for_player, scanbehavior_locate_csrel_after< gamelocal_getplayerbyidx_and_peermask_for_player_locator>);
+	static scangroup_t<
+		locate_vertexcolor_offset_entry, 
+		ideventarg_from_entity_ctor_enty, 
+		locate_processeventargs, 
+		locate_getparmvalue, 
+		locate_getplayerbyidx_and_peermask_for_player
+	> tertiary_scangroup_pass{};
 
 }

@@ -741,7 +741,6 @@ FILE* get_override_for_resource(const char* name, size_t* size_out) {
 }
 static constexpr unsigned INDEX_OF_READFILE = 29;
 
-static constexpr unsigned INDEX_OF_OPENFILEREAD = 37;
 static size_t readfile_repl(void* fs, const char* path, void** out_data, void* fileprops, unsigned psrch);
 static void* g_old_readfile = (void*)readfile_repl;
 

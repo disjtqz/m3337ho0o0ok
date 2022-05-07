@@ -1,1 +1,1 @@
-RangeCheckIndexes: index out of range
+Projectile definition projectile/player/plasma_rifle had no damage decl assigned.  Fix this in idStudio.

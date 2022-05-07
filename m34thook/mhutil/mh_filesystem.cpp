@@ -106,7 +106,7 @@ void filesys::seek_file(cs_fd_t fd, std::int64_t position) {
 static
 bool filesys::file_exists(const char* filename) {
 
-	if (sh::syscall_interface_available()) {
+	//if (sh::syscall_interface_available()) {
 		wchar_t tmppath[MH_FILESYS_PATHBUFFER_LENGTH];
 
 		tmppath[0] = '\\';
@@ -135,21 +135,21 @@ bool filesys::file_exists(const char* filename) {
 		objattr.Length = sizeof(OBJECT_ATTRIBUTES);
 		objattr.Attributes = 64;
 
-		MH_UNLIKELY_IF(!sh::syscall_interface_available()) {
+	//	MH_UNLIKELY_IF(!sh::syscall_interface_available()) {
 			return NtQueryAttributesFile(&objattr, &info) >= 0 && info.FileAttributes != -1;
-		}
-		else {
-			return sh::perform_syscall<_ZwQueryAttributesFile, NTSTATUS>(&objattr, &info) >= 0 && info.FileAttributes != -1;
-		}
+	//	}
+	//	else {
+	//		return sh::perform_syscall<_ZwQueryAttributesFile, NTSTATUS>(&objattr, &info) >= 0 && info.FileAttributes != -1;
+	//	}
 	
-	}
+/* }
 	else {
 		cs_fd_t result = open_file(filename, filemode_e::READ);
 
 		if (result)
 			NtClose(result);
 		return result != nullptr;
-	}
+	}*/
 }
 
 static BOOLEAN(*g_fnptr_RtlDosPathNameToRelativeNtPathName_U)(

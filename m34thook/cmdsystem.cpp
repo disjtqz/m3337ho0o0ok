@@ -261,44 +261,7 @@ void idCVar::generate_name_table() {
 	cvartxt += "};";
 	write_cfile(std::move(cvartxt), "doom_eternal_cvars_generated.cpp");
 }
-unsigned g_cvardata_rvas[DE_NUMCVARS];
 
-void idCVar::get_cvardata_rvas() {
-	bvec_t hugebuffer_decompress1 = decompress_strset(ALLCVARS_COMPRESSED_DATA, ALLCVARS_COMPRESSED_SIZE, ALLCVARS_DECOMPRESSED_SIZE);
-
-
-	strviewset_t decompressed_set = unpack_strset(hugebuffer_decompress1, DE_NUMCVARS);
-
-	mh_map_t<std::string_view, idCVar::cvarData_t*> cvar_datas;
-	unsigned num_cvars;
-	idCVar** cvs = idCVar::GetList(num_cvars);
-
-
-	for (unsigned i = 0; i < num_cvars; ++i) {
-		idCVar* current = cvs[i];
-
-		auto data = current->data;
-		cvar_datas[data->name] = data;
-	}
-
-	strviewset_t::iterator current_findpos = decompressed_set.begin();
-
-	auto cvardataend = cvar_datas.end();
-	for (unsigned i = 0; i < DE_NUMCVARS; ++i) {
-
-		auto loc = cvar_datas.find(*current_findpos);
-		if (loc == cvardataend) {
-
-			g_cvardata_rvas[i] == 0;
-		}
-		else {
-			g_cvardata_rvas[i] = to_de_rva(loc->second);
-		}
-		++current_findpos;
-	}
-
-
-}
 
 MH_NOINLINE
 void idCVar::cvarData_t::call_onchange_functions() {

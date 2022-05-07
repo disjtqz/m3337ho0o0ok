@@ -69,3 +69,40 @@ unsigned scanner_late_get_field_offset(const char* cls, const char* fld) {
 		
 	}
 }
+MH_NOINLINE
+void* scanner_late_get_vtbl(const char* name) {
+	return get_class_vtbl(name);
+}
+
+
+MH_NOINLINE
+MH_REGFREE_CALL
+void scanner_find_and_extract_next_call_within_range(
+	scanstate_t* scstate,
+	void** out_call,
+	unsigned max_distance
+) {
+
+	*out_call = nullptr;
+	mh_disassembler_t dis{};
+	dis.setup_for_addr(scstate->addr);
+	/*
+		todo: technically, we dont need to disassemble, we can just decode
+		and check the first byte to see if its 0xE8
+	*/
+	if (!dis.find_next_of_mnem<UD_Icall>())
+		return;
+
+	void* target_res = dis.extract_pcrel_value(0);
+
+	if (!target_res || !scstate->dll->is_in_image(target_res)) {
+		return;
+	}
+	//did we go too far?
+	if (mh_ptrdelta(dis.current_pc(), scstate->addr) > max_distance) {
+		return;
+	}
+
+	*out_call = target_res;
+	scstate->addr = (unsigned char*)dis.current_pc();
+}

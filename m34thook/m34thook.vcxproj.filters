@@ -323,14 +323,8 @@
     <ClInclude Include="rapiddecl.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pregenerated\doom_eternal_properties_generated.hpp">
-      <Filter>Header Files\pregenerated</Filter>
-    </ClInclude>
     <ClInclude Include="mh_headergen.hpp">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="pregenerated\doom_eternal_cvars_generated.hpp">
-      <Filter>Header Files\pregenerated</Filter>
     </ClInclude>
     <ClInclude Include="mh_editor_math.hpp">
       <Filter>Header Files</Filter>
@@ -353,5 +347,11 @@
     <ClInclude Include="mh_gui_rasterizer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="mh_game_messages.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="feature_plan.txt" />
   </ItemGroup>
 </Project>

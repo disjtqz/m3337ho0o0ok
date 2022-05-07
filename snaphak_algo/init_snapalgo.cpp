@@ -143,6 +143,7 @@ void sh_algo_init(snaphak_algo_t* out_algo) {
 	//https://wiki.winehq.org/Developer_FAQ
 	out_algo->m_is_under_wine = (GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_version") != nullptr);
 
+#if defined(ENABLE_SYSCALL_STUFF)
 	if (out_algo->m_is_under_wine) {
 		out_algo->m_get_syscall_code = nullptr;
 		out_algo->m_get_syscall_func = nullptr;
@@ -153,6 +154,7 @@ void sh_algo_init(snaphak_algo_t* out_algo) {
 		out_algo->m_get_syscall_func = win_syscalls::get_syscall_func_ptr;
 
 	}
+#endif
 	int cpuflags[4] = { 0 };
 	//EAX, EBX, ECX, and EDX
 	__cpuid(cpuflags, 1);

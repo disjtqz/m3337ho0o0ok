@@ -378,5 +378,4 @@ extern uint64_t g_propname_hashes[DE_NUMPROPS];
 extern mh_classtypeextra_t* g_typeextra;
 
 
-classVariableInfo_t* mh_fast_field_get(classTypeInfo_t* cls, de_prop_e propert);
 

@@ -2,6 +2,8 @@
 // enable various features that are only useful to me
 //#define			MH_DEV_BUILD
 
+#define     MH_ENABLE_SAFE_DECL_RELOAD
+
 #include <intrin.h>
 #include <array>
 #include "snaphakalgo.hpp"
@@ -10,6 +12,8 @@
 #include <vector>
 #include <string>
 #include <set>
+
+
 
 //#define     DISABLE_MH_NATIVE_API   
 
@@ -107,6 +111,13 @@ template<typename TTo, mh_ptr_sized_c TFrom>
 static inline TTo* mh_lea(TFrom shouldbptr, ptrdiff_t displacement) {
 	return (TTo*)(&((char*)shouldbptr)[displacement]);
 }
+
+template<typename TX, typename TY>
+static inline ptrdiff_t mh_ptrdelta(TX* x, TY* y) {
+
+    return reinterpret_cast<unsigned char*>(x) - reinterpret_cast<unsigned char*>(y);
+}
+
 
 MH_NOINLINE
 void mh_error_message(const char* fmt, ...);
@@ -241,7 +252,7 @@ struct cs_uninit_t {
 		return reinterpret_cast<T*>(&m_storage[0]);
 	}
 	inline const T* operator ->() const {
-		return reinterpret_cast<const T*>(&m_storage[0]);
+		return reinterpret_cast<const T*>(&m_storage[0]erw );
 	}
 	inline T* operator &() {
 		return reinterpret_cast<T*>(&m_storage[0]);
@@ -639,3 +650,21 @@ template<typename T>
 static inline T* from_mh_rva(unsigned rva) {
     return mh_lea<T>(get_mh_base(), static_cast<uintptr_t>(rva));
 }
+
+#define     mh_align_down(...)      __builtin_align_down(__VA_ARGS__)
+#define     mh_align_up(...)        __builtin_align_up(__VA_ARGS__)
+
+#if defined(MH_ENABLE_SAFE_DECL_RELOAD)
+//2mb stack for decl reloads
+#define     DECL_RELOAD_STACK_SIZE          (1024*1024)*2
+//a safe alternate stack that decl reloading will execute on
+extern sh::coros::coro_t* g_decl_reload_context;
+//for switching back to main threads context
+extern sh::coros::coro_t* g_decl_reload_main_thread_context;
+extern void* g_teb_for_decl_reload;
+extern const char* g_seh_trigger_msg;
+
+
+extern char* g_decl_reload_stack_base;
+
+#endif

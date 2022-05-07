@@ -1,0 +1,10 @@
+
+Remapping other keys to ~ via our idInputEventQueue_QueueEvent hook so people without that key can use the console easily/prevent accidental opening of the console
+Filtering out certain classes from raycast hits for mh_grab, things like triggers, lights, lightprobes.
+Ability to grab multiple entities (often related entities are all placed at the same position, mh_grab grabs all at the same pos)
+flesh out more of the netmessage code 
+add scripting that can access the engine via all the shit we already have set up here, probably luajit since its lightweight and very fast. I do hate lua though
+Override filesystem scan thread, reuse stuff from my fast NtQueryDirectoryFile based file searcher. Automatically reloads decls when changes are detected
+
+Try to introduce "safe" decl reloading. This may not work, but basically the idea is to create a fiber that sets up SEH in case of some kind of segfault and executes reload_decl. Our overrides for idfatalerror will have some new code added to
+check whether a setjmp handler is set up for this context and then jmps to that, passing the error message along so that we can show it to the user. The fiber will then switch back to the main thread and be deleted.

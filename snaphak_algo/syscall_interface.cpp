@@ -1,3 +1,4 @@
+#if defined(ENABLE_SYSCALL_STUFF)
 #include "syscall_list.hpp"
 
 #include <array>
@@ -126,3 +127,5 @@ void perform_syscall_impl();
 void* win_syscalls::get_syscall_func_ptr(unsigned untranslated_swi) {
 	return reinterpret_cast<void*>((g_translated_syscalls[untranslated_swi] * 16 ) + reinterpret_cast<char*>(&perform_syscall_impl));
 }
+
+#endif

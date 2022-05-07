@@ -48,10 +48,9 @@ struct mh_uisurface_soa_t {
 	float* m_uv_s;
 	float* m_uv_t;
 	unsigned* m_color;
-
-
-
 };
+
+
 
 
 struct mh_uigeo_builder_t {
@@ -142,6 +141,7 @@ void draw_char(mh_uigeo_builder_t* ub, unsigned character, float xpos, float ypo
 //returns ending xpos
 float draw_string(mh_uigeo_builder_t* ub, float xpos, float ypos, const char* string, mh_color_t color, float scale=1.0f);
 float get_smallchar_height();
+
 static unsigned num_indices_for_string(unsigned stringlen) {
 	return stringlen * 6;
 }

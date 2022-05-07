@@ -464,7 +464,19 @@ void* scanner_late_get_cvar(const char* s);
 unsigned scanner_late_get_struct_size(const char* s);
 MH_NOINLINE
 unsigned scanner_late_get_field_offset(const char* cls, const char* fld);
+
 void* scanner_late_get_eventdef(const char* name);
+
+MH_NOINLINE
+void* scanner_late_get_vtbl(const char* name);
+
+MH_NOINLINE
+MH_REGFREE_CALL
+void scanner_find_and_extract_next_call_within_range(
+	scanstate_t* scstate,
+	void** out_call,
+	unsigned max_distance
+);
 /*
 	late-stage scanner types
 */
@@ -621,6 +633,62 @@ struct late_match_field_offset {
 
 };
 #define		match_fieldoffs_m(size_type, cls, fld)			late_match_field_offset<size_type, yuckystring_m(cls), yuckystring_m(fld)>
+
+
+template<typename TYuckyStr>
+struct late_riprel_to_vtbl {
+
+	static constexpr const char* parm = yuckystring_str_from_type_m(TYuckyStr);
+
+
+	static inline void* g_vtblloc = nullptr;
+	static constexpr unsigned required_valid_size = 4;
+
+	MH_NOINLINE
+		MH_REGFREE_CALL
+		static void init_vtbl() {
+		g_vtblloc = scanner_late_get_vtbl(parm);
+	}
+
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
+		MH_UNLIKELY_IF(!g_vtblloc) {
+			init_vtbl();
+			if (!g_vtblloc) {
+				mh_error_message("Wasnt able to find vtbl %s", parm);
+			}
+		}
+		if (!state.dll->is_in_image(state.addr))
+			return false;
+		ptrdiff_t df = *reinterpret_cast<int*>(state.addr);
+
+		if (g_vtblloc != (void*)(state.addr + 4 + df)) {
+			return false;
+		}
+
+		state.addr += 4;
+		return true;
+
+
+	}
+};
+
+#define		late_riprel_to_vtbl_m(...)			late_riprel_to_vtbl<yuckystring_m(__VA_ARGS__)>
+
+template<void** out_calltarget, unsigned max_distance>
+struct skip_call_within_distance_and_capture_target {
+	static constexpr unsigned required_valid_size = max_distance;
+
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
+		if (!state.dll->is_in_image(state.addr))
+			return false;
+		//function sets up new pos of addr for us
+		scanner_find_and_extract_next_call_within_range(&state, out_calltarget, max_distance);
+		return *out_calltarget != nullptr;
+	}
+};
+
 
 using workgroup_result_t = void*;
 

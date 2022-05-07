@@ -28,10 +28,29 @@ static void idfatalerror_override(const char* msg, ...) {
 	fclose(quicklog_file);
 
 #endif
+
+	auto show_the_messagebox = [tmpbuf]() {
+		MessageBoxA(nullptr, tmpbuf, Fatal ? "Engine Fatal Error" : "Engine Error", MB_ICONERROR);
+	};
+
+#if defined(MH_ENABLE_SAFE_DECL_RELOAD)
+
+	//yield the formatted string on this stack, caller should print it before resetting our stack
+	
+	if (g_decl_reload_context && NtCurrentTeb() == g_teb_for_decl_reload) {
+
+		//we will not be returned to after this. 
+		g_decl_reload_context->yield_to(g_decl_reload_main_thread_context, &tmpbuf[0]);
+	}
+	else {
+		show_the_messagebox();
+	}
+
+#else
 	//too lazy to check ret
 	//
-	MessageBoxA(nullptr, tmpbuf, Fatal ? "Engine Fatal Error" : "Engine Error", MB_ICONERROR);
-
+	show_the_messagebox();
+#endif
 	TerminateProcess(GetCurrentProcess(), 1);
 
 }

@@ -84,6 +84,7 @@
     <PlatformToolset>ClangCL</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
+    <LLVMToolsVersion>14.0.0</LLVMToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -91,7 +92,9 @@
     <PlatformToolset>ClangCL</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>false</WholeProgramOptimization>
-    <VCToolsVersion>14.29.30133</VCToolsVersion>
+    <VCToolsVersion>
+    </VCToolsVersion>
+    <LLVMToolsVersion>14.0.0</LLVMToolsVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -430,6 +433,7 @@
     <ClInclude Include="mh_dev_hooks.hpp" />
     <ClInclude Include="mh_editor_math.hpp" />
     <ClInclude Include="mh_editor_mode.hpp" />
+    <ClInclude Include="mh_game_messages.hpp" />
     <ClInclude Include="mh_gui_rasterizer.hpp" />
     <ClInclude Include="mh_headergen.hpp" />
     <ClInclude Include="mh_mainloop.hpp" />
@@ -439,8 +443,6 @@
     <ClInclude Include="mh_native_api.hpp" />
     <ClInclude Include="mh_staticmodel.hpp" />
     <ClInclude Include="objfiles\objloader.h" />
-    <ClInclude Include="pregenerated\doom_eternal_cvars_generated.hpp" />
-    <ClInclude Include="pregenerated\doom_eternal_properties_generated.hpp" />
     <ClInclude Include="rapiddecl.hpp" />
     <ClInclude Include="resource.hpp" />
     <ClInclude Include="scanners\initial_scangroup.hpp" />
@@ -458,6 +460,9 @@
     <ClInclude Include="xmacro_mh_config.hpp" />
     <ClInclude Include="xmacro_scanned_features.hpp" />
     <ClInclude Include="xmacro_vec3_base.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="feature_plan.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

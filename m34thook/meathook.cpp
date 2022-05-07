@@ -57,7 +57,6 @@ void meathook_final_init() {
 	//compute classinfo object super object deltas for quick inheritance traversal
 	idType::init_prop_rva_table();
 	idType::compute_classinfo_mh_payloads();
-	idCVar::get_cvardata_rvas();
 	
 	
 

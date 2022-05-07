@@ -266,6 +266,18 @@ using locate_idRenderModelGui_DrawChar = memscanner_t<
 	scanbytes<0x41, 0xb9, 0x2e, 0x0, 0x0, 0x0, 0x48, 0x8b, 0x8f, 0xd8, 0x0, 0x0, 0x0, 0x66, 0xf, 0x6e, 0xc6, 0xf, 0x5b, 0xc0, 0x66, 0x41, 0xf, 0x6e, 0xfd, 0xf3, 0xf, 0x5c, 0xc1, 0xf3, 0x44, 0xf, 0x11, 0x4c, 0x24, 0x20, 0xf, 0x5b, 0xff, 0xf3, 0xf, 0x2c, 0xc0, 0xf, 0x28, 0xd7, 0x66, 0xf, 0x6e, 0xf0, 0xf, 0x5b, 0xf6, 0xf, 0x28, 0xce, 0xe8>
 >;
 
+//v1 - 01410386DF
+using locate_reliablemsg = memscanner_t<
+	scanbytes<0x83, 0x78, 0x8, 0x0, 0xf, 0x95, 0xc0, 0xf, 0xb6, 0xc8, 0xe8>,
+	skip<4>, //idlib printfif
+	scanbytes<0x41, 0xf, 0xb6, 0xd7, 0x48, 0x8d, 0x4c, 0x24, 0x20, 0xe8>,
+	skip<4>,
+	scanbytes<0x48, 0x8B, 0x0D >,
+	match_riprel32_to<&descan::g_gamelocal>,
+	scanbytes<0x48, 0x8d, 0x54, 0x24, 0x20, 0xe8>
+>;
+	
+
 
 namespace scanners_phase2 {
 #if !defined(MH_ETERNAL_V6)
@@ -312,6 +324,8 @@ namespace scanners_phase2 {
 	BSCANENT(drawfilled_located_entry, &descan::g_idRenderModelGui__DrawFilled, scanbehavior_locate_csrel_after< locate_idRenderModelGui_DrawFilled>);
 	BSCANENT(drawstring_locator_entry, &descan::g_idRenderModelGui__DrawString, scanbehavior_locate_csrel_after< locate_idRenderModelGui_DrawString>);
 	BSCANENT(drawchar_locator_entry, &descan::g_idRenderModelGui__DrawChar, scanbehavior_locate_csrel_after< locate_idRenderModelGui_DrawChar>);
+	BSCANENT(reliablemsg_entry, &descan::g_handlereliable, scanbehavior_locate_csrel_after< locate_reliablemsg>);
+
 	//9 scanners
 #define		PAR_SCANGROUP_P2_1 				entry_phase2_locate_findclassinfo, entry_phase2_locate_idfilecompressed_getfile
 #define		PAR_SCANGROUP_P2_2				entry_phase2_locate_resourcelist_for_classname,locate_subimage_upload_entry
@@ -321,7 +335,7 @@ namespace scanners_phase2 {
 #define		PAR_SCANGROUP_P2_5 				locate_resourcelist_add_entry,find_next_ent_with_class_locator_entry, getentitystate_needsoffset
 #define		PAR_SCANGROUP_P2_6				locate_idstaticmodel_finish_entry,locate_commonlocal_frame_job_pointer,drawstring_locator_entry
 #define		PAR_SCANGROUP_P2_7				entry_find_idcolor_pack,locate_rendermodelgui_alloctris_entry,atomicstringset_locator_entry
-#define		PAR_SCANGROUP_P2_8				locate_idimagemanager_scratchimage_entry,locate_getlevelmap_entry, sqrt_locator_entry
+#define		PAR_SCANGROUP_P2_8				locate_idimagemanager_scratchimage_entry,locate_getlevelmap_entry, sqrt_locator_entry,reliablemsg_entry
 #if defined(DISABLE_PHASE2_PARALLEL_SCANGROUPS)
 
 	using secondary_scangroup_type = scangroup_t<

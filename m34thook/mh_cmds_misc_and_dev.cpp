@@ -298,11 +298,23 @@ static void mh_test_pointerscan(idCmdArgs* args) {
 
 
 }
+
+static void mh_showcursor(idCmdArgs* args) {
+
+	void* cur = get_cursor();
+
+	*(bool*)cur = 1;
+
+}
 void install_miscndev_cmds() {
-#if !defined(MH_DISABLE_ALL_DEV_STUFF)
 	idCmd::register_command("mh_cpuinfo", meathook_cpuinfo, "takes no args, dumps info about your cpu for dev purposes");
-	//idCmd::register_command("image_fill", image_fill, "test");
+	idCmd::register_command("mh_dumpentity", mh_dumpentityvalues, "<entity name> dumps a string representation of an entities current values in memory.");
+	idCmd::register_command("mh_count_entities", mh_count_entities, "prints the total number of entities that are currently in existence");
 	idCmd::register_command("mh_optimize", cmd_optimize, "Patches the engine to make stuff run faster. do not use online, might result in slightly different floating point results (probably not though)");
+
+#if !defined(MH_DISABLE_ALL_DEV_STUFF)
+
+	//idCmd::register_command("image_fill", image_fill, "test");
 	idCmd::register_command("mh_locate_fspec_char_uses", locate_eventdef_type, "<char> Finds all usages of a provided char in event formatspecs/rettypes");
 	idCmd::register_command("mh_dump_bmodel", mh_dump_bmodel, "<name> <output path> <skip_compression> Finds a staticmodel and then executes writestaticbmodel to the provided path");
 	idCmd::register_command("mh_test_genbmodel", mh_test_genbmodel, "<obj path> <output path> (YOU MUST BE ON V1 WITH RANDOMBASEADDR FLAG OFF ON EXE FOR THIS RIGHT NOW) generate bmodel in standalone resource from .obj");
@@ -310,8 +322,9 @@ void install_miscndev_cmds() {
 
 	idCmd::register_command("mh_testnormalize", mh_testnormalize, "<x> <y> <z> dev command for checking results of normalize.");
 
-	idCmd::register_command("mh_dumpentity", mh_dumpentityvalues, "<entity name> dumps a string representation of an entities current values in memory.");
-	idCmd::register_command("mh_count_entities", mh_count_entities, "prints the total number of entities that are currently in existence");
+	
+	
 	idCmd::register_command("mh_test_pointerscan", mh_test_pointerscan, "<class rtti mangled name> Do a pointer scan for references to a given vtbl on the global heap");
+	idCmd::register_command("mh_showcursor", mh_showcursor, "Test showing the cursor manually");
 #endif
 }

@@ -68,8 +68,10 @@ enum class mh_memclass_e : std::uint32_t {
 */
 struct snaphak_algo_t {
 
+#if defined(ENABLE_SYSCALL_STUFF)
 	unsigned (*m_get_syscall_code)(unsigned swi);
 	void* (*m_get_syscall_func)(unsigned swi);
+#endif
 	void (*m_print_cpu_info)(struct snaphak_algo_t* alg, char* buffer, size_t maxsize);
 	snaphak_cpu_lvl_t m_cpulevel;
 	struct {
@@ -138,7 +140,7 @@ namespace sh {
 	static inline void fatal(const char* fmt, Ts... args) {
 		g_shalgo.m_fatal_raise(fmt, args...);
 	}
-
+#if defined(ENABLE_SYSCALL_STUFF)
 	static inline bool syscall_interface_available() {
 		return !g_shalgo.m_is_under_wine;
 	}
@@ -146,7 +148,7 @@ namespace sh {
 	static RetType perform_syscall(Argtypes... args) {
 		return reinterpret_cast<RetType(*)(Argtypes...)>(g_shalgo.m_get_syscall_func(swicode))(args...);
 	}
-
+#endif
 }
 namespace sh::heap {
 #include "sh_heap_shared.hpp"
@@ -255,7 +257,7 @@ namespace sh::rb {
 		register low_gpregs_t* rsave asm("r10") = saverestore_area;
 
 		__asm__ volatile(
-			"call cs_rbnode_insert_and_color\n\t"
+			"call cs_rbnode_erase_from\n\t"
 			:
 			: "r"(rpass), "r"(rsave), "d" (n)
 			: "r8", "r9"

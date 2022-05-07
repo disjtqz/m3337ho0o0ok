@@ -144,3 +144,9 @@ SCANNED_PTR_FEATURE(g_idFont_GetGlyph)
 SCANNED_PTR_FEATURE(g_idFont_GetMaterial)
 
 SCANNED_PTR_FEATURE(g_idParmBlock_GetParmValue)
+
+//get nth player
+//postinit scangroup
+SCANNED_PTR_FEATURE(g_idgamelocal_getplayer)
+//postinit scangroup
+SCANNED_PTR_FEATURE(g_peermask_for_player)

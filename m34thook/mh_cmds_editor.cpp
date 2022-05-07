@@ -103,6 +103,80 @@ void cmd_mh_testmapentity(idCmdArgs* args) {
 
 }
 
+#if defined(MH_ENABLE_SAFE_DECL_RELOAD)
+
+sh::coros::coro_t* g_decl_reload_context = nullptr;
+sh::coros::coro_t* g_decl_reload_main_thread_context = nullptr;
+
+void* g_teb_for_decl_reload = nullptr;
+
+char* g_decl_reload_stack_base = nullptr;
+
+const char* g_seh_trigger_msg = nullptr;
+
+static sh::coros::coro_t g_decl_reload_context_storage{};
+static sh::coros::coro_t g_decl_reload_main_thread_context_storage{};
+
+
+static uintptr_t decl_reload_coro_proc(uintptr_t memb) {
+	bool got_execption = false;
+
+	__try {
+		uintptr_t result = reload_decl((void*)memb);
+		g_decl_reload_context->yield_to(g_decl_reload_main_thread_context, result);
+	}
+	__except (EXCEPTION_EXECUTE_HANDLER) {
+		g_decl_reload_context->yield_to(g_decl_reload_main_thread_context, "A SEH exception was raised trying to reload the resource, program may now be in an invalid state. You may have just reloaded at a bad moment and may try again.\n");
+	
+	}
+
+
+		
+
+	
+	return 0;
+}
+
+
+static bool call_decl_reload(void* resourcelist_member) {
+	bool success = false;
+	g_decl_reload_context = &g_decl_reload_context_storage;
+	g_decl_reload_main_thread_context = &g_decl_reload_main_thread_context_storage;
+	g_teb_for_decl_reload = NtCurrentTeb();
+	if (!g_decl_reload_stack_base) {
+		g_decl_reload_stack_base = (char*) sh::vmem::allocate_rw(DECL_RELOAD_STACK_SIZE);
+
+	}
+
+	
+
+	g_decl_reload_context->coro_set_up_calling_context(&mh_align_down(mh_lea<char>(g_decl_reload_stack_base, (DECL_RELOAD_STACK_SIZE - 8)), 16)[-8], decl_reload_coro_proc, resourcelist_member);
+
+	uintptr_t result = g_decl_reload_main_thread_context->yield_to(g_decl_reload_context);
+
+
+	if (result < 2ULL) { //is boolean ret
+		success = result == 1;
+	}
+	else { //is definitely error
+		idLib::Printf("Failed to reload decl due to error, program may be in a bad state now. error was %s\n", result);
+		success = false;
+	}
+	sh::vmem::discard_contents(g_decl_reload_stack_base, DECL_RELOAD_STACK_SIZE);
+	g_decl_reload_context = nullptr;
+	g_decl_reload_main_thread_context = nullptr;
+	g_teb_for_decl_reload = nullptr;
+	return success;
+}
+
+#else
+static bool call_decl_reload(void* resourcelist_member) {
+	return reload_decl(resourcelist_member);
+}
+
+#endif
+
+
 
 static void mh_reload_decl(idCmdArgs* args) {
 
@@ -122,7 +196,7 @@ static void mh_reload_decl(idCmdArgs* args) {
 		return;
 	}
 	idLib::Printf("calling decl_read_production_file\n");
-	if (!reload_decl(memb)) {
+	if (!call_decl_reload(memb)) {
 		return;
 	}
 
@@ -163,8 +237,10 @@ static void mh_grab(idCmdArgs* args) {
 //ai_suicideCheck_disable 1 to prevent ai from dying in out of bounds situations
 static void mh_editor(idCmdArgs* args) {
 
-	set_cvar_integer(cvr_hands_show, 0);
-	set_cvar_integer(cvr_g_showHud, 0);
+
+
+	set_cvar_integer("hands_show", 0);
+	set_cvar_integer("g_showHud", 0);
 	toggle_idplayer_boolean(get_local_player(), "noClip", true, true);
 	get_current_editor()->init_for_session();
 

@@ -21,7 +21,7 @@
 #include "mhgui.hpp"
 #include "GLState.hpp"
 #include <mutex>
-
+#include "clipboard_helpers.hpp"
 #include "mh_gui_rasterizer.hpp"
 static idCVar* com_debugHUD = nullptr;
 
@@ -65,11 +65,13 @@ static void mh_rendergui_callback(idDebugHUD* dbghud, idRenderModelGui* rgui) {
 		com_debugHUD = // idCVar::Find("com_debugHUD");
 	}*/
 
-	if (!cvar_data(cvr_com_debugHUD)) {
+	auto cvd = idCVar::Find("com_debugHUD");
+
+	if (!cvd || !cvd->data) {
 		return; //we're on v1, and running before the rvas have been populated
 
 	}
-	cvar_data(cvr_com_debugHUD)->valueInteger = 1;
+	set_cvar_integer("com_debugHUD", 1);
 
 	ensure_text_rasterization_initialized();
 	//com_debugHUD->data->valueInteger = 1;
@@ -97,7 +99,15 @@ static void mh_rendergui_callback(idDebugHUD* dbghud, idRenderModelGui* rgui) {
 
 static void cmd_set_testmaterial(idCmdArgs* args) {
 	if(args->argc < 2){
-		g_testmaterial.clear();
+		//this makes testing a lot of different mtrs much easier
+		const char* txt = get_clipboard_data();
+		
+		if (!txt || txt[0] == 0) {
+			g_testmaterial.clear();
+		}
+		else {
+			g_testmaterial = txt;
+		}
 	}
 	else {
 		g_testmaterial = args->argv[1];

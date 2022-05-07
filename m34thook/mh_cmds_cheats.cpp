@@ -19,7 +19,7 @@
 #include <string.h>
 #include "mh_guirender.hpp"
 #include "mh_editor_mode.hpp"
-
+#include "mh_game_messages.hpp"
 struct idClientGameMsgDoom2016
 {
 	__int64 servertime;
@@ -57,6 +57,36 @@ void cmd_notarget(idCmdArgs* args) {
 static bool return_1() {
 
 	return 1;
+}
+
+void execute_spawnage(idCmdArgs* args) {
+	if (args->argc < 2) {
+		idLib::Printf("Not enough args, need entitydef");
+		return;
+	}
+	idVec3 playertrace;
+
+	get_player_trace_pos(&playertrace);
+	idClientGameMsg_PlayerCommand_SpawnEntity spawner{};
+	spawner.vtbl = get_class_vtbl(".?AVidClientGameMsg_PlayerCommand_SpawnEntity@@");
+	spawner.entityDef = locate_resourcelist_member("idDeclEntityDef", args->argv[1]);
+
+	if (!spawner.entityDef) {
+		return;
+	}
+	spawner.fromPeer = -1;
+	spawner.peerMask = -1;
+	spawner.playerNumber = 0;
+	spawner.spawnLocation = playertrace;
+	spawner.unknown = 0;
+	if (args->argc > 2) {
+		spawner.unknown = atoi(args->argv[2]);
+	}
+	spawner.spawnedEntity.serializedSpawnId.handle = 0x1FFFFFE;
+	spawner.spawnedEntity.spawnId.handle = 0x1FFFFFE;
+	
+	call_as<void>(descan::g_handlereliable, get_gamelocal(), &spawner);
+
 }
 
 
@@ -719,8 +749,7 @@ static void sneakybeaky_godmode(idCmdArgs* args) {
 }
 void cheats_postinit() {
 	/*
-		oh come on man, i made it so clear in the comments that this wasnt something i wanted everyone to know and somehow its the first thing you pick out to tell everyone??
-		this kind of stuff is most effective in obscurity. 
+		was trying to keep it a secret that i patched this, but someone immediately announced it :facepalmemojii:
 	*/
 	idCmd::swap_command_impl("God", sneakybeaky_godmode);
 
@@ -736,6 +765,7 @@ void install_cheat_cmds() {
 	idCmd::register_command("noclip", cmd_noclip, "Toggle noclip");
 
 	idCmd::register_command("notarget", cmd_notarget, "Toggle notarget");
-	idCmd::register_command("mh_wallhack", mh_wallhack, "Turn on the wallhack field for idview");
-	idCmd::register_command("mh_worldedpass", mh_worldedpass, "");
+	//idCmd::register_command("mh_wallhack", mh_wallhack, "Turn on the wallhack field for idview");
+	//idCmd::register_command("mh_worldedpass", mh_worldedpass, "");
+	idCmd::register_command("mh_spawncheat", execute_spawnage, "");
 }

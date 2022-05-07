@@ -68,32 +68,19 @@ struct __declspec(align(8)) idCVar
 
 	static void generate_name_table();
 
-	static void get_cvardata_rvas();
 
 };
 
-#include "pregenerated/doom_eternal_cvars_generated.hpp"
-
-
-//array of rvas to each de_cvar_e's location
-extern unsigned g_cvardata_rvas[DE_NUMCVARS];
-
 
 MH_PURE
-static idCVar::cvarData_t* cvar_data(de_cvar_e cv) {
+static void set_cvar_integer(const char* cv, int value) {
+	auto cvx = idCVar::Find(cv);
 
-	unsigned rv = g_cvardata_rvas[cv];
-
-
-
-	return from_de_rva<idCVar::cvarData_t>(rv);
-}
-
-
-
-MH_PURE
-static void set_cvar_integer(de_cvar_e cv, int value) {
-	auto cvd = cvar_data(cv);
+	if (!cvx)
+		return;
+	auto cvd = cvx->data;
+	if (!cvd)
+		return;
 	cvd->flags |= 0x40000; // CVAR_MODIFIED
 	cvd->valueInteger = value;
 	cvd->valueFloat = value;

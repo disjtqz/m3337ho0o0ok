@@ -295,6 +295,15 @@ static void cycle_staticmodel(void* entity, int delta) {
 
 }
 
+static bool is_physical_entity(void* entity) {
+	idEventArg retval = ev_getModel(entity);
+
+	if (retval.type == 0 || retval.value.s == nullptr || retval.value.s[0] == 0)
+		return false;
+	//const char* mdl = ev_getModel(entity).value.s;
+	return true;
+}
+
 class edited_entity_t {
 	
 	mh_entityref_t m_ent;
@@ -693,6 +702,11 @@ struct trace_context_t {
 
 			if (!is_entity_valid(current, etable))
 				continue;
+
+
+			if (!is_physical_entity(current)) {
+				continue;
+			}
 
 			//call_as<void>(entity_eventcall, current, &m_scratch_evret, getorigin, m_scratch_evargs);
 
@@ -1501,8 +1515,8 @@ void* mh_editor_local_t::look_target() {
 
 	TRACE_EDITOR("Focustrace dist = %f, trackerdist = %f", dist, *g_idPlayer_focusTracker_traceDistance(lplayer));
 
-	std::string tracetxt = idType::stringify_object(get_local_player_focus_trace(), idType::FindClassInfo("idFocusTrace"));
-	TRACE_EDITOR("Focustrace dump: %s", tracetxt.c_str());
+//	std::string tracetxt = idType::stringify_object(get_local_player_focus_trace(), idType::FindClassInfo("idFocusTrace"));
+//	TRACE_EDITOR("Focustrace dump: %s", tracetxt.c_str());
 	*g_idPlayer_focusTracker_traceDistance(lplayer) = 2047.0f;
 	auto [playerb0u, playerb1u] = get_object_bbox_simd(lplayer);
 	auto [playerb0, playerb1] = bounds_simd::expand(playerb0u, playerb1u, 0.2f);
