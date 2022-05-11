@@ -11,10 +11,8 @@
 #include "gameapi.hpp"
 #include "memscan.hpp"
 #include "snaphakalgo.hpp"
-
-
-//extern declared in meathook.cpp
-void cmd_optimize(idCmdArgs* args) {
+//run in mh_mainloop on first frame if MH_DEV_STARTMAP is defined, prior to loading the startmap
+void mh_optimize_run(bool vprintf_too = false) {
 	make_ret(descan::g_security_check_cookie);
 	make_ret(descan::g_alloca_probe);
 
@@ -29,7 +27,7 @@ void cmd_optimize(idCmdArgs* args) {
 	char sqrt_override[] = { (char)0xF2, 0x0F, 0x51, (char)0xC0, (char)0xC3 };
 
 	patch_memory_with_undo(descan::g_sqrt, sizeof(sqrtf_override), sqrt_override);
-	if(args->argc > 1) {
+	if (vprintf_too) {
 		make_ret(descan::g_idlib_vprintf);
 	}
 
@@ -39,4 +37,10 @@ void cmd_optimize(idCmdArgs* args) {
 #endif
 
 	//redirect_to_func(g_shalgo.m_sroutines. descan::g__ZN5idStr4IcmpEPKcS1_)
+}
+
+
+//extern declared in meathook.cpp
+void cmd_optimize(idCmdArgs* args) {
+	mh_optimize_run(args->argc > 1);
 }

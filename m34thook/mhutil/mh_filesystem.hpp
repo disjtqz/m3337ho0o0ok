@@ -33,7 +33,10 @@ namespace filesys {
 	std::int64_t read_file(cs_fd_t fd, void* buffer, size_t ntoread);
 	std::int64_t write_file(cs_fd_t fd, const void* buffer, size_t size);
 
+	CS_NOINLINE
+	void* get_file_contents(const char* path, unsigned* out_size);
 
+	void free_file_contents(void* datas);
 
 	/*
 		using this is faster than the end-relative or current relative seek operations 

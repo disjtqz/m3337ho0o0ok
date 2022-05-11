@@ -141,22 +141,22 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>Q:\DOOMEternal_dev_version</OutDir>
+    <OutDir>K:\</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>../</OutDir>
+    <OutDir>K:\</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLRelease|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>Q:\DOOMEternal_dev_version</OutDir>
+    <OutDir>K:\</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>Q:\DOOMEternal_dev_version</OutDir>
+    <OutDir>K:\</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
@@ -272,7 +272,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLRelease|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
@@ -374,6 +374,8 @@
     <ClCompile Include="mh_cmds_misc_and_dev.cpp" />
     <ClCompile Include="mh_cmds_queries.cpp" />
     <ClCompile Include="mh_cmds_spawning.cpp" />
+    <ClCompile Include="mh_configfile.cpp" />
+    <ClCompile Include="mh_config_globals_definitions.cpp" />
     <ClCompile Include="mh_dev_hooks.cpp" />
     <ClCompile Include="mh_editor_mode.cpp" />
     <ClCompile Include="mh_guirender.cpp" />
@@ -403,7 +405,6 @@
       <BasicRuntimeChecks Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</BasicRuntimeChecks>
       <BufferSecurityCheck Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</BufferSecurityCheck>
     </ClCompile>
-    <ClCompile Include="thunkstrementer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\RPCInterface\meathook_interface.h" />
@@ -429,6 +430,8 @@
     <ClInclude Include="mhutil\cs_simd.hpp" />
     <ClInclude Include="mhutil\mh_filesystem.hpp" />
     <ClInclude Include="mhutil\mh_structures.hpp" />
+    <ClInclude Include="mh_configfile.hpp" />
+    <ClInclude Include="mh_config_globals.hpp" />
     <ClInclude Include="mh_defs.hpp" />
     <ClInclude Include="mh_dev_hooks.hpp" />
     <ClInclude Include="mh_editor_math.hpp" />
@@ -451,7 +454,6 @@
     <ClInclude Include="scanners\secondary_scangroup.hpp" />
     <ClInclude Include="scanners\tertiary_scangroup.hpp" />
     <ClInclude Include="scanner_core.hpp" />
-    <ClInclude Include="types_with_vtables.hpp" />
     <ClInclude Include="win32\ntdll.h" />
     <ClInclude Include="xbyak\xbyak.h" />
     <ClInclude Include="xbyak\xbyak_bin2hex.h" />

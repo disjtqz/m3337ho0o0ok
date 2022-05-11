@@ -114,6 +114,19 @@ namespace decl_parsing {
 
 }
 
+struct aux_etable_t {
+	uintptr_t m_position;
+	void* m_entities[WORLD_ENTITY_IDX];
+
+
+	void add_entity(void* e) {
+		m_entities[m_position++] = e;
+	}
+
+
+};
+
+
 //ahahah this fucking works
 //offset to it hasnt changed since v1
 //this is incredible! it actually uses the in-memory values for adding the entity
@@ -602,7 +615,7 @@ class mh_editor_local_t : public mh_editor_interface_t {
 	editor_vec3_t get_point_in_player_direction(double distance);
 	MH_NOINLINE
 	MH_SEMIPURE
-	void* trace_slow(vec3_simd_t origin, vec3_simd_t direction, __m128 exclude_bbox0, __m128 exclude_bbox1, float maxdistance = MH_EDGE_OF_REALITY);
+		void* trace_slow(vec3_simd_t origin, vec3_simd_t direction, __m128 exclude_bbox0, __m128 exclude_bbox1, float maxdistance = MH_EDGE_OF_REALITY, __m128 bbox_xpansion = {});
 
 	vec3_simd_t get_origin_simd(void* entity) {
 
@@ -661,6 +674,62 @@ static bounds_simd_t get_object_bbox_simd(void* obj) {
 	vec3_simd_t maxs = _mm_add_ps(other_origin, halfsize);
 	return { mins, maxs };
 }
+//actually, similarity result for this is in range 0.0 to 3.0. best to premultiply your tolerance by 3.0f
+static __m128 fuzzy_cmp_vectors(__m128 x, __m128 y) {
+
+	
+
+	__m128 mins = _mm_min_ps(x, y);
+
+	__m128 maxs = _mm_max_ps(x, y);
+
+
+	__m128 divided = _mm_div_ps(mins, maxs);
+
+	__m128 sm = vec3_simd::horiz_sum3_ss(divided);
+	
+	return sm;
+
+}
+
+
+
+
+/*
+	idea: if they grab an entity at a position, and there are other entities with the exact same coord, they are probably all related entities, so grab them all
+*/
+static void gather_objects_with_same_position(vec3_simd_t position, float tolerance, mh_vector_t<void*>* out) {
+
+	void** etable = get_entity_table();
+
+	idEventDef* ev_getorigin = ev_getWorldOrigin.Get();
+	idEventArg pos_scratch;
+	idEventArg unused_scratch;
+	float toler3 = tolerance * 3.0f;
+
+	position = vec3_simd::make_ele3_1_0(position);
+
+
+	for (unsigned i = LAST_PLAYER_IDX; i < WORLD_ENTITY_IDX; ++i) {
+		void* current = etable[i];
+		if (!is_entity_valid(current, etable))
+			continue;
+		mh_ScriptCmdEntFast(ev_getorigin, current, &unused_scratch, &pos_scratch);
+
+
+		__m128 cmpared = fuzzy_cmp_vectors(position, vec3_simd::make_ele3_1_0(_mm_loadu_ps(&pos_scratch.value.v[0])) );
+		float cmpres = _mm_cvtss_f32(cmpared);
+
+
+		if (cmpres >= tolerance) {
+			out->push_back(current);
+		}
+
+	}
+
+
+}
+
 #define		TRACE_DONT_USE_MINMAX
 struct trace_context_t {
 	idEventDef* getorigin;
@@ -671,6 +740,8 @@ struct trace_context_t {
 	__m128 direction;
 	__m128 exclude_bbox0;
 	__m128 exclude_bbox1;
+
+	__m128 bbox_xpansion;
 	float maxdistance;
 	idEventArg m_scratch_evret;
 	idEventArg m_scratch_evargs[2];
@@ -729,8 +800,11 @@ struct trace_context_t {
 				mh_ScriptCmdEntFast(getsize, current, m_scratch_evargs, &m_scratch_evret);
 
 
+
+
 				vec3_simd_t size = _mm_loadu_ps(&m_scratch_evret.value.v[0]);
 
+				size = _mm_add_ps(bbox_xpansion, size);
 
 				vec3_simd_t halfsize = _mm_mul_ps(size, _mm_set1_ps(0.5f));
 
@@ -798,7 +872,7 @@ struct run_trace_t {
 
 MH_NOINLINE
 MH_SEMIPURE
-void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, __m128 exclude_bbox0, __m128 exclude_bbox1, float maxdistance) {
+void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, __m128 exclude_bbox0, __m128 exclude_bbox1, float maxdistance, __m128 bbox_xpansion) {
 
 #if 1
 	auto start = GetTickCount64();
@@ -818,6 +892,7 @@ void* mh_editor_local_t::trace_slow(vec3_simd_t origin, vec3_simd_t direction, _
 	ctx.exclude_bbox0 = exclude_bbox0;
 	ctx.exclude_bbox1 = exclude_bbox1;
 	ctx.maxdistance = maxdistance;
+	ctx.bbox_xpansion = bbox_xpansion;
 	void* result = sh_multiversioner_t<run_trace_t>::exec(&ctx);
 
 	TRACE_EDITOR("Trace took %d ms", ((unsigned)(GetTickCount64() - start)));
@@ -1527,9 +1602,29 @@ void* mh_editor_local_t::look_target() {
 
 	double endpoint_dist = endp.distance3d(ppos);
 	//fudge
-	endpoint_dist += 4.0;
+	//endpoint_dist += 4.0;
+	//just forcing this to 8192 for now, because the focustracker doesnt want to cooperate and trace against distance objects
+	endpoint_dist = 8192.0;
 
-	return trace_slow(get_origin_simd(lplayer), get_player_look_direction().to_vec3_simd(), playerb0, playerb1, (float)endpoint_dist);
+	__m128 player_simd_origin = get_origin_simd(lplayer);
+
+	__m128 player_lookdir = get_player_look_direction().to_vec3_simd();
+
+	__m128 bbox_xpansion = _mm_setzero_ps();
+	void* result =  trace_slow(player_simd_origin, player_lookdir, playerb0, playerb1, (float)endpoint_dist, bbox_xpansion);
+
+	/*
+		if we got nothing, try again with each objects bbox expanded by 5.0
+	*/
+	if (!result) {
+
+
+		bbox_xpansion = _mm_setr_ps(5.0f, 5.0, 5.0f, 0.0f);
+		result = trace_slow(player_simd_origin, player_lookdir, playerb0, playerb1, (float)endpoint_dist, bbox_xpansion);
+		
+	}
+	return result;
+
 #endif
 
 }

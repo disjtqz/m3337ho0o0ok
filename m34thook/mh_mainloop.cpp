@@ -17,7 +17,7 @@
 #include "snaphakalgo.hpp"
 #include "mh_mainloop.hpp"
 #include "mh_guirender.hpp"
-
+#include "mh_config_globals.hpp"
 
 
 
@@ -76,7 +76,7 @@ static frame_callbacks_t g_postframe{};
 
 static bool g_isfirstframe = true;
 
-
+extern void mh_optimize_run(bool vprintf_too = false);
 MH_NOINLINE
 MH_REGFREE_CALL
 CS_COLD_CODE
@@ -85,6 +85,17 @@ static void run_firstframe_code()  {
 	//run the late stage scanners, load all plugins
 	meathook_final_init();	
 	mh_gui::install_gui_hooks();
+
+//#if defined(MH_DEV_STARTMAP)
+	//mh_optimize_run();
+	if (g_loadmaponstart) {
+		char loadbuffer[1024];
+		sprintf(loadbuffer, "map %s", g_loadmaponstart);
+
+		idCmd::execute_command_text(loadbuffer);//"mh_spmap " MH_DEV_STARTMAP);
+
+	}
+//#endif
 }
 
 static uint64_t g_num_ticks = 0;

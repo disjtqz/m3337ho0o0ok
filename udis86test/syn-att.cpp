@@ -29,7 +29,7 @@
 #include "itab.h"
 #include "syn.h"
 #include "udint.h"
-
+#if 0
 /* -----------------------------------------------------------------------------
  * opr_cast() - Prints an operand cast.
  * -----------------------------------------------------------------------------
@@ -114,7 +114,7 @@ gen_operand(struct ud* u, struct ud_operand* op)
   default: return;
   }
 }
-
+#endif
 /* =============================================================================
  * translates to AT&T syntax 
  * =============================================================================
@@ -122,6 +122,7 @@ gen_operand(struct ud* u, struct ud_operand* op)
 extern void 
 ud_translate_att(struct ud *u)
 {
+#if 0
   int size = 0;
   int star = 0;
 
@@ -217,6 +218,7 @@ ud_translate_att(struct ud *u)
 
   if (u->operand[0].type != UD_NONE)
   gen_operand(u, &u->operand[0]);
+#endif
 }
 
 /*

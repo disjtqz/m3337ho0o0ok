@@ -95,7 +95,46 @@ void filesys::seek_file(cs_fd_t fd, std::int64_t position) {
 	NtSetInformationFile(fd, &iblock, &position, sizeof(std::int64_t), FilePositionInformation);
 
 }
+CS_NOINLINE
+void* filesys::get_file_contents(const char* path, unsigned* out_size) {
+	cs_fd_t fd = open_file(path, filemode_e::READ);
+	int64_t ln;
+	void* mem;
+	int64_t nread;
+	if (!fd) {
+err:
+		*out_size = 0;
+		return nullptr;
+	}
 
+	ln = file_length(fd);
+
+	if (ln <= 0) {
+	close_file_err:
+		close_file(fd);
+		goto err;
+	}
+
+	mem = sh::heap::alloc_from_heap(g_mh_heap, ln + 1, 0);
+
+	if (!mem) {
+		goto close_file_err;
+	}
+	nread = read_file(fd, mem, ln);
+
+	if (nread <= 0) {
+		sh::heap::free_from_heap(g_mh_heap, mem, 0);
+		goto close_file_err;
+	}
+	//plop a zero just after the data for safety
+	((char*)mem)[ln] = 0;
+	close_file(fd);
+	*out_size = ln;
+	return mem;
+}
+void filesys::free_file_contents(void* datas) {
+	sh::heap::free_from_heap(g_mh_heap, datas, 0);
+}
 //
 
 /*

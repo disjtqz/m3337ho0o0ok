@@ -262,11 +262,36 @@ static void mh_editor_spawn(idCmdArgs* args) {
 		return;
 	ed->editor_spawn_entitydef(edef);
 }
+static mh_new_fieldcached_t<void,
+	yuckystring_m("idGameSystemLocal"),
+	yuckystring_m("mapChangeRequest"),
+	yuckystring_m("gameSpawnInfo")> g_get_gamespawninfo{};
 
-void cmd_mh_forcereload(idCmdArgs* args)
-{
+
+static void* get_gamespawninfo() {
+	return  g_get_gamespawninfo(descan::g_idgamesystemlocal);
+
+}
+static mh_new_fieldcached_t<idListVoid,
+	yuckystring_m("idGameSystemLocal"),
+	yuckystring_m("mapChangeRequest"),
+	yuckystring_m("gameSaveFiles")> g_gamesaves{};
+
+
+static void set_gamespawninfo_bool(const char* spawninfo_var, bool value) {
+
+	auto spawninf = get_gamespawninfo();
+
+
+	set_classfield_boolean(spawninf, idType::FindClassField("idGameSpawnInfo", spawninfo_var), value);
+
+}
+using gspawn_t = yuckystring_m("idGameSpawnInfo");
+
+static mh_new_fieldcached_t< idStrStatic<1024>, gspawn_t, yuckystring_m("checkpointName")> g_chkpt_name{};
+static void force_reload_or_reset(bool reset) {
 	// Force a reload of the file. idGameSystemLocal->persistMapFile
-	//memset(((char*)descan::g_idgamesystemlocal + 0x60), 0, sizeof(void*));
+//memset(((char*)descan::g_idgamesystemlocal + 0x60), 0, sizeof(void*));
 	auto PersistMapFileVar = idType::FindClassField("idGameSystemLocal", "persistMapFile");
 	memset(((char*)descan::g_idgamesystemlocal + PersistMapFileVar->offset), 0, sizeof(void*));
 
@@ -276,7 +301,32 @@ void cmd_mh_forcereload(idCmdArgs* args)
 	auto Requested = idType::FindClassField(MapChangeRequest->type, "requested");
 	bool* mapChangeRequest_t_requested = ((bool*)((char*)descan::g_idgamesystemlocal + MapChangeRequest->offset + Requested->offset));
 	*mapChangeRequest_t_requested = true;
+
+	if (reset) {
+		//set_gamespawninfo_bool("isCheckpointReload", false);
+		set_gamespawninfo_bool("initialMapLoad", true);
+		auto chkpt_name = g_chkpt_name(get_gamespawninfo());
+		chkpt_name->base.base.len = 0;
+		memset(chkpt_name->base.buffer, 0, 1024);
+		//*g_set_initialmapload(descan::g_idgamesystemlocal) = true;
+		//nope, this just cleared the inventory and made it fists only
+		
+		/*auto gamesaves = g_gamesaves(descan::g_idgamesystemlocal);
+		gamesaves->num = 0;
+		*/
+
+	}
 }
+
+void cmd_mh_forcereload(idCmdArgs* args)
+{
+	force_reload_or_reset(false);
+}
+void cmd_mh_force_reset(idCmdArgs* args)
+{
+	force_reload_or_reset(true);
+}
+
 void cmd_mh_spmap(idCmdArgs* args) {
 
 	if (args->argc < 2) {
@@ -318,7 +368,7 @@ void install_editor_cmds() {
 	idCmd::register_command("mh_reload_decl", mh_reload_decl, "mh_reload_decl <classname(ex:idDeclWeapon)> <decl path>");
 
 	idCmd::register_command("mh_force_reload", cmd_mh_forcereload, "Force reload current level");
-
+	idCmd::register_command("mh_force_reset", cmd_mh_force_reset, "Force reset current level");
 	idCmd::register_command("mh_grab", mh_grab, "Grab an object");
 	idCmd::register_command("mh_editor", mh_editor, "Sets up the editor session");
 	idCmd::register_command("mh_editor_spawn", mh_editor_spawn, "Spawns an entity, saving it to the map and grabbing it for manipulation");

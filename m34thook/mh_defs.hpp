@@ -3,6 +3,7 @@
 //#define			MH_DEV_BUILD
 
 #define     MH_ENABLE_SAFE_DECL_RELOAD
+#define     MH_DEV_STARTMAP         "e3m3_maykr"
 
 #include <intrin.h>
 #include <array>

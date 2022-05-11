@@ -201,9 +201,12 @@ void mh_spawn(idCmdArgs* args) {
 
 }
 
+
 void install_spawning_commands() {
 	idCmd::register_command("chrispy", mh_spawn, "chrispy <entitydef> <optional xyz position, uses your look direction as default> - spawns an entity at the position");
 	idCmd::register_command("rechrispy", mh_spawn_prev, "rechrispy spawns the previous entitydef used with chrispy at the previous position");
+
+
 	idCmd::register_command("mh_spawnfile", exec_spawnlist, "<spawn file path> spawns the entities at the positions from the file");
 	idCmd::register_command("mh_start_spawnrec", begin_recording_spawns, "<spawn file path> starts recording all chrispy/rechrispy spawns/spawn positions to a file for later exec by mh_spawnfile");
 	idCmd::register_command("mh_end_spawnrec", finish_recording_spawns, "No args, closes current spawnfile");

@@ -143,4 +143,10 @@ const mh_interface_t* mh_api_get() {
 	return &g_interface;
 }
 
+
+void native_api_load_modules() {
+
+}
+
+
 #endif

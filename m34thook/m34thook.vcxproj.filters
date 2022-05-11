@@ -37,9 +37,6 @@
     <Filter Include="Source Files\pregenerated">
       <UniqueIdentifier>{a69d6faa-1d81-4171-a049-334a7134bae4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Header Files\pregenerated">
-      <UniqueIdentifier>{6a6a4a19-4e77-4f69-84df-3480342a49cf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\objfiles">
       <UniqueIdentifier>{3068534c-bf59-42d7-863b-c36cce1cb0be}</UniqueIdentifier>
     </Filter>
@@ -97,9 +94,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="memscan.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="thunkstrementer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mh_dev_hooks.cpp">
@@ -186,6 +180,12 @@
     <ClCompile Include="mh_gui_rasterizer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="mh_configfile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mh_config_globals_definitions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game_exe_interface.hpp">
@@ -213,9 +213,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="alltypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="types_with_vtables.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="resource.hpp">
@@ -348,6 +345,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="mh_game_messages.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mh_configfile.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mh_config_globals.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

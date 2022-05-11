@@ -7,6 +7,7 @@
 #include "meathook.h"
 #include "scanner_core.hpp"
 #include "fs_hooks.hpp"
+#include "mh_config_globals.hpp"
 sh_heap_t g_mh_heap = nullptr;
 static void* g_mh_heap_base = nullptr;
 char* g_mh_module_base = nullptr;
@@ -171,6 +172,8 @@ BOOL WINAPI DllMain(
 
 	g_mh_heap = sh::heap::create_heap_from_mem(g_mh_heap_base, MH_HEAP_SIZE, 0);
 	g_did_init = true;
+
+	mh_global_config_load();
 
 	init_reach();
 	g_kernel32_getsysinfo_ptr = GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetSystemInfo");
