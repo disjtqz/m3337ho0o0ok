@@ -18,6 +18,7 @@
 #include "cmdsystem.hpp"
 #include "snaphakalgo.hpp"
 #include "mhutil/mh_filesystem.hpp"
+#include "mh_config_globals.hpp"
 /*
 	the directory containing the doom exe
 	we need this for gamepass versions
@@ -893,7 +894,23 @@ void hook_idfilesystem() {
 	tmpbuffer_filename[backpos] = 0;
 	g_basepath = tmpbuffer_filename;
 	delete[] tmpbuffer_filename;
-	g_overrides_dir = g_basepath + "\\overrides\\";
+
+	if (g_overrides_absdir) {
+		g_overrides_dir = g_overrides_absdir;
+	}
+	else {
+
+		if (g_overrides_subdir[0] != '\\') {
+			g_overrides_dir = g_basepath + "\\";
+		}
+		g_overrides_dir += g_overrides_subdir;
+
+	}
+
+
+	if (!g_overrides_dir.ends_with('\\')) {
+		g_overrides_dir += "\\";
+	}
 
 #if 1
 	Xbyak::CodeGenerator redirector{};
