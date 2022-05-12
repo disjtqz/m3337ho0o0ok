@@ -1,4 +1,6 @@
 
+#define		SNAPHAK_SIZE_FLAG_HUGEPAGES		(1ULL << 62)
+
 
 struct snaphak_virtmemroutines_t {
 	void* (*m_allocate_rw)(size_t size);

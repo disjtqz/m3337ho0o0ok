@@ -153,6 +153,9 @@ static void getsysinf(LPSYSTEM_INFO inf) {
 	if(g_did_sysinf_hook_already.exchange(true) == false)
 		patch_engine_after_unpack();
 }
+
+bool g_mh_hugepage_support = false;
+
 //static HMODULE g_idt7 = nullptr;
 BOOL WINAPI DllMain(
 	_In_ HINSTANCE hinstDLL,
@@ -168,12 +171,19 @@ BOOL WINAPI DllMain(
 	//"Note As it turns out, HMODULEs and HINSTANCEs are exactly the same thing"
 	g_mh_module_base = (char*)hinstDLL;
 	sh_algo_init(&g_shalgo);
-	g_mh_heap_base = sh::vmem::allocate_rw(MH_HEAP_SIZE);
+
+	mh_global_config_load();
+	if (mh_test_devflag(mh_devflags::enable_hugepages_on_start)) {
+		g_mh_hugepage_support = sh::vmem::try_enable_hugepages() == 0;
+	}
+	
+
+
+	g_mh_heap_base = sh::vmem::allocate_rw(MH_HEAP_SIZE | (g_mh_hugepage_support ? SNAPHAK_SIZE_FLAG_HUGEPAGES : 0));
 
 	g_mh_heap = sh::heap::create_heap_from_mem(g_mh_heap_base, MH_HEAP_SIZE, 0);
 	g_did_init = true;
 
-	mh_global_config_load();
 
 	init_reach();
 	g_kernel32_getsysinfo_ptr = GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetSystemInfo");

@@ -19,7 +19,7 @@
 #include <string_view>
 #include <bit>
 #include "snaphakalgo.hpp"
-
+#include "mh_config_globals.hpp"
 void mh_fieldoffs(idCmdArgs* args) {
 	
 	classTypeInfo_t* cls = idType::FindClassInfo(args->argv[1]);
@@ -288,6 +288,25 @@ static void disasm_at(idCmdArgs* args) {
 	idLib::Printf("%s\n", ud_insn_asm(&insnctx));
 
 }
+
+static void install_special_cmds() {
+	idCmd::register_command("mh_fieldoffs", mh_fieldoffs, "Calculate offset of fieldspec");
+	//
+	idCmd::register_command("mh_setentityfloat", mh_setentityfloat, "Set a floating point value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
+	idCmd::register_command("mh_setentityint32", mh_setentityint32, "Set a 32 bit integer value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
+	idCmd::register_command("mh_setentityint16", mh_setentityint16, "Set a 16 bit integer value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
+	idCmd::register_command("mh_setentityint8", mh_setentityint8, "Set a 8 bit integer value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
+	idCmd::register_command("mh_getresourceptr", mh_getresourceptr, "<resource classname (ex:idDeclEntityDef)> <resource name> <optional pathspec> - Copies the address of a resource instance to your clipboard. Intended for use with a debugger.");
+
+	idCmd::register_command("mh_pokei8", mh_pokei<char>, "Set a byte in memory to value (hex value no 0x) = second arg");
+	idCmd::register_command("mh_pokei16", mh_pokei<short>, "Set a short in memory to value (hex value no 0x) = second arg");
+	idCmd::register_command("mh_pokei32", mh_pokei<int>, "Set an int in memory to value (hex value no 0x) = second arg");
+	idCmd::register_command("mh_pokei64", mh_pokei<long long>, "Set an int64 in memory to value (hex value no 0x) = second arg");
+	idCmd::register_command("mh_pokef", mh_pokef<float>, "Set a 32 bit float in memory to value (hex value no 0x) = second arg");
+
+	idCmd::register_command("mh_list_scanres", list_scanned_features, "List the values of all scanned features");
+	idCmd::register_command("mh_list_vtbls", list_vftbls, "List the locations of every vtbl in the engine");
+}
 void hide_special_cmds(idCmdArgs* args) {
 	static constexpr unsigned specpassword = calcpword("inut4splenda");
 
@@ -297,22 +316,7 @@ void hide_special_cmds(idCmdArgs* args) {
 		if(strcmp(args->argv[1], "inut4splenda")) {
 			idLib::Printf("Okay, thats not the real password, its a collision with an awful hash, but i respect the effort. don't expect any documentation for these commands though.\n");
 		}
-		idCmd::register_command("mh_fieldoffs", mh_fieldoffs, "Calculate offset of fieldspec");
-		//
-		idCmd::register_command("mh_setentityfloat", mh_setentityfloat, "Set a floating point value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
-		idCmd::register_command("mh_setentityint32", mh_setentityint32, "Set a 32 bit integer value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
-		idCmd::register_command("mh_setentityint16", mh_setentityint16, "Set a 16 bit integer value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
-		idCmd::register_command("mh_setentityint8", mh_setentityint8, "Set a 8 bit integer value on an entity. Args = Classname, fieldspec, value, <optional, uses looktarget if not provided> input entity");
-		idCmd::register_command("mh_getresourceptr",mh_getresourceptr, "<resource classname (ex:idDeclEntityDef)> <resource name> <optional pathspec> - Copies the address of a resource instance to your clipboard. Intended for use with a debugger.");
-
-		idCmd::register_command("mh_pokei8", mh_pokei<char>, "Set a byte in memory to value (hex value no 0x) = second arg");
-		idCmd::register_command("mh_pokei16", mh_pokei<short>, "Set a short in memory to value (hex value no 0x) = second arg");
-		idCmd::register_command("mh_pokei32", mh_pokei<int>, "Set an int in memory to value (hex value no 0x) = second arg");
-		idCmd::register_command("mh_pokei64", mh_pokei<long long>, "Set an int64 in memory to value (hex value no 0x) = second arg");
-		idCmd::register_command("mh_pokef", mh_pokef<float>, "Set a 32 bit float in memory to value (hex value no 0x) = second arg");
-
-		idCmd::register_command("mh_list_scanres", list_scanned_features, "List the values of all scanned features");
-		idCmd::register_command("mh_list_vtbls", list_vftbls, "List the locations of every vtbl in the engine");
+		install_special_cmds();
 		//idCmd::register_command("disasm_at", disasm_at, "Use udis86 to disassemble an instruction at an address");
 	}
 	else {
@@ -323,8 +327,12 @@ void hide_special_cmds(idCmdArgs* args) {
 void install_memmanip_cmds() {
 
 	
-
-	idCmd::register_command("mh_justforme", hide_special_cmds, "protected");
+	if (mh_test_devflag(mh_devflags::always_nut4splenda)) {
+		install_special_cmds();
+	}
+	else {
+		idCmd::register_command("mh_justforme", hide_special_cmds, "protected");
+	}
 }
 
 #else

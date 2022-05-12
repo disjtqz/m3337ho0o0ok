@@ -742,26 +742,32 @@ bool idType::enum_member_is(enumTypeInfo_t* enm, long long value, const char* me
 		return false;
 	return sh::string::streq(name, membername);
 }
-
-
 MH_NOINLINE
-long long* idType::get_enum_member_value(const char* ename, const char* mname) {
+long long* idType::get_enum_member_value(enumTypeInfo_t* ename, const char* mname) {
 
-	enumTypeInfo_t* etyp = FindEnumInfo(ename);
+	enumTypeInfo_t* etyp = ename;
 	MH_UNLIKELY_IF(!etyp) {
 		return nullptr;
 	}
 	enumValueInfo_t* values = etyp->values;
 
-	while(values->name && values->name[0]) {
-		
-		if(sh::string::streq(values->name, mname)){
+	while (values->name && values->name[0]) {
+
+		if (sh::string::streq(values->name, mname)) {
 			return &values->value;
 		}
 
 		++values;
 	}
 	return nullptr;
+}
+
+
+MH_NOINLINE
+long long* idType::get_enum_member_value(const char* ename, const char* mname) {
+
+	enumTypeInfo_t* etyp = FindEnumInfo(ename);
+	return get_enum_member_value(etyp, mname);
 }
 
 

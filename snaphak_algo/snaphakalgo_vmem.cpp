@@ -5,6 +5,9 @@
 #include <ntstatus.h>
 #include <Sddl.h>
 
+
+
+
 /*
 struct snaphak_virtmemroutines_t {
 	void* (*m_allocate_rw)(size_t size);
@@ -13,15 +16,30 @@ struct snaphak_virtmemroutines_t {
 	void (*m_prefetch_for_seq_access)(void* mem, size_t size);
 };
 */
+
+
+static DWORD get_largepages_norm_size(size_t& size) {
+    if (size & SNAPHAK_SIZE_FLAG_HUGEPAGES) {
+        size &= ~SNAPHAK_SIZE_FLAG_HUGEPAGES;
+
+        return MEM_LARGE_PAGES;
+    }
+    return 0;
+}
+
 SNAPHAK_SHARED_SEG
 static 
 void* cs_vmem_allocate_rw(size_t size) {
-	return VirtualAlloc(nullptr, size, MEM_COMMIT, PAGE_READWRITE);
+    
+    DWORD largepage_flag = get_largepages_norm_size(size);
+
+	return VirtualAlloc(nullptr, size, MEM_COMMIT| largepage_flag, PAGE_READWRITE);
 }
 SNAPHAK_SHARED_SEG
 static 
 void* cs_vmem_allocate_rw_absolute(size_t size, void* where) {
-	void* res = VirtualAlloc(where, size, MEM_COMMIT, PAGE_READWRITE);
+    DWORD largepage_flag = get_largepages_norm_size(size);
+	void* res = VirtualAlloc(where, size, MEM_COMMIT| largepage_flag, PAGE_READWRITE);
 	if(res !=where)
 		return nullptr;
 	return res;
@@ -29,7 +47,8 @@ void* cs_vmem_allocate_rw_absolute(size_t size, void* where) {
 SNAPHAK_SHARED_SEG
 static 
 void* cs_vmem_allocate_rwx_absolute(size_t size, void* where) {
-	void* res = VirtualAlloc(where, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    DWORD largepage_flag = get_largepages_norm_size(size);
+	void* res = VirtualAlloc(where, size, MEM_COMMIT| largepage_flag, PAGE_EXECUTE_READWRITE);
 	if(res !=where)
 		return nullptr;
 	return res;

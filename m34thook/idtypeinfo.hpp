@@ -178,6 +178,8 @@ namespace idType {
 	MH_NOINLINE
 	long long* get_enum_member_value(const char* ename, const char* mname);
 	MH_NOINLINE
+		long long* get_enum_member_value(enumTypeInfo_t* ename, const char* mname);
+	MH_NOINLINE
 	classVariableInfo_t* FindClassField(const char* cname, const char* fieldname);
 
 	classTypeInfo_t* ClassTypes(unsigned& out_n, unsigned whichsource=0);

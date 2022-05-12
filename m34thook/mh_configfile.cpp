@@ -13,7 +13,7 @@ std::string get_mh_file_path(bool* success, const char* subpath) {
 	}
 
 	std::filesystem::path p = path;
-	p.concat("/.meathook/");
+	p.concat("/meathook/");
 
 
 	if (!std::filesystem::is_directory(p)) {
@@ -291,6 +291,8 @@ void mh_configfile_load(
 	void* cfg_file_contents = filesys::get_file_contents(path_to_config.c_str(), &cfg_file_size);
 
 	if (!cfg_file_contents) {
+
+
 		return;
 	}
 

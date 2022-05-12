@@ -95,6 +95,24 @@ void filesys::seek_file(cs_fd_t fd, std::int64_t position) {
 	NtSetInformationFile(fd, &iblock, &position, sizeof(std::int64_t), FilePositionInformation);
 
 }
+
+static void* alloc_mh(size_t sz) {
+	if (!g_mh_heap) {
+		return malloc(sz); //we're early on in initialization
+	}
+	else {
+		return sh::heap::alloc_from_heap(g_mh_heap, sz, 0);
+	}
+}
+static void free_mh(void* vp) {
+	if (!g_mh_heap) {
+		free(vp);
+	}
+	else {
+		return sh::heap::free_from_heap(g_mh_heap, vp, 0);
+	}
+}
+
 CS_NOINLINE
 void* filesys::get_file_contents(const char* path, unsigned* out_size) {
 	cs_fd_t fd = open_file(path, filemode_e::READ);
@@ -114,8 +132,9 @@ err:
 		close_file(fd);
 		goto err;
 	}
+	
 
-	mem = sh::heap::alloc_from_heap(g_mh_heap, ln + 1, 0);
+	mem = alloc_mh(ln + 1);
 
 	if (!mem) {
 		goto close_file_err;
@@ -123,7 +142,7 @@ err:
 	nread = read_file(fd, mem, ln);
 
 	if (nread <= 0) {
-		sh::heap::free_from_heap(g_mh_heap, mem, 0);
+		free_mh( mem);
 		goto close_file_err;
 	}
 	//plop a zero just after the data for safety
@@ -132,8 +151,13 @@ err:
 	*out_size = ln;
 	return mem;
 }
+
+CS_NOINLINE
+void filesys::write_file_contents(const char* path, const void* data, unsigned data_size) {
+
+}
 void filesys::free_file_contents(void* datas) {
-	sh::heap::free_from_heap(g_mh_heap, datas, 0);
+	free_mh(datas);
 }
 //
 

@@ -466,6 +466,9 @@ namespace sh::vmem {
 	static inline void release_rw(void* mem) { return g_shalgo.m_vmemroutines.m_release_rw(mem); }
 	static inline void discard_contents(void* mem, size_t size) { return g_shalgo.m_vmemroutines.m_discard_contents(mem, size); }
 	static inline void prefetch_for_seq_access(void* mem, size_t size) { return g_shalgo.m_vmemroutines.m_prefetch_for_seq_access(mem, size); }
+	static inline int try_enable_hugepages() {
+		return g_shalgo.m_vmemroutines.m_try_enable_hugepages();
+	}
 }
 namespace sh::coros {
 

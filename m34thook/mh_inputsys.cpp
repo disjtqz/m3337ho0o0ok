@@ -19,6 +19,7 @@
 #include "mh_inputsys.hpp"
 #include "mh_mainloop.hpp"
 #include <mutex>
+#include "mh_config_globals.hpp"
 static void* g_original_queueevent = nullptr;
 
 static enumTypeInfo_t* g_eventtype_enum = nullptr;
@@ -425,6 +426,37 @@ done:
 	return consumed;
 }
 
+static bool g_setup_console_swap = false;
+
+static int g_console_key_new = -1;
+static int g_console_key_old = -1;
+CS_NOINLINE
+
+static void setup_the_console_swap() {
+
+
+
+
+	auto v = g_keynum_enum->values;
+
+	
+	while (v->name && v->name[0]) {
+		//skip over K_
+		if (sh::string::strieq(&v->name[2], g_console_key_swap)) {
+			g_console_key_new = v->value;
+			break;
+		}
+		++v;
+
+	}
+
+	g_setup_console_swap = true;
+	g_console_key_old = *idType::get_enum_member_value(g_keynum_enum, "K_GRAVE");
+
+
+
+}
+
 static __int64  idInputEventQueue_QueueEvent(
 	__int64 a1,
 	int evtype,
@@ -438,6 +470,23 @@ static __int64  idInputEventQueue_QueueEvent(
 
 		init_inputeventqueue_hook_globals();
 		//	init_testmacro();
+	}
+	if (g_console_key_swap) {
+		MH_UNLIKELY_IF(!g_setup_console_swap) {
+			setup_the_console_swap();
+		}
+
+
+		if (evtype == SE_KEY) {
+			if (evval == g_console_key_old) {
+				evval = g_console_key_new;
+			}
+			else if (evval == g_console_key_new) {
+				evval = g_console_key_old;
+			}
+		}
+
+
 	}
 #if 0
 	if (idType::enum_member_is(g_eventtype_enum, evtype, "SE_CHAR")) {

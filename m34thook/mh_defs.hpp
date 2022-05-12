@@ -669,3 +669,5 @@ extern const char* g_seh_trigger_msg;
 extern char* g_decl_reload_stack_base;
 
 #endif
+extern bool g_mh_hugepage_support;
+

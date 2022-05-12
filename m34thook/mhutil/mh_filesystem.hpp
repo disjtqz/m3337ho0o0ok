@@ -36,7 +36,12 @@ namespace filesys {
 	CS_NOINLINE
 	void* get_file_contents(const char* path, unsigned* out_size);
 
+	
+
 	void free_file_contents(void* datas);
+
+	CS_NOINLINE
+		void write_file_contents(const char* path, const void* data, unsigned data_size);
 
 	/*
 		using this is faster than the end-relative or current relative seek operations 
