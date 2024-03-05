@@ -1,4 +1,5 @@
 #include <cstdint>
+#include <cassert>
 #include <intrin.h>
 #include "rb_impl.hpp"
 #include "bmp_impl.hpp"

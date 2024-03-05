@@ -36,6 +36,15 @@ void* cs_vmem_allocate_rw(size_t size) {
 	return VirtualAlloc(nullptr, size, MEM_COMMIT| largepage_flag, PAGE_READWRITE);
 }
 SNAPHAK_SHARED_SEG
+static
+void* cs_vmem_allocate_rwx(size_t size) {
+
+    DWORD largepage_flag = get_largepages_norm_size(size);
+
+    return VirtualAlloc(nullptr, size, MEM_COMMIT | largepage_flag, PAGE_EXECUTE_READWRITE);
+}
+
+SNAPHAK_SHARED_SEG
 static 
 void* cs_vmem_allocate_rw_absolute(size_t size, void* where) {
     DWORD largepage_flag = get_largepages_norm_size(size);
@@ -271,6 +280,7 @@ static int enable_huge_pages()
 }
 void vmemalgos_init(snaphak_virtmemroutines_t* routines) {
 	routines->m_allocate_rw = cs_vmem_allocate_rw;
+    routines->m_allocate_rwx = cs_vmem_allocate_rwx;
 	routines->m_release_rw = cs_vmem_release;
 	routines->m_discard_contents = cs_vmem_discard;
 	routines->m_prefetch_for_seq_access = cs_vmem_prefetch;

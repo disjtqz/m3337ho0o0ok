@@ -4,7 +4,10 @@
 
 #define     MH_ENABLE_SAFE_DECL_RELOAD
 #define     MH_DEV_STARTMAP         "e3m3_maykr"
+#define     __NH_CONCAT(x, z, y)        x##y##z
+#define     _MH_CONCAT(cb, ...)             cb(__VA_ARGS__)
 
+#define     mh_concat2_m(x, y)          _MH_CONCAT(__NH_CONCAT, x, , y)
 #include <intrin.h>
 #include <array>
 #include "snaphakalgo.hpp"

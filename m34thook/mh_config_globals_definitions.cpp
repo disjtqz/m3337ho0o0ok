@@ -5,6 +5,8 @@ char* g_loadmaponstart = nullptr;
 char* g_overrides_subdir = (char*)"overrides";
 char* g_overrides_absdir = nullptr;
 char* g_console_key_swap = nullptr;
+long long g_preallocated_ghost_heap_size = ((1024ULL * 1024ULL * 1024ULL)) * 2ULL;
+
 long long mh_devflags::g_devflags = 0;
 #define		DEVFLAG_CFGVAR(name)		{&mh_devflags::g_devflags, #name, mh_devflags::name}
 static const constexpr mh_configvar_header_t g_mh_configvars[] = {
@@ -13,7 +15,9 @@ static const constexpr mh_configvar_header_t g_mh_configvars[] = {
 	{&g_overrides_subdir, "overrides_subdir"},
 	{&g_console_key_swap, "console_key_swap"},
 	DEVFLAG_CFGVAR(always_nut4splenda),
-	DEVFLAG_CFGVAR(enable_hugepages_on_start)
+	DEVFLAG_CFGVAR(enable_hugepages_on_start),
+	DEVFLAG_CFGVAR(preallocate_entire_game_heap),
+	{&g_preallocated_ghost_heap_size, "preallocated_ghost_heap_size"}
 };
 
 static constexpr unsigned g_n_mh_configvars = sizeof(g_mh_configvars) / sizeof(g_mh_configvars[0]);

@@ -143,13 +143,69 @@ enumTypeInfo_t* idType::FindEnumInfo(const char* ename) {
 	return reinterpret_cast<enumTypeInfo_t * (*)(void*, const char*)>(descan::g_idtypeinfo_findenuminfo)(typeinfo_tools, ename);
 }
 
+/*
+SPECIFIERFLAG_([^\s]+)([^,]+),
+*/
+#undef CONST
+#undef PURE
+#define		EXPAND_SPECIFIERFLAGS(SPECFLAG)	SPECFLAG(CONST)\
+	SPECFLAG(VOLATILE)\
+	SPECFLAG(AUTO)\
+	SPECFLAG(REGISTER)\
+	SPECFLAG(STATIC)\
+	SPECFLAG(EXTERN)\
+	SPECFLAG(MUTABLE)\
+	SPECFLAG(INLINE)\
+	SPECFLAG(VIRTUAL)\
+	SPECFLAG(EXPLICIT)\
+	SPECFLAG(FRIEND)\
+	SPECFLAG(TYPEDEF)\
+	SPECFLAG(CANSKIP)\
+	SPECFLAG(CANSUPPRESS)\
+	SPECFLAG(CLIENTSAFE)\
+	SPECFLAG(METASTATE)\
+	SPECFLAG(ALLOCATOR)\
+	SPECFLAG(SAVESKIP)\
+	SPECFLAG(SAVEOBJ)\
+	SPECFLAG(EDIT)\
+	SPECFLAG(DESIGN)\
+	SPECFLAG(DEF)\
+	SPECFLAG(ENUMBITFLAGS)\
+	SPECFLAG(NOSCRIPT)\
+	SPECFLAG(SCRIPTDEFINE)\
+	SPECFLAG(BOLD)\
+	SPECFLAG(META)\
+	SPECFLAG(HIDDEN)\
+	SPECFLAG(LOADSKIP)\
+	SPECFLAG(PURE)
+
+
+static void format_specifierflags(unsigned int sf, char* outbuf) {
+
+#define		sfh(flg)		if(sf & mh_concat2_m(SPECIFIERFLAG_, flg) ){strcat(outbuf, #flg "|");}
+
+
+	EXPAND_SPECIFIERFLAGS(sfh);
+
+
+
+	unsigned outlen = sh::string::strlength(outbuf);
+
+	if (outlen != 0) {
+
+		//delete the trailing |
+		outbuf[outlen - 1] = 0;
+	}
+}
+
 static void dump1(std::string& filetext, const char* entname, std::set<std::string>& seen, std::vector<const char*>& queued) {
+	char sfbuf[4096] = {};
 
 	auto ctype = idType::FindClassInfo(entname);
 
 	if (!ctype)
 		return;
-	filetext += "\nstruct ";
+	filetext += "\nstruct __cppobj ";
 	filetext += entname;
 	if (ctype->superType && ctype->superType[0]) {
 		filetext += " : public ";
@@ -165,7 +221,18 @@ static void dump1(std::string& filetext, const char* entname, std::set<std::stri
 		char buff[64];
 		sprintf_s(buff, "Offset %d,\t size %d\n", bleh2->offset, bleh2->size);
 
+
+
 		filetext += buff;
+		sfbuf[0] = 0;
+		format_specifierflags(bleh2->flags, sfbuf);
+
+		if (sfbuf[0]) {
+			filetext += "\t//";
+			filetext += &sfbuf[0];
+			filetext += "\n";
+		}
+
 		if (bleh2->comment && bleh2->comment[0]) {
 			filetext += "\t//";
 			filetext += bleh2->comment;
@@ -184,25 +251,193 @@ static void dump1(std::string& filetext, const char* entname, std::set<std::stri
 	}
 	filetext += "};\n";
 }
+static const char* get_typename_for_enumtype(enumType et) {
+	switch (et) {
+	case ENUM_S8:
+		return "__int8";
+	case ENUM_U8:
+		return "unsigned __int8";
+	case ENUM_U16:
+		return "unsigned __int16";
+	case ENUM_S16:
+		return "__int16";
+	case ENUM_U32:
+		return "unsigned __int32";
+	case ENUM_S32:
+		return "__int32";
+	case ENUM_U64:
+		return "unsigned __int64";
+	case ENUM_S64:
+		return "__int64";
+	}
+}
+
+static const char* get_suffix_for_enum_type_values(enumType et) {
+
+	if (et == ENUM_U32) {
+		return "U";
+	}
+	else if (et == ENUM_U64) {
+		return "ULL";
+	}
+	else if (et == ENUM_S64) {
+		return "LL";
+	}
+	return nullptr;
+}
+
+static bool is_unsigned_enum_type(enumType et) {
+
+	return et == ENUM_U8 || et == ENUM_U16 || et == ENUM_U32 || et == ENUM_U64;
+}
+//similarity score
+//nvm zoned out and wrote this on autopilot, i want the ratio
+/*
+static double fuzzu32(unsigned x, unsigned y) {
+	return static_cast<double>(min(x, y)) / static_cast<double>(max(x, y));
+
+}*/
+
+static double ratio_u32(unsigned numerator, unsigned denominator) {
+
+	return static_cast<double>(numerator) / static_cast<double>(denominator);
+
+}
+
+static bool looks_like_flag_enum(enumTypeInfo_t* e) {
+
+	enumValueInfo_t* ev = e->values;
+
+	unsigned qty_with_onebit_members = 0;
+	unsigned qty_with_multibit_members = 0;
+
+	unsigned nseen = 0;
+
+	unsigned long long largest_value = INT64_MIN;
+	while (ev->name && ev->name[0]) {
+		++nseen;
+		largest_value = max(largest_value, ev->value);
+		if (std::popcount<unsigned long long>(ev->value) < 2) {
+			++qty_with_onebit_members;
+		}
+		else {
+			++qty_with_multibit_members;
+		}
+		++ev;
+	}
+	//if less than 5, the majority of members are onebit so ignore
+	//0, 1, 2, 3, 4, 5
+	if (largest_value < 5)
+		return false;
+	//make sure we have no zeros before we do ratio
+	if (qty_with_multibit_members == 0) {
+		return true;
+	}
+	if (qty_with_onebit_members == 0) {
+		return false;
+	}
+
+	//require supermajority
+	return ratio_u32(qty_with_onebit_members, nseen) > 0.66;
+	
+}
+
+static std::string choose_format_for_enumtypeinfo(enumTypeInfo_t* e) {
+	bool isflags = looks_like_flag_enum(e);
+
+
+	char format[64];
+	strcpy(format, "\t%s = ");
+
+	if (isflags) {
+		strcat(format, "0x%llX");
+	}
+	else if(is_unsigned_enum_type(e->type)) {
+
+		
+		strcat(format, "%llu");
+	}
+	else {
+		strcat(format, "%lld");
+	}
+	const char* vsuff = get_suffix_for_enum_type_values(e->type);
+
+	if (vsuff) {
+		strcat(format, vsuff);
+	}
+	strcat(format, ",\n");
+
+	return std::string{ &format[0] };
+
+}
+static std::string stringify_enum(enumTypeInfo_t* e) {
+
+	if (!e || !e->values)
+		return "";
+	
+	std::string fmt = choose_format_for_enumtypeinfo(e);
+
+	char intermed_buff[512];
+
+	std::string result = "enum ";
+
+	if(e->name)
+		result += e->name;
+
+	result += " : ";
+
+	result += get_typename_for_enumtype(e->type);
+
+	result += " { \n";
+
+	auto ev = e->values;
+
+	while (ev && ev->name && ev->name[0]) {
+		
+		unsigned intermed_len = sprintf(intermed_buff, fmt.c_str(), ev->name, ev->value);
+
+		result.append(&intermed_buff[0], &intermed_buff[intermed_len]);
+
+		++ev;
+	}
+
+	return result + "};\n";
+
+
+}
 
 void idType::do_idlib_dump() {
-#if 0
+#if 1
 	std::set<std::string> seen_names{};
 
-	for (auto&& ename : g_all_entity_names)
-		seen_names.insert(ename);
+
+	//for (auto&& ename : g_all_entity_names)
+//		seen_names.insert(ename);
 
 	std::string filetext{};
 	std::vector<const char*> queued_types{};
 	queued_types.reserve(131072);
-
-	for (auto entname : g_all_types) {
-
-
-		dump1(filetext, entname, seen_names, queued_types);
-
-
+	for (unsigned whichsource = 0; whichsource < 2; ++whichsource) {
+		unsigned n;
+		enumTypeInfo_t* etyp = idType::EnumTypes(n, whichsource);
+		for (unsigned i = 0; i < n; ++i) {
+			
+			filetext += stringify_enum(&etyp[i]);
+		}
 	}
+	//for (auto entname : g_all_types) {
+	for (unsigned whichsource = 0; whichsource < 2; ++whichsource) {
+		unsigned n;
+		classTypeInfo_t* ctyp = idType::ClassTypes(n, whichsource);
+		for (unsigned i = 0; i < n; ++i) {
+
+
+			dump1(filetext, ctyp[i].name, seen_names, queued_types);
+		}
+	}
+
+
+	//}
 #if 0
 	while (queued_types.size() != 0) {
 		std::vector<const char*> old_queued_types = std::move(queued_types);
@@ -213,9 +448,10 @@ void idType::do_idlib_dump() {
 	}
 #endif
 	FILE* outtypes = nullptr;
-	fopen_s(&outtypes, "eternal_idlib.h", "w");
+	fopen_s(&outtypes, "eternal_idlib.h", "wb");
 
-	fputs(filetext.c_str(), outtypes);
+	fwrite(filetext.c_str(), filetext.length(), 1, outtypes);
+	fflush(outtypes);
 	fclose(outtypes);
 #endif
 }

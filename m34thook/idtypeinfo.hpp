@@ -17,6 +17,51 @@ struct enumValueInfo_t {
 	long long value;
 
 };
+enum enumType : int
+{
+	ENUM_S8 = 0x0,
+	ENUM_U8 = 0x1,
+	ENUM_S16 = 0x2,
+	ENUM_U16 = 0x3,
+	ENUM_S32 = 0x4,
+	ENUM_U32 = 0x5,
+	ENUM_S64 = 0x6,
+	ENUM_U64 = 0x7,
+};
+enum specifierFlags_t : __int32
+{
+	SPECIFIERFLAG_CONST = 0x1,
+	SPECIFIERFLAG_VOLATILE = 0x2,
+	SPECIFIERFLAG_AUTO = 0x4,
+	SPECIFIERFLAG_REGISTER = 0x8,
+	SPECIFIERFLAG_STATIC = 0x10,
+	SPECIFIERFLAG_EXTERN = 0x20,
+	SPECIFIERFLAG_MUTABLE = 0x40,
+	SPECIFIERFLAG_INLINE = 0x80,
+	SPECIFIERFLAG_VIRTUAL = 0x100,
+	SPECIFIERFLAG_EXPLICIT = 0x200,
+	SPECIFIERFLAG_FRIEND = 0x400,
+	SPECIFIERFLAG_TYPEDEF = 0x800,
+	SPECIFIERFLAG_CANSKIP = 0x1000,
+	SPECIFIERFLAG_CANSUPPRESS = 0x4000,
+	SPECIFIERFLAG_CLIENTSAFE = 0x8000,
+	SPECIFIERFLAG_METASTATE = 0x10000,
+	SPECIFIERFLAG_ALLOCATOR = 0x20000,
+	SPECIFIERFLAG_SAVESKIP = 0x40000,
+	SPECIFIERFLAG_SAVEOBJ = 0x80000,
+	SPECIFIERFLAG_EDIT = 0x100000,
+	SPECIFIERFLAG_DESIGN = 0x200000,
+	SPECIFIERFLAG_DEF = 0x400000,
+	SPECIFIERFLAG_ENUMBITFLAGS = 0x800000,
+	SPECIFIERFLAG_NOSCRIPT = 0x1000000,
+	SPECIFIERFLAG_SCRIPTDEFINE = 0x2000000,
+	SPECIFIERFLAG_BOLD = 0x4000000,
+	SPECIFIERFLAG_META = 0x8000000,
+	SPECIFIERFLAG_HIDDEN = 0x10000000,
+	SPECIFIERFLAG_LOADSKIP = 0x20000000,
+	SPECIFIERFLAG_PURE = 0x40000000,
+};
+
 
 #define		ENUMFLAG_IS_BITFLAGS		0x000000000080000ull
 struct enumTypeInfo_t {
@@ -24,7 +69,7 @@ struct enumTypeInfo_t {
 	char* name;
 	//offset 8 , size 4
 	unsigned long long flags;
-	int type;
+	enumType type;
 	int valueIndexLength;
 
 	//offset 16 , size 8
@@ -52,7 +97,7 @@ struct classVariableInfo_t
 	char* name;
 	int offset;
 	int size;
-	int flags;
+	int flags; // specifierFlags_t
 	//char pad36[4];
 	int m_mh_added_delta2type; //delta to FindClassInfo(type)
 	char* comment;//i dont think anything in the engine actually uses comment, so i might be able to pack it into a delta and put more data here if i ever need it
@@ -116,7 +161,7 @@ struct  idHierarchy
 	idHierarchy<T>* child;
 	T* owner;
 };
-
+using idclass_placement_create_func_t = idClass * (*)(idClass* cls, unsigned clssize);
 struct __declspec(align(8)) idTypeInfo
 {
 	char* classname;
@@ -125,7 +170,7 @@ struct __declspec(align(8)) idTypeInfo
 	char gap18[16];
 	idClass** CreateInstance;
 	idClass*** CreateCloneInstance;
-	idClass*** PlacementCreateInstance;
+	idClass* (*PlacementCreateInstance)(idClass* cls, unsigned clssize);
 	void** Destruct;
 	void* VerifyPrototypeMacro;
 	idTypeInfo* super;

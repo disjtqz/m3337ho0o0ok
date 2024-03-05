@@ -105,7 +105,7 @@ static void callinstrument_logic(uintptr_t retaddr) {
 	ringbuffer_list_ele_t* ringbuff =  *ringbufferpos_for;
 
 	if(!ringbuff) {
-		size_t newringbuffpos = _interlockedincrement64((volatile long long*) &g_current_free_ringbuff);
+		size_t newringbuffpos = _InterlockedIncrement64((volatile long long*) &g_current_free_ringbuff);
 		if(newringbuffpos >= NUM_RESERVED_RINGBUFFS) {
 			return;
 		}
@@ -123,7 +123,7 @@ static void callinstrument_logic(uintptr_t retaddr) {
 
 
 
-	size_t currtime = _interlockedincrement64((volatile long long*)&g_current_calltime);
+	size_t currtime = _InterlockedIncrement64((volatile long long*)&g_current_calltime);
 
 
 	/*

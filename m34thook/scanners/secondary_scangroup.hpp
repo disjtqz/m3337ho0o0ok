@@ -278,6 +278,31 @@ using locate_reliablemsg = memscanner_t<
 >;
 	
 
+//v6.66 r2 = 140D1DC90 
+//v1 = 140B45D00
+//warning: we include 2 short jmp displacements in this scanner
+using locate_gamelocal_getchallengeentity = memscanner_t<
+	scanbytes<0x40, 0x53, 0x48, 0x83, 0xec, 0x20, 0x48, 0x8d, 0x99, 0x40>,
+	skip<2>,
+	scanbytes<0x0, 0x8b, 0x3, 0x48, 0x8d, 0x53, 0x4, 0x3b, 0x2, 0x75, 0x1b, 0x3d, 0xfe, 0xff, 0xff, 0x1, 0x74, 0x1c, 0x48, 0x83, 0x7b, 0x8, 0x0, 0x75>, //this next short jmp offset does vary across versions
+	masked_eq_byte<0xF0, 0x10>, //0x1c in some, 0x15 in others
+
+	scanbytes<0x48, 0x83, 0x3d>,
+
+	match_riprel32_to<&descan::g_gamelocal, 1>,
+	scanbytes<0x0, 0x74, 0xb, 0x48, 0x8b, 0xd3, 0x48, 0x8b, 0xcb, 0xe8>,
+	skip<4>,//idManagedClassPtr<idGameChallenge>::SetSpawnId
+	//V6.66 = mov tmp, [ptr] cmp ptr, 0 
+	//v1 = cmp [ptr], 0
+
+	match_either<
+	scanbytes<0x48, 0x8b, 0x4b, 0x8, 0x48, 0x85, 0xc9, 0x74>,
+	scanbytes<0x48, 0x83, 0x7b, 0x8, 0x0, 0x74>
+	>
+
+>;//could use mh_disassembler_t to get the next call after this point, which is idManagedClassPtr<idGameChallenge>::SetSpawnId. from that you can get GetManagedObjectForSpawnId? , idManagedClassPtr<idEntity>::SetObject, idEntity::CastTo, idEntity::RemoveEntityPointerFromList, and idManagedClass::Unlink
+
+
 
 namespace scanners_phase2 {
 #if !defined(MH_ETERNAL_V6)
@@ -326,9 +351,11 @@ namespace scanners_phase2 {
 	BSCANENT(drawchar_locator_entry, &descan::g_idRenderModelGui__DrawChar, scanbehavior_locate_csrel_after< locate_idRenderModelGui_DrawChar>);
 	BSCANENT(reliablemsg_entry, &descan::g_handlereliable, scanbehavior_locate_csrel_after< locate_reliablemsg>);
 
+	BSCANENT(gamelocal_getchallengeentity_locator_entry, &descan::g_gamelocal_get_challenge_entity, scanbehavior_locate_func< locate_gamelocal_getchallengeentity>);
+
 	//9 scanners
 #define		PAR_SCANGROUP_P2_1 				entry_phase2_locate_findclassinfo, entry_phase2_locate_idfilecompressed_getfile
-#define		PAR_SCANGROUP_P2_2				entry_phase2_locate_resourcelist_for_classname,locate_subimage_upload_entry
+#define		PAR_SCANGROUP_P2_2				entry_phase2_locate_resourcelist_for_classname,locate_subimage_upload_entry//, gamelocal_getchallengeentity_locator_entry
 #define		PAR_SCANGROUP_P2_3				locate_idmapfilelocal_write_body_entry,locate_findenuminfo_entry,drawfilled_located_entry
 #define		PAR_SCANGROUP_P2_4				locate_idlib_fatalerror_entry,locate_idlib_error_entry, sqrtf_locator_entry,drawchar_locator_entry
 

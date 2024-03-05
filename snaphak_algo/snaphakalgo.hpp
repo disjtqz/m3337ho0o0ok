@@ -461,6 +461,7 @@ namespace sh::memops {
 
 namespace sh::vmem {
 	static inline void* allocate_rw(size_t size) { return g_shalgo.m_vmemroutines.m_allocate_rw(size); }
+	static inline void* allocate_rwx(size_t size) { return g_shalgo.m_vmemroutines.m_allocate_rwx(size); }
 	static inline void* allocate_rwx_absolute(size_t size, void* where) { return g_shalgo.m_vmemroutines.m_allocate_rwx_absolute(size, where); }
 	static inline void* allocate_rw_absolute(size_t size, void* where) { return g_shalgo.m_vmemroutines.m_allocate_rw_absolute(size, where); }
 	static inline void release_rw(void* mem) { return g_shalgo.m_vmemroutines.m_release_rw(mem); }

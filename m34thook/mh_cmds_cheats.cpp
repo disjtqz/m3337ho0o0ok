@@ -30,7 +30,6 @@ struct idClientGameMsgDoom2016
 
 
 
-
 void cmd_noclip(idCmdArgs* args) {
 	auto player = get_local_player();
 
@@ -755,8 +754,7 @@ void cheats_postinit() {
 
 }
 void install_cheat_cmds() {
-
-	idCmd::register_command("mh_killAi", mh_killai, "Kills all living ai");
+    idCmd::register_command("mh_killAi", mh_killai, "Kills all living ai");
 	idCmd::register_command("mh_removeAi", mh_removeAi, "Removes all living ai");
 	idCmd::register_command("mh_randomact", goofy_op, "<distance> <scalar> uses scalar + random values to randomly change the color, scale, and velocity of all entities within distance from player");
 	idCmd::register_command("mh_ScriptCmdEnt", mh_ScriptCmdEnt_console, "<entity> <event> <args> ai_ScriptCmdEnt resurrected, now copies the results of the eventcall to your clipboard for chaining commands together");

@@ -43,6 +43,9 @@
     <Filter Include="Source Files\objfiles">
       <UniqueIdentifier>{9772d6ec-8240-4817-a58e-45381c52a673}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\reference_code">
+      <UniqueIdentifier>{bd4479a7-a765-4a08-bd28-88fe5e6aab24}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -184,6 +187,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="mh_config_globals_definitions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mh_new_entity_types.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -352,6 +358,9 @@
     </ClInclude>
     <ClInclude Include="mh_config_globals.hpp">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="idlib_templates.hpp">
+      <Filter>Header Files\reference_code</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -29,6 +29,8 @@
 */
 #define		SCAN_UNROLL_AMNT		2
 #define			BEHAVIOR_PURE		MH_PURE
+
+#define		DISABLE_MEMSCAN_ATOMIC_STORES
 struct scanstate_t {
 	blamdll_t* const dll;
 	unsigned char* addr;
@@ -207,10 +209,10 @@ struct scanbytes {
 
 };
 
-template<void** to>
+template<void** to, unsigned extra_offs=0>
 struct match_riprel32_to {
 
-	static constexpr unsigned required_valid_size = 4;
+	static constexpr unsigned required_valid_size = 4 + extra_offs;
 
 	MH_FORCEINLINE
 		static bool match(scanstate_t& state) {
@@ -218,7 +220,7 @@ struct match_riprel32_to {
 			return false;
 		ptrdiff_t df = *reinterpret_cast<int*>(state.addr);
 
-		if (*to != (void*)(state.addr + 4 + df)) {
+		if (*to != (void*)(state.addr + (4+ extra_offs) + df )) {
 			return false;
 		}
 
@@ -302,9 +304,13 @@ struct skip_and_capture_rva {
 
 		ptrdiff_t df = *reinterpret_cast<int*>(state.addr);
 
-		
-		store8_no_cache(rva_out, (void*)(state.addr + 4 + df));
+#if defined(DISABLE_MEMSCAN_ATOMIC_STORES)
 
+		*rva_out = (void*)(state.addr + 4 + df);
+
+#else
+		store8_no_cache(rva_out, (void*)(state.addr + 4 + df));
+#endif
 		//*rva_out = (void*)(state.addr + 4 + df);
 
 		state.addr += 4;
@@ -320,15 +326,18 @@ struct skip_and_capture_4byte_value {
 
 		//*number_out = *reinterpret_cast<unsigned*>(state.addr);
 
-
+#if defined(DISABLE_MEMSCAN_ATOMIC_STORES)
+		*number_out = *reinterpret_cast<unsigned*>(state.addr);
+#else
 		store4_no_cache(number_out, *reinterpret_cast<unsigned*>(state.addr));
+#endif
 		state.addr += 4;
 		return true;
 	}
 };
 template<unsigned* number_out>
 struct skip_and_capture_1byte_value {
-	static constexpr unsigned required_valid_size = 4;
+	static constexpr unsigned required_valid_size = 1;
 	MH_FORCEINLINE
 		static bool match(scanstate_t& state) {
 
@@ -338,6 +347,20 @@ struct skip_and_capture_1byte_value {
 		return true;
 	}
 };
+
+template<unsigned* number_out> 
+struct skip_and_capture_2byte_value {
+	static constexpr unsigned required_valid_size = 2;
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
+
+		*number_out = *reinterpret_cast<unsigned short*>(state.addr);
+
+		state.addr += 2;
+		return true;
+	}
+};
+
 template<unsigned n>
 struct align_next {
 	static constexpr unsigned required_valid_size = n;
@@ -433,6 +456,20 @@ struct memscanner_factory_t {
 		}
 	};
 };
+template<typename X1, typename X2>
+struct match_either {
+
+	static constexpr unsigned required_valid_size = max(X1::required_valid_size, X2::required_valid_size);
+	MH_FORCEINLINE
+		static bool match(scanstate_t& state) {
+
+		return X1::match(state) || X2::match(state);
+	}
+
+};
+
+
+
 /*
 	match another memscanner_t within up to n bytes after the current address
 	added for locate_game_engine which had bytes removed before it
@@ -1264,7 +1301,12 @@ struct block_scangroup_entry_t : public scangroup_listnode_t {
 				we're done, remove us from the execution list
 			*/
 			if (m_result_receiver) {
+#if defined(DISABLE_MEMSCAN_ATOMIC_STORES)
+
+				*m_result_receiver = res;
+#else
 				store8_no_cache(m_result_receiver, res);
+#endif
 				//* = res;
 			}
 			if (m_prev) {

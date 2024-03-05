@@ -4,6 +4,7 @@
 
 struct snaphak_virtmemroutines_t {
 	void* (*m_allocate_rw)(size_t size);
+	void* (*m_allocate_rwx)(size_t size);
 	void* (*m_allocate_rwx_absolute)(size_t size,void* where);
 	void* (*m_allocate_rw_absolute)(size_t size,void* where);
 	void (*m_release_rw)(void* mem);

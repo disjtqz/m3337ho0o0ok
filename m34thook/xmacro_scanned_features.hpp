@@ -150,3 +150,20 @@ SCANNED_PTR_FEATURE(g_idParmBlock_GetParmValue)
 SCANNED_PTR_FEATURE(g_idgamelocal_getplayer)
 //postinit scangroup
 SCANNED_PTR_FEATURE(g_peermask_for_player)
+
+//typeinfo that can be referenced before any game initialization (after P1 scanners)
+//needed in order to add new entity types
+SCANNED_PTR_FEATURE(g_generated_typeinfo)
+//need this in order to determine the vtbl offset of Think_Impl for idEntities (so we can replace the pointer for custom per-frame logic)
+//shit, no vtbls directly contain this, theres a thunk function that jmps to it, so we need a second scanner
+SCANNED_PTR_FEATURE(g_identity_thinkimpl)
+
+SCANNED_PTR_FEATURE(g_idbloatedentity_activate)
+
+//grabbing this since we can get it from bloatedentity::activate. can also grab the offset of the time manager from it if i need that
+SCANNED_PTR_FEATURE(g_gametimemanager_getgamems)
+
+//0x12xxxx - this is the xxxx part
+SCANNED_UINT_FEATURE(g_gametimemanager_offset_from_gamelocal_low16)
+
+SCANNED_PTR_FEATURE(g_gamelocal_get_challenge_entity)

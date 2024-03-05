@@ -21,7 +21,9 @@ static uint64_t cs_movemask(T val) {
 
 static unsigned ctz_op(unsigned value) {
 #if IMPL_VECTOR_WIDTH==16
-	return  std::countr_zero(value);
+	assert(false);
+	return 0;
+	//return  std::countr_zero(value);
 #else
 	return __builtin_ctz(value);
 #endif
@@ -51,32 +53,8 @@ static uint64_t cs_movemask_i16_findindex(T val) {
 IMPL_CODE_SEG
 static unsigned find_first_equal16(unsigned short* values, unsigned nvalues, unsigned tofind) {
 
-
-
-
-	unsigned i = 0;
-
-#pragma clang loop vectorize(enable)
-#pragma clang loop interleave(enable)
-	for (; (i + g_niter_per_element16) < nvalues; i += g_niter_per_element16) {
-		ivec16_local_t tocmp = *reinterpret_cast<ivec16_local_t*>(&values[i]);
-		auto mask = tocmp == tofind;
-
-		unsigned realmask = cs_movemask(mask);
-
-		if (realmask) {
-			return i + (ctz_op(realmask) / 2);
-		}
-
-	}
-#pragma clang loop unroll(disable) vectorize(disable)
-
-	for (; i < nvalues; ++i) {
-		if (values[i] == tofind) {
-			return i;
-		}
-	}
-	return ~0u;
+	assert(false);
+	return 69;
 }
 IMPL_CODE_SEG
 static unsigned find_first_equal32(unsigned* values, unsigned nvalues, unsigned tofind) {

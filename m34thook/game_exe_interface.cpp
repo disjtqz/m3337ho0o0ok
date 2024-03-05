@@ -339,3 +339,42 @@ done_iterating:
 	//}
 
 }
+
+
+
+#define		DECLNOP(n, ...)			static constexpr unsigned char mh_concat2_m(nop_, n)[n] = {__VA_ARGS__}
+
+
+DECLNOP(1, 0x90);
+DECLNOP(2, 0x66, 0x90) ;
+DECLNOP(3,0x0F, 0x1F, 0x00) ;
+DECLNOP(4,0x0F, 0x1F, 0x40, 0x00) ;
+DECLNOP(5, 0x0F, 0x1F, 0x44, 0x00, 0x00);
+DECLNOP(6,0x66, 0x0F, 0x1F, 0x44, 0x00, 0x00);
+DECLNOP(7,0x0F, 0x1F, 0x80, 0x00, 0x00, 0x00, 0x00);
+DECLNOP(8, 0x0F, 0x1F, 0x84, 00, 00, 00, 00, 00);
+DECLNOP(9, 0x66, 0x0F, 0x1F, 0x84, 00, 00, 00, 00, 00);
+
+
+
+static constexpr const unsigned char* const g_noptable[] = {
+	&nop_1[0],& nop_1[0],& nop_2[0],& nop_3[0],& nop_4[0],& nop_5[0],& nop_6[0],& nop_7[0],& nop_8[0],& nop_9[0]
+};
+
+static constexpr unsigned LENGTHOF_NOPTABLE = sizeof(g_noptable) / sizeof(g_noptable[0]);
+
+void nop_out(void* location, unsigned size) {
+	unsigned char* locptr = (unsigned char*)location;
+
+	while (size != 0) {
+
+		
+		unsigned patchsize = size % LENGTHOF_NOPTABLE;
+
+		patch_memory(locptr, size, (char*)g_noptable[patchsize]);
+		locptr += patchsize;
+		size -= patchsize;
+	}
+
+
+}

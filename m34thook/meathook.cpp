@@ -34,7 +34,7 @@ extern void install_miscndev_cmds();
 //see mh_cmds_cheats
 extern void cheats_postinit();
 
-
+extern void init_new_entity_type_stuff();
 void* __fastcall idFileResourceCompressed__GetFile(__int64 a1);
 
 static bool return_1() {
@@ -62,6 +62,7 @@ void meathook_final_init() {
 
 	descan::run_gamelib_postinit_scangroups();
 	cheats_postinit();
+	init_new_entity_type_stuff();
 }
 
 static void* nothinfunc = (void*)do_nothing;
@@ -137,6 +138,9 @@ void meathook_init() {
 	install_editor_cmds();
 	install_dumpngen_cmds();
 	install_miscndev_cmds();
+
+
+
 	//idCmd::register_command("mh_test_persistent_text", test_persistent_text, "Test persistent onscreen text");
 	//idCmd::register_command("mh_phys_test", test_physics_op, "test physics ops");
 	// Start rpc server.

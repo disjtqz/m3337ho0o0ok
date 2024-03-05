@@ -176,6 +176,17 @@ BOOL WINAPI DllMain(
 	if (mh_test_devflag(mh_devflags::enable_hugepages_on_start)) {
 		g_mh_hugepage_support = sh::vmem::try_enable_hugepages() == 0;
 	}
+
+	if (mh_test_devflag(mh_devflags::preallocate_entire_game_heap)) {
+
+		void* ghost_heap_base = sh::vmem::allocate_rw(g_preallocated_ghost_heap_size | (g_mh_hugepage_support ? SNAPHAK_SIZE_FLAG_HUGEPAGES : 0));
+
+		sh_heap_t heap = sh::heap::create_heap_from_mem(ghost_heap_base, g_preallocated_ghost_heap_size, 0);
+
+		void* peb = *mh_lea<void*>(NtCurrentTeb(), 0x60);
+
+		*mh_lea<sh_heap_t>(peb, 0x30) = heap;
+	}
 	
 
 

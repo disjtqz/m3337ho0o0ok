@@ -300,6 +300,46 @@ using locate_va = memscanner_t<
 	scanbytes<0x48, 0x8d, 0x4d, 0xe0, 0xe8>
 >;//last 4 = va rva
 
+
+/*
+V1 - 140934DA0
+
+I checked against V1, V6.66 R2, and V6-something MS Store: All of them have the same prologue
+*/
+using locate_generated_typeinfo = memscanner_t<
+	scanbytes<0x48, 0x89, 0x5c, 0x24, 0x10, 0x48, 0x89, 0x74, 0x24, 0x18, 0x55, 0x57, 0x41, 0x56, 0x48, 0x8d, 0x6c, 0x24, 0xb9, 0x48, 0x81, 0xec, 0x90, 0x0, 0x0, 0x0, 0x48, 0x8b, 0x5>,
+	skip<4>, //security cookie
+	scanbytes<0x48, 0x33, 0xc4, 0x48, 0x89, 0x45, 0x3f, 0x48, 0x8d, 0x15> //last 4 is rva to generated typeinfo
+>;
+//v1 = 140FF8834
+//v6.66 r2 = 141251CCB 
+//ms store v6 = 14128413B 
+using locate_identity_thinkimpl = memscanner_t<
+	scanbytes < 0xf3, 0x41, 0xf, 0x59, 0xf0, 0x41, 0xf, 0x28, 0xc9, 0xf3, 0x41, 0xf, 0x59, 0xc9, 0xf3, 0xf, 0x58, 0xf0, 0xf3, 0xf, 0x58, 0xf1, 0xf, 0x2f, 0x35>,
+	riprel32_data_equals< 0x4D, 0xAF, 0xFF, 0x35>
+>;
+//v1 = 140FF2FD0
+//v6.66 r2 = 14124C3A0
+//ms store v6 =14127E7F0
+using located_idbloatedentity_activate = memscanner_t<
+	scanbytes<0x48, 0x89, 0x5c, 0x24, 0x10, 0x57, 0x48, 0x83, 0xec, 0x20, 0x48, 0x8b, 0x5>,
+	skip<4>, //g_debugTriggers.data
+	scanbytes<0x48, 0x8b, 0xfa, 0x48, 0x8b, 0xd9, 0x83, 0x78, 0x8, 0x0, 0x74, 0x42, //warning: this (0x42) byte is a short jmp offset, appears same in all though
+	0x48, 0x8B, 0x0D
+	>,
+	skip<4>, //gameLocal
+	scanbytes<0x48, 0x8d, 0x54, 0x24, 0x30, 0x48, 0x81, 0xc1>, 
+	skip_and_capture_2byte_value<&descan::g_gametimemanager_offset_from_gamelocal_low16>,
+	//skip<2>, 
+	scanbytes< 0x12, 0x0>, //only ingest 0x0012 (high part) of offset on gamelocal, low 2 bytes of offset varies across versions
+	scanbytes<0x41, 0xb8, 0x1, 0x0, 0x0, 0x0, 0xe8>,
+	skip_and_capture_rva<&descan::g_gametimemanager_getgamems>,
+	scanbytes<0x48, 0x8b, 0x3, 0x48, 0x8b, 0xcb, 0xff, 0x50, 0x60, 0x48, 0x8b, 0x54, 0x24, 0x30, 0x48, 0x8d, 0xd>,
+	riprel32_data_equals< 0x28, 0x25, 0x6C, 0x6C, 0x64, 0x29, 0x3A, 0x20, 0x27, 0x25, //(%lld): '%s' idBloatedEntity::Activate\n
+	0x73, 0x27, 0x20, 0x69, 0x64, 0x42, 0x6C, 0x6F, 0x61, 0x74,
+	0x65, 0x64, 0x45, 0x6E, 0x74, 0x69, 0x74, 0x79, 0x3A, 0x3A,
+	0x41, 0x63, 0x74, 0x69, 0x76, 0x61, 0x74, 0x65, 0x0A, 0x00>>;
+
 namespace initial_scanners {
 
 	/*
@@ -353,12 +393,19 @@ namespace initial_scanners {
 	BSCANENT(locate_idcommonlocal_frame_entry, &descan::g_idCommonLocal_Frame, scanbehavior_locate_func_with_start_search<locate_idcommonlocal_frame>);
 
 	BSCANENT(locate_va_entry, &descan::g_va_va, scanbehavior_locate_csrel_after<locate_va>);
+
+	BSCANENT(locate_generated_typeinfo_entry, &descan::g_generated_typeinfo, scanbehavior_locate_csrel_after<locate_generated_typeinfo>);
+
+	BSCANENT(locate_identity_thinkimpl, &descan::g_identity_thinkimpl, scanbehavior_locate_func_with_start_search< locate_identity_thinkimpl>);
+	BSCANENT(locate_idbloatedentity_activate, &descan::g_idbloatedentity_activate, scanbehavior_locate_func< located_idbloatedentity_activate>);
+
 #define		PAR_SCANGROUP_P1_1				find_alloca_probe_entry, find_security_check_cookie_entry, find_doom_operator_new_and_idfile_memory_ctor_entry, locate_idoodle_decompress_entry, locate_idlib_vprintf_entry
-#define		PAR_SCANGROUP_P1_2				locate_game_engine_init_ptr_entry, idstr_ctor_void_locator_entry, idgamelocal_locator_entry, locate_va_entry
+#define		PAR_SCANGROUP_P1_2				locate_game_engine_init_ptr_entry, idstr_ctor_void_locator_entry, idgamelocal_locator_entry, locate_va_entry, locate_generated_typeinfo_entry, locate_idbloatedentity_activate
 
 #define		PAR_SCANGROUP_P1_3				locate_idstr_dctor_entry, locate_idstr_assign_charptr_entry, locate_typeinfo_tools_entry, locate_resourceManager2_entry,locate_resourcestreamer_getfile
 
-#define		PAR_SCANGROUP_P1_4				idgamesystemlocal_locator_entry,resourcelist_index_locator_entry,locate_rtti_typeinfo_string_entry,locate_idcommonlocal_frame_entry
+#define		PAR_SCANGROUP_P1_4				idgamesystemlocal_locator_entry,resourcelist_index_locator_entry,locate_rtti_typeinfo_string_entry,locate_idcommonlocal_frame_entry, locate_identity_thinkimpl
+
 #ifdef DISABLE_PARALLEL_SCANGROUPS
 
 	

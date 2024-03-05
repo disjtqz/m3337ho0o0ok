@@ -8,3 +8,58 @@ Override filesystem scan thread, reuse stuff from my fast NtQueryDirectoryFile b
 
 Try to introduce "safe" decl reloading. This may not work, but basically the idea is to create a fiber that sets up SEH in case of some kind of segfault and executes reload_decl. Our overrides for idfatalerror will have some new code added to
 check whether a setjmp handler is set up for this context and then jmps to that, passing the error message along so that we can show it to the user. The fiber will then switch back to the main thread and be deleted.
+
+
+Swap out idEncounterManager::Handle_Event's vtbl entry in order to implement enemy randomization
+
+
+
+Hook/replace methods on useless entity types' vtbls in order to add in new entity types for custom game logic
+
+classinformer regex for this: ^([^\s]+)\s+598\s+([^\s]+)([^\r]+)
+
+
+idTest_Sector
+idTest_MetaData_WebPath
+idTest_MetaData_Target
+idTest_MetaData_String
+idTest_MetaData_SectorYaw
+idTest_MetaData_SectorPitch
+idTest_MetaData_Plane
+idTest_MetaData_MoveableSpheres
+idTest_MetaData_Model
+idTest_MetaData_Line
+idTest_MetaData_FovYaw
+idTest_MetaData_FovPitch
+idTest_MetaData_Fov
+idTest_MetaData_Cylinder2
+idTest_MetaData_Cylinder
+idTest_MetaData_Circle
+idTest_MetaData_Bounds
+
+
+
+idVolume_OliviasGuardFight_DangerZone is probably unused, same for jakesDevWidget
+
+
+to call idBloatedEntity, grab idBloatedEntity typeinfo and then call PlacementCreateInstance((obj), sizeof(idBloatedEntity))
+
+replace idProject_SiphonGrenade with mh_scripted_projectile
+replace idStaticCannon with mh_scripted_weapon
+
+
+Add new events?
+	Replace existing ones that might be unused.
+	Potentially unused events:
+		testFunctionality //no xrefs to eventdef other than ctor
+		isProdBuilding
+
+	these do absolutely nothing in idEntity::Base:
+	         case EVID_fadeSound: //no xrefs to its eventdef other than ctor
+
+            case EVID_fadePitch://no xrefs to its eventdef other than ctor
+            case EVID_midnightStarted:
+            case EVID_midnightInterrupted:
+            case EVID_midnightFinished:
+            case EVID_midnightSkipped:
+            case EVID_midnightFailed:

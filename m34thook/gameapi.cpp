@@ -1050,3 +1050,15 @@ void get_player_view_pos_and_axis(idVec3* out_position, idMat3* out_axis) {
 	*out_position = *g_renderview_origin(rv);
 	*out_axis = *g_renderview_axis(rv);
 }
+
+void* get_gametimemanager() {
+	void* gamelocal = get_gamelocal();
+
+	if (!gamelocal)
+		return nullptr;
+
+	if (!descan::g_gametimemanager_offset_from_gamelocal_low16)
+		return nullptr;
+
+	return mh_lea<void>(gamelocal, static_cast<unsigned>(descan::g_gametimemanager_offset_from_gamelocal_low16) + 0x120000);
+}

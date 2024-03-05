@@ -8,7 +8,7 @@
 #define	LAST_PLAYER_IDX			12
 
 #define	VTBLOFFS_CALLEVENT			0x30
-#define	VTBLOFFS_IDCLASS_GETTYPE	0x16
+#define	VTBLOFFS_IDCLASS_GETTYPE	16
 void* find_entity(const char* name);
 /*
 	iterate over all entities with a given classname
@@ -2291,3 +2291,6 @@ static inline bool is_entity_valid(void* MH_NOESCAPE entity) {
 }
 
 std::string stringify_entity(void* ent);
+
+
+void* get_gametimemanager();

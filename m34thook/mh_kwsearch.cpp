@@ -11,15 +11,37 @@
 #include "eventdef.hpp"
 #include "cmdsystem.hpp"
 
+static const char* stristr(const char* string, const char* substring)
+{
+	const char* a, * b;
+	b = substring;
+	if (*b == 0)
+		return string;
+	for (; *string != 0; string += 1)
+	{
+		if (*string != *b)
+			continue;
+		a = string;
+		while (1)
+		{
+			if (tolower(*b) == 0)
+				return string;
+			if (tolower(*a++) != tolower(*b++))
+				break;
+		}
+		b = substring;
+	}
+	return nullptr;
+}
 
 static bool check_string_against_query(const char* inputstr, const char** args, unsigned argc) {
 	if (!inputstr || inputstr[0] == 0)
 		return false;
 	for (unsigned i = 1; i < argc; ++i) {
-		unsigned idx = sh::string::find_string_insens(inputstr, args[i]);
+	//	unsigned idx = ;//sh::string::find_string_insens(inputstr, args[i]);
 
 		
-		if (!~idx)
+		if (!stristr(inputstr, args[i]))
 			continue;
 		return true;
 	}

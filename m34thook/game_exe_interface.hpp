@@ -369,3 +369,5 @@ struct feature_binder_ptr_t {
 
 //DO NOT pass in a heap allocated pointer for out_array, matches may end up becoming duplicated! (possibly until crash?) instead pass in virtual memory or statically allocated memory. do not pass in stack arrays, the stack may have been malloced
 unsigned pointer_reference_scan(void* scanfor, void** out_array, unsigned max_outputs);
+
+void nop_out(void* location, unsigned size);

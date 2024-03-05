@@ -69,14 +69,16 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <LLVMToolsVersion>16</LLVMToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>ClangCL</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <LLVMToolsVersion>16</LLVMToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLRelease|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -84,7 +86,7 @@
     <PlatformToolset>ClangCL</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <LLVMToolsVersion>14.0.0</LLVMToolsVersion>
+    <LLVMToolsVersion>16</LLVMToolsVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -94,7 +96,7 @@
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <VCToolsVersion>
     </VCToolsVersion>
-    <LLVMToolsVersion>14.0.0</LLVMToolsVersion>
+    <LLVMToolsVersion>16</LLVMToolsVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -141,22 +143,22 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>K:\</OutDir>
+    <OutDir>D:\SteamLibrary\steamapps\common\DOOMEternal</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>K:\</OutDir>
+    <OutDir>D:\SteamLibrary\steamapps\common\DOOMEternal</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLRelease|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>K:\</OutDir>
+    <OutDir>D:\SteamLibrary\steamapps\common\DOOMEternal</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>K:\</OutDir>
+    <OutDir>D:\SteamLibrary\steamapps\common\DOOMEternal</OutDir>
     <TargetName>XINPUT1_3</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg">
@@ -224,11 +226,11 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>MH_ETERNAL_V6;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -247,13 +249,13 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>MH_ETERNAL_V6;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AdditionalIncludeDirectories>$(SolutionDir)/snaphak_algo;$(SolutionDir)/RPCInterface;$(SolutionDir)/udis86test;$(SolutionDir)/m34thook</AdditionalIncludeDirectories>
@@ -278,10 +280,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>MH_ETERNAL_V6;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
-      <AdditionalIncludeDirectories>$(SolutionDir)/snaphak_algo;$(SolutionDir)/RPCInterface;$(SolutionDir)/udis86test;$(SolutionDir)/m34thook</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)snaphak_algo;$(SolutionDir)RPCInterface;$(SolutionDir)udis86test;$(SolutionDir)m34thook</AdditionalIncludeDirectories>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
@@ -292,10 +294,12 @@
       <StringPooling>true</StringPooling>
       <BufferSecurityCheck>false</BufferSecurityCheck>
       <AdditionalOptions>-flto=full -msse4.1 -msse4.2 -msse3 -Wl,-plugin-opt=-save-temps %(AdditionalOptions)</AdditionalOptions>
-      <AssemblerOutput>All</AssemblerOutput>
-      <AssemblerListingLocation>Q:\DOOMEternal_dev_version\asmout.asm</AssemblerListingLocation>
+      <AssemblerOutput>NoListing</AssemblerOutput>
+      <AssemblerListingLocation>
+      </AssemblerListingLocation>
       <GuardEHContMetadata>
       </GuardEHContMetadata>
+      <BuildStlModules>false</BuildStlModules>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -308,13 +312,13 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ClangCLDebug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>MH_ETERNAL_V6;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <LanguageStandard>stdcpp20</LanguageStandard>
       <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <AdditionalIncludeDirectories>$(SolutionDir)/snaphak_algo;$(SolutionDir)/RPCInterface;$(SolutionDir)/udis86test;$(SolutionDir)/m34thook</AdditionalIncludeDirectories>
@@ -386,6 +390,7 @@
     <ClCompile Include="mh_mainloop.cpp" />
     <ClCompile Include="mh_memmanip_cmds.cpp" />
     <ClCompile Include="mh_native_api.cpp" />
+    <ClCompile Include="mh_new_entity_types.cpp" />
     <ClCompile Include="mh_staticmodel.cpp" />
     <ClCompile Include="objfiles\objloader.cpp" />
     <ClCompile Include="optimizations\mhoptimize.cpp" />
@@ -419,6 +424,7 @@
     <ClInclude Include="generalized_number.hpp" />
     <ClInclude Include="GLState.hpp" />
     <ClInclude Include="idLib.hpp" />
+    <ClInclude Include="idlib_templates.hpp" />
     <ClInclude Include="idmath.hpp" />
     <ClInclude Include="idStr.hpp" />
     <ClInclude Include="idtypeinfo.hpp" />
